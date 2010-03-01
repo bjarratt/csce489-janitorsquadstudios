@@ -1,8 +1,0 @@
-#summary This page outlines the programming conventions we will be using in our project.
-
-  * Local variables:  `variableName`
-  * Class variables:  `this.variableName` (make sure to use the "this")
-  * Class constants:  `this.CONST_NAME`
-  * Global constants:  `GlobalConstants.CONST_NAME` (where `GlobalConstants` is a class used to store `const` members)
-  * Brackets:  automatically formatted by Visual Studio
-  * *Add and edit as needed...*
