@@ -7,7 +7,7 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb</Output>
+      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb</Output>
       <Time>2010-03-05T16:26:40.703125-06:00</Time>
     </Item>
     <Item>
@@ -16,7 +16,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\blank.xnb</Output>
+      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\blank.xnb</Output>
       <Time>2010-02-12T00:53:43.8125-06:00</Time>
     </Item>
     <Item>
@@ -25,7 +25,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb</Output>
+      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb</Output>
       <Time>2010-03-05T15:28:53.109375-06:00</Time>
     </Item>
     <Item>
@@ -34,7 +34,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb</Output>
+      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb</Output>
       <Time>2010-03-05T15:45:08.296875-06:00</Time>
     </Item>
     <Item>
@@ -43,7 +43,7 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\cave.xnb</Output>
+      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\cave.xnb</Output>
       <Time>2010-03-05T16:42:11.78125-06:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
@@ -51,10 +51,10 @@
       <TargetPlatform>Windows</TargetPlatform>
       <BuildConfiguration>Release</BuildConfiguration>
       <CompressContent>true</CompressContent>
-      <RootDirectory>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\Content\</RootDirectory>
-      <LoggerRootDirectory>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\</LoggerRootDirectory>
-      <IntermediateDirectory>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\Content\obj\x86\Release\</IntermediateDirectory>
-      <OutputDirectory>C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\</OutputDirectory>
+      <RootDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\Content\</RootDirectory>
+      <LoggerRootDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\</LoggerRootDirectory>
+      <IntermediateDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\Content\obj\x86\Release\</IntermediateDirectory>
+      <OutputDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>
