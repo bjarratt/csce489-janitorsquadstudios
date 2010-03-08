@@ -1,0 +1,11 @@
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\blank.xnb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\Content\cave.xnb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\caveGame.exe
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\bin\x86\Release\caveGame.pdb
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\obj\x86\Release\ResolveAssemblyReference.cache
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\obj\x86\Release\caveGame.exe
+C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\obj\x86\Release\caveGame.pdb
