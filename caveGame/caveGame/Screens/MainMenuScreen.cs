@@ -27,9 +27,9 @@ namespace caveGame
             : base("")
         {
             // Create our menu entries.
-            MenuEntry playGameMenuEntry = new MenuEntry("Play Game");
-            MenuEntry optionsMenuEntry = new MenuEntry("Instructions");
-            MenuEntry exitMenuEntry = new MenuEntry("Exit");
+            MenuEntry playGameMenuEntry = new MenuEntry("Start");
+            MenuEntry optionsMenuEntry = new MenuEntry("Options");
+            MenuEntry exitMenuEntry = new MenuEntry("Quit");
 
             // Hook up menu event handlers.
             playGameMenuEntry.Selected += PlayGameMenuEntrySelected;
@@ -77,7 +77,7 @@ namespace caveGame
         /// </summary>
         protected override void OnCancel(PlayerIndex playerIndex)
         {
-            const string message = "Are you sure you want to exit the game?";
+            const string message = "Are you sure you want to quit?";
 
             MessageBoxScreen confirmExitMessageBox = new MessageBoxScreen(message);
 
