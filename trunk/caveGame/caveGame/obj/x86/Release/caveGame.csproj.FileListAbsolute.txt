@@ -20,3 +20,14 @@ C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\c
 C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
 C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\caveGame.exe
 C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\caveGame.pdb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\blank.xnb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\cave.xnb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\caveGame.exe
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\caveGame.pdb
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\ResolveAssemblyReference.cache
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\Microsoft.Xna.Framework.RuntimeProfile.txt
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\caveGame.exe
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\obj\x86\Release\caveGame.pdb
