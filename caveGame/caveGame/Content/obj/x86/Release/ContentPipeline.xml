@@ -7,8 +7,8 @@
       <Importer>FontDescriptionImporter</Importer>
       <Processor>FontDescriptionProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb</Output>
-      <Time>2010-03-05T16:26:40.703125-06:00</Time>
+      <Output>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\gamefont.xnb</Output>
+      <Time>2010-03-08T15:29:40.639722-06:00</Time>
     </Item>
     <Item>
       <Source>blank.png</Source>
@@ -16,8 +16,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\blank.xnb</Output>
-      <Time>2010-02-12T00:53:43.8125-06:00</Time>
+      <Output>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\blank.xnb</Output>
+      <Time>2010-03-08T15:05:30.987821-06:00</Time>
     </Item>
     <Item>
       <Source>title_screen.png</Source>
@@ -25,8 +25,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb</Output>
-      <Time>2010-03-05T15:28:53.109375-06:00</Time>
+      <Output>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\title_screen.xnb</Output>
+      <Time>2010-03-08T15:05:30.866944-06:00</Time>
     </Item>
     <Item>
       <Source>pause_screen.png</Source>
@@ -34,8 +34,8 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb</Output>
-      <Time>2010-03-07T23:25:01.953125-06:00</Time>
+      <Output>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\pause_screen.xnb</Output>
+      <Time>2010-03-08T15:05:30.038773-06:00</Time>
     </Item>
     <Item>
       <Source>cave.bmp</Source>
@@ -43,18 +43,18 @@
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
       <Options>None</Options>
-      <Output>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\cave.xnb</Output>
-      <Time>2010-03-05T16:42:11.78125-06:00</Time>
+      <Output>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\cave.xnb</Output>
+      <Time>2010-03-08T15:05:31.192619-06:00</Time>
     </Item>
     <BuildSuccessful>true</BuildSuccessful>
     <Settings>
       <TargetPlatform>Windows</TargetPlatform>
       <BuildConfiguration>Release</BuildConfiguration>
       <CompressContent>true</CompressContent>
-      <RootDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\Content\</RootDirectory>
-      <LoggerRootDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\</LoggerRootDirectory>
-      <IntermediateDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\Content\obj\x86\Release\</IntermediateDirectory>
-      <OutputDirectory>C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\</OutputDirectory>
+      <RootDirectory>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\Content\</RootDirectory>
+      <LoggerRootDirectory>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\</LoggerRootDirectory>
+      <IntermediateDirectory>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\Content\obj\x86\Release\</IntermediateDirectory>
+      <OutputDirectory>\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\bin\x86\Release\Content\</OutputDirectory>
     </Settings>
     <Assemblies>
       <Assembly>
@@ -79,7 +79,7 @@
       </Assembly>
       <Assembly>
         <Key>C:\WINDOWS\assembly\GAC_32\Microsoft.Xna.Framework.Content.Pipeline\3.0.0.0__6d5c3888ef60e27d\Microsoft.Xna.Framework.Content.Pipeline.dll</Key>
-        <Value>2010-01-25T14:35:55.6187676-06:00</Value>
+        <Value>2010-01-23T04:13:28.28125-06:00</Value>
       </Assembly>
     </Assemblies>
   </Asset>

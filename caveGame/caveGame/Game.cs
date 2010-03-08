@@ -38,8 +38,10 @@ namespace caveGame
 
             graphics = new GraphicsDeviceManager(this);
 
-            graphics.PreferredBackBufferWidth = 800;
-            graphics.PreferredBackBufferHeight = 750;
+            graphics.PreferredBackBufferWidth =1280;
+            graphics.PreferredBackBufferHeight = 1024;
+
+            graphics.IsFullScreen = true;
 
             // Create the screen manager component.
             this.screenManager = new ScreenManager(this);

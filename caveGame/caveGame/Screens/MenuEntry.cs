@@ -114,8 +114,8 @@ namespace caveGame
         public virtual void Draw(MenuScreen screen, Vector2 position,
                                  bool isSelected, GameTime gameTime)
         {
-            // Draw the selected entry in yellow, otherwise white.
-            Color color = isSelected ? Color.Yellow : Color.White;
+            // Draw the selected entry in white, otherwise gray.
+            Color color = isSelected ? Color.White : Color.Gray;
             
             float scale = 1;
 

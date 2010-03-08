@@ -1,2 +1,3 @@
 C:\Documents and Settings\Brandon\My Documents\Visual Studio 2008\Projects\caveGame\caveGame\Content\obj\x86\Release\ResolveAssemblyReference.cache
 C:\Documents and Settings\Brandon\Desktop\caveGame\csce489-janitorsquadstudios\caveGame\caveGame\Content\obj\x86\Release\ResolveAssemblyReference.cache
+\\filer\bjarratt\ms_windows\cpsc_redirected\Desktop\cave game\csce489-janitorsquadstudios\caveGame\caveGame\Content\obj\x86\Release\ResolveAssemblyReference.cache
