@@ -140,7 +140,7 @@ namespace caveGame
             Vector2 textPosition = (viewportSize - textSize) / 2;
 
             // The background includes a border somewhat larger than the text itself.
-            const int hPad = 47;
+            const int hPad = 30;
             const int vPad = 16;
 
             Rectangle backgroundRectangle = new Rectangle((int)textPosition.X - hPad,
