@@ -142,7 +142,7 @@ namespace caveGame
         /// </summary>
         public override void Draw(GameTime gameTime)
         {
-            ScreenManager.FadeBackBufferToBlack(TransitionAlpha * 2 / 3);
+            ScreenManager.FadeBackBufferToBlack(TransitionAlpha * 3 / 3);
 
             base.Draw(gameTime);
         }
