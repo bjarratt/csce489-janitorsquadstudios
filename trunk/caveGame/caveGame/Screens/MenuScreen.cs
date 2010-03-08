@@ -167,16 +167,6 @@ namespace caveGame
 
             Vector2 position = new Vector2(100, 300);
 
-            // Make the menu slide into place during transitions, using a
-            // power curve to make things look more interesting (this makes
-            // the movement slow down as it nears the end).
-            float transitionOffset = (float)Math.Pow(TransitionPosition, 2);
-
-            if (ScreenState == ScreenState.TransitionOn)
-                position.X -= transitionOffset * 256;
-            else
-                position.X += transitionOffset * 512;
-
             spriteBatch.Begin();
 
             // Draw each menu entry in turn.
@@ -196,8 +186,6 @@ namespace caveGame
             Vector2 titleOrigin = font.MeasureString(menuTitle) / 2;
             Color titleColor = new Color(192, 192, 192, TransitionAlpha);
             float titleScale = 1.25f;
-
-            titlePosition.Y -= transitionOffset * 100;
 
             spriteBatch.DrawString(font, menuTitle, titlePosition, titleColor, 0,
                                    titleOrigin, titleScale, SpriteEffects.None, 0);

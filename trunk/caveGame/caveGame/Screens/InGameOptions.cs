@@ -1,6 +1,6 @@
-#region File Description
+﻿#region File Description
 //-----------------------------------------------------------------------------
-// OptionsMenuScreen
+// PauseMenuScreen
 //-----------------------------------------------------------------------------
 #endregion
 
@@ -11,27 +11,22 @@ using Microsoft.Xna.Framework;
 namespace caveGame
 {
     /// <summary>
-    /// The options screen is brought up over the top of the main menu
-    /// screen, and gives the user a chance to configure the game
-    /// in various hopefully useful ways.
+    /// The pause menu comes up over the top of the game,
+    /// giving the player options to resume or quit.
     /// </summary>
-    class OptionsMenuScreen : MenuScreen
+    class InGameOptionsScreen : MenuScreen
     {
+
         #region Fields
 
-        MenuEntry MenuEntry1;
-        MenuEntry MenuEntry2;
-        MenuEntry MenuEntry3;
-        MenuEntry MenuEntry4;
-
-        enum Shader
+        enum Option
         {
             Toony,
             reallyToony,
             Llama,
         }
 
-        static Shader currentShader = Shader.Toony;
+        static Option currentShader = Option.Toony;
 
         static string[] languages = { "C#", "French", "Deoxyribonucleic acid" };
         static int currentLanguage = 0;
@@ -48,17 +43,18 @@ namespace caveGame
         /// <summary>
         /// Constructor.
         /// </summary>
-        public OptionsMenuScreen()
+        public InGameOptionsScreen()
             : base("Options")
         {
+            // Flag that there is no need for the game to transition
+            // off when the pause menu is on top of it.
+            IsPopup = true;
+
             // Create our menu entries.
-            MenuEntry1 = new MenuEntry(string.Empty);
-            MenuEntry2 = new MenuEntry(string.Empty);
-            MenuEntry3 = new MenuEntry(string.Empty);
-            MenuEntry4 = new MenuEntry(string.Empty);
-
-            SetMenuEntryText();
-
+            MenuEntry MenuEntry1 = new MenuEntry("MenuEntry1");
+            MenuEntry MenuEntry2 = new MenuEntry("MenuEntry2");
+            MenuEntry MenuEntry3 = new MenuEntry("MenuEntry3");
+            MenuEntry MenuEntry4 = new MenuEntry("MenuEntry4");
             MenuEntry backMenuEntry = new MenuEntry("Back");
 
             // Hook up menu event handlers.
@@ -67,7 +63,8 @@ namespace caveGame
             MenuEntry3.Selected += MenuEntry3Selected;
             MenuEntry4.Selected += MenuEntry4Selected;
             backMenuEntry.Selected += OnCancel;
-            
+
+
             // Add entries to the menu.
             MenuEntries.Add(MenuEntry1);
             MenuEntries.Add(MenuEntry2);
@@ -76,18 +73,12 @@ namespace caveGame
             MenuEntries.Add(backMenuEntry);
         }
 
-
         /// <summary>
         /// Fills in the latest values for the options screen menu text.
         /// </summary>
         void SetMenuEntryText()
         {
-            MenuEntry1.Text = "Menu Entry 1";
-            MenuEntry2.Text = "Menu Entry 2";
-            MenuEntry3.Text = "Menu Entry 3";
-            MenuEntry4.Text = "Menu Entry 4";
         }
-
 
         #endregion
 
@@ -95,13 +86,13 @@ namespace caveGame
 
 
         /// <summary>
-        /// Event handler for when the Ungulate menu entry is selected.
+        /// Event handler for when the 1st menu entry is selected.
         /// </summary>
         void MenuEntry1Selected(object sender, PlayerIndexEventArgs e)
         {
             currentShader++;
 
-            if (currentShader > Shader.Llama)
+            if (currentShader > Option.Llama)
                 currentShader = 0;
 
             SetMenuEntryText();
@@ -109,7 +100,7 @@ namespace caveGame
 
 
         /// <summary>
-        /// Event handler for when the Language menu entry is selected.
+        /// Event handler for when the 2nd menu entry is selected.
         /// </summary>
         void MenuEntry2Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -120,7 +111,7 @@ namespace caveGame
 
 
         /// <summary>
-        /// Event handler for when the Frobnicate menu entry is selected.
+        /// Event handler for when the 3rd menu entry is selected.
         /// </summary>
         void MenuEntry3Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -131,13 +122,29 @@ namespace caveGame
 
 
         /// <summary>
-        /// Event handler for when the Elf menu entry is selected.
+        /// Event handler for when the 4th menu entry is selected.
         /// </summary>
         void MenuEntry4Selected(object sender, PlayerIndexEventArgs e)
         {
             sfx = !sfx;
 
             SetMenuEntryText();
+        }
+
+        #endregion
+
+        #region Draw
+
+
+        /// <summary>
+        /// Draws the pause menu screen. This darkens down the gameplay screen
+        /// that is underneath us, and then chains to the base MenuScreen.Draw.
+        /// </summary>
+        public override void Draw(GameTime gameTime)
+        {
+            ScreenManager.FadeBackBufferToBlack(TransitionAlpha * 2 / 3);
+
+            base.Draw(gameTime);
         }
 
 

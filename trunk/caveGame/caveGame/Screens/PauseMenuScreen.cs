@@ -30,15 +30,18 @@ namespace caveGame
             IsPopup = true;
 
             // Create our menu entries.
-            MenuEntry resumeGameMenuEntry = new MenuEntry("Resume Game");
-            MenuEntry quitGameMenuEntry = new MenuEntry("Quit Game");
+            MenuEntry resumeGameMenuEntry = new MenuEntry("Resume");
+            MenuEntry optionMenuEntry = new MenuEntry("Options");
+            MenuEntry quitGameMenuEntry = new MenuEntry("Quit");
             
             // Hook up menu event handlers.
             resumeGameMenuEntry.Selected += OnCancel;
+            optionMenuEntry.Selected += optionMenuEntrySelected;
             quitGameMenuEntry.Selected += QuitGameMenuEntrySelected;
 
             // Add entries to the menu.
             MenuEntries.Add(resumeGameMenuEntry);
+            MenuEntries.Add(optionMenuEntry);
             MenuEntries.Add(quitGameMenuEntry);
         }
 
@@ -60,6 +63,14 @@ namespace caveGame
             confirmQuitMessageBox.Accepted += ConfirmQuitMessageBoxAccepted;
 
             ScreenManager.AddScreen(confirmQuitMessageBox, ControllingPlayer);
+        }
+
+        /// <summary>
+        /// Event handler for when the options menu entry is selected.
+        /// </summary>
+        void optionMenuEntrySelected(object sender, PlayerIndexEventArgs e)
+        {
+            ScreenManager.AddScreen(new InGameOptionsScreen(), e.PlayerIndex);
         }
 
 
