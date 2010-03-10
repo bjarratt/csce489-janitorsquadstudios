@@ -19,6 +19,11 @@ namespace caveGame
 
         #region Fields
 
+        MenuEntry MenuEntry1;
+        MenuEntry MenuEntry2;
+        MenuEntry MenuEntry3;
+        MenuEntry MenuEntry4;
+
         enum Option
         {
             Toony,
@@ -28,7 +33,7 @@ namespace caveGame
 
         static Option currentShader = Option.Toony;
 
-        static string[] languages = { "C#", "French", "Deoxyribonucleic acid" };
+        static string[] languages = { "English", "French", "Spanish" };
         static int currentLanguage = 0;
 
         static bool antialias = true;
@@ -51,11 +56,13 @@ namespace caveGame
             IsPopup = true;
 
             // Create our menu entries.
-            MenuEntry MenuEntry1 = new MenuEntry("MenuEntry1");
-            MenuEntry MenuEntry2 = new MenuEntry("MenuEntry2");
-            MenuEntry MenuEntry3 = new MenuEntry("MenuEntry3");
-            MenuEntry MenuEntry4 = new MenuEntry("MenuEntry4");
+            MenuEntry1 = new MenuEntry(string.Empty);
+            MenuEntry2 = new MenuEntry(string.Empty);
+            MenuEntry3 = new MenuEntry(string.Empty);
+            MenuEntry4 = new MenuEntry(string.Empty);
             MenuEntry backMenuEntry = new MenuEntry("Back");
+
+            SetMenuEntryText();
 
             // Hook up menu event handlers.
             MenuEntry1.Selected += MenuEntry1Selected;
@@ -78,6 +85,10 @@ namespace caveGame
         /// </summary>
         void SetMenuEntryText()
         {
+            MenuEntry1.Text = "Shader: " + currentShader;
+            MenuEntry2.Text = "Language: " + languages[currentLanguage];
+            MenuEntry3.Text = "Anti-aliasing: " + (antialias ? "on" : "off"); ;
+            MenuEntry4.Text = "Sound FX: " + (sfx ? "on" : "off"); ;
         }
 
         #endregion

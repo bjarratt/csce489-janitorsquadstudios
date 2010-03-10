@@ -33,7 +33,7 @@ namespace caveGame
 
         static Shader currentShader = Shader.Toony;
 
-        static string[] languages = { "C#", "French", "Deoxyribonucleic acid" };
+        static string[] languages = { "English", "French", "Spanish" };
         static int currentLanguage = 0;
 
         static bool antialias = true;
@@ -82,10 +82,10 @@ namespace caveGame
         /// </summary>
         void SetMenuEntryText()
         {
-            MenuEntry1.Text = "Menu Entry 1";
-            MenuEntry2.Text = "Menu Entry 2";
-            MenuEntry3.Text = "Menu Entry 3";
-            MenuEntry4.Text = "Menu Entry 4";
+            MenuEntry1.Text = "Shader: " + currentShader;
+            MenuEntry2.Text = "Language: " + languages[currentLanguage];
+            MenuEntry3.Text = "Anti-aliasing: " + (antialias ? "on" : "off"); ;
+            MenuEntry4.Text = "Sound FX: " + (sfx ? "on" : "off"); ;
         }
 
 
