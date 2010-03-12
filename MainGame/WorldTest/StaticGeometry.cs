@@ -122,6 +122,10 @@ namespace WorldTest
                     Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
                     currentPolygon.normal.Normalize();
 
+                    currentPolygon.v1.Y += 150.0f;
+                    currentPolygon.v2.Y += 150.0f;
+                    currentPolygon.v3.Y += 150.0f;
+
                     collisionMesh.Add(currentPolygon);
                 }
                 else // Unused line format, skipping
@@ -142,6 +146,26 @@ namespace WorldTest
 
         private bool pointInsidePolygon(Vector3 point, CollisionPolygon polygon)
         {
+            /*
+            Vector3 u = polygon.v2 - polygon.v1;
+            Vector3 v = polygon.v3 - polygon.v1;
+            Vector3 w = point - polygon.v1;
+
+            float denom = 1.0f / ((Vector3.Dot(u,v) * Vector3.Dot(u,v)) - (Vector3.Dot(u,u) * Vector3.Dot(v,v)));
+
+            float s = ((Vector3.Dot(u, v) * Vector3.Dot(w, v)) - (Vector3.Dot(v, v) * Vector3.Dot(w, u))) * denom;
+            float t = ((Vector3.Dot(u, v) * Vector3.Dot(w, u)) - (Vector3.Dot(u, u) * Vector3.Dot(w, v))) * denom;
+
+            if (s >= 0.0f && t >= 0.0f && (s + t) <= 1.0f)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }*/
+
+            
             Vector3 vec1;
             Vector3 vec2;
 
@@ -188,24 +212,24 @@ namespace WorldTest
         }
 
         private Vector3 newPosition;
-        private Vector3 distToPoint;
+        //private Vector3 distToPoint;
 
         private Vector3 collisionPoint;
         private Vector3 newVelocityVector;
-        private Vector3 remainingVelocityVector;
+        //private Vector3 remainingVelocityVector;
         private float closestT;
         private Vector3 closestVelocityVector;
         private Vector3 closestCollisionPoint;
 
-        private Vector3 projectOnto;
-        private Vector3 reverseNormal;
+        //private Vector3 projectOnto;
+        //private Vector3 reverseNormal;
 
-        private const float minVelocityVectorLen = 0.9f;
+        private const float minVelocityVectorLen = 2.0f;
         private const float acceptableFloatError = 0.01f;
 
         public Vector3 CollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, int remainingRecursions)
         {
-            if (remainingRecursions == 0 || velocityVector == Vector3.Zero) // Math.Abs(velocityVector.Length()) < minVelocityVectorLen || 
+            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)// || Math.Abs(velocityVector.Length()) < minVelocityVectorLen )
             {
                 return originalPosition;
             }
@@ -217,7 +241,6 @@ namespace WorldTest
 
             for (int i = 0; i < this.collisionMesh.Count; i++)
             {
-
                 float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
 
                 if (tValue < 0 || tValue > 1)
@@ -244,7 +267,7 @@ namespace WorldTest
 
                 if (firstTimeThrough || tValue < this.closestT)
                 {
-                    if (pointInsidePolygon(this.collisionPoint, this.collisionMesh[i]))
+                    if (pointInsidePolygon(this.collisionPoint /*+ ((float)radius * this.collisionMesh[i].normal)*/, this.collisionMesh[i]))
                     {
                         this.closestT = tValue;
                         this.closestVelocityVector = this.newVelocityVector;
@@ -261,7 +284,7 @@ namespace WorldTest
             }
             else
             {
-                return CollideWith(this.closestCollisionPoint, this.newVelocityVector, radius, remainingRecursions - 1);
+                return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1);
             }
         }
     }

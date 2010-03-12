@@ -88,6 +88,7 @@ namespace WorldTest
             content = Content;
 
             position = Vector3.Zero;
+            position.Y += 150;
             velocity = Vector3.Zero;
             reference = new Vector3(0, 0, -1);
 
@@ -202,8 +203,8 @@ namespace WorldTest
                 MoveForward(ref position, orientation, moveSpeed, stickL, ref terrain);
             //}
 
-            camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
-            camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
+            camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
+            camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
             camera.camera_rotation.Normalize();
             camera.transform = Matrix.CreateFromQuaternion(camera.camera_rotation);
             camera.transform.Translation = position;
@@ -231,7 +232,7 @@ namespace WorldTest
             {
                 position = terrain.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
                 //position += addVector * speed;
-            }
+            }             
         }
 
         #endregion

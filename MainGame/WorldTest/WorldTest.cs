@@ -122,7 +122,7 @@ namespace WorldTest
             cel_effect = Content.Load<Effect>("CelShade");
             m_celMap = Content.Load<Texture2D>("Toon");
 
-            vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("cave1.obj").ToArray(typeof(VertexPositionNormalTexture));
+            vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("Terrain_Hi_Res.obj").ToArray(typeof(VertexPositionNormalTexture));
 
             terrain = new StaticGeometry(graphics.GraphicsDevice, vertices, "cave1_collision.obj");
 
@@ -151,6 +151,9 @@ namespace WorldTest
         #endregion
 
         #region Update
+
+        private float deltaFPSTime = 0;
+
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -158,6 +161,16 @@ namespace WorldTest
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            float fps = 1 / elapsed;
+            deltaFPSTime += elapsed;
+            if (deltaFPSTime > 1)
+            {
+                Window.Title = "FPS: " + fps.ToString();
+                deltaFPSTime -= 1;
+            }
+
             // Get states for keys and pad
             currentKeyboardState = Keyboard.GetState();
             currentGamePadState = GamePad.GetState(PlayerIndex.One);
@@ -178,6 +191,7 @@ namespace WorldTest
         #endregion
 
         #region Draw
+
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -223,6 +237,7 @@ namespace WorldTest
 
             //Draw terrain
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullClockwiseFace;
+            //this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
             cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
             cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
             cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
@@ -238,7 +253,6 @@ namespace WorldTest
             cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(new Vector3(1.0f));
             cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(new Vector3(100, 100, 100));
 
-
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
             {
@@ -248,6 +262,7 @@ namespace WorldTest
 
                 pass.End();
             }
+            //this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
             this.cel_effect.End();
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullCounterClockwiseFace;
 
