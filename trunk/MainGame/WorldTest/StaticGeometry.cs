@@ -28,10 +28,8 @@ namespace WorldTest
     {
         public const int MAX_RECURSIONS = 10;
         private VertexBuffer vertexBuffer;
-        //private IndexBuffer indexBuffer;
         private VertexDeclaration vertexDeclaration;
         private int vertexCount;
-        //private int indexCount;
         private List<CollisionPolygon> collisionMesh;
 
         public StaticGeometry(GraphicsDevice device, VertexPositionNormalTexture[] vertices, string collisionMeshFilename)
@@ -40,20 +38,6 @@ namespace WorldTest
             this.vertexBuffer.SetData(vertices);
 
             this.vertexCount = vertices.Length;
-            //this.indexCount = vertices.Length;
-
-            /*
-            Int32[] indices = new Int32[this.vertexCount];
-            for (Int32 i = 0; i < this.vertexCount; i++)
-            {
-                indices[i] = i + 1;
-            }
-            
-
-            //this.indexBuffer = new IndexBuffer(device, typeof(Int16), indices.Length, BufferUsage.WriteOnly);
-            this.indexBuffer = new IndexBuffer(device, 4 * this.indexCount, BufferUsage.WriteOnly, IndexElementSize.ThirtyTwoBits);
-            this.indexBuffer.SetData(indices);
-            */
 
             this.vertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
 
@@ -66,9 +50,7 @@ namespace WorldTest
         public void Draw(GraphicsDevice device)
         {
             device.VertexDeclaration = this.vertexDeclaration;
-            //device.Indices = this.indexBuffer;
             device.Vertices[0].SetSource(this.vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
-            //device.DrawIndexedPrimitives(PrimitiveType.TriangleList, 0, 0, this.vertexCount, 0, this.indexCount / 3);
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
         }
 
@@ -77,6 +59,11 @@ namespace WorldTest
             ArrayList positionList = new ArrayList();
 
             this.collisionMesh = new List<CollisionPolygon>();
+
+            if (filename == "")
+            {
+                return;
+            }
 
             positionList.Add(new Vector3());
 
@@ -122,9 +109,9 @@ namespace WorldTest
                     Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
                     currentPolygon.normal.Normalize();
 
-                    currentPolygon.v1.Y += 150.0f;
-                    currentPolygon.v2.Y += 150.0f;
-                    currentPolygon.v3.Y += 150.0f;
+                    //currentPolygon.v1.Y += 145.0f;
+                    //currentPolygon.v2.Y += 145.0f;
+                    //currentPolygon.v3.Y += 145.0f;
 
                     collisionMesh.Add(currentPolygon);
                 }
@@ -145,27 +132,7 @@ namespace WorldTest
         }
 
         private bool pointInsidePolygon(Vector3 point, CollisionPolygon polygon)
-        {
-            /*
-            Vector3 u = polygon.v2 - polygon.v1;
-            Vector3 v = polygon.v3 - polygon.v1;
-            Vector3 w = point - polygon.v1;
-
-            float denom = 1.0f / ((Vector3.Dot(u,v) * Vector3.Dot(u,v)) - (Vector3.Dot(u,u) * Vector3.Dot(v,v)));
-
-            float s = ((Vector3.Dot(u, v) * Vector3.Dot(w, v)) - (Vector3.Dot(v, v) * Vector3.Dot(w, u))) * denom;
-            float t = ((Vector3.Dot(u, v) * Vector3.Dot(w, u)) - (Vector3.Dot(u, u) * Vector3.Dot(w, v))) * denom;
-
-            if (s >= 0.0f && t >= 0.0f && (s + t) <= 1.0f)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }*/
-
-            
+        {          
             Vector3 vec1;
             Vector3 vec2;
 
@@ -212,24 +179,19 @@ namespace WorldTest
         }
 
         private Vector3 newPosition;
-        //private Vector3 distToPoint;
 
         private Vector3 collisionPoint;
         private Vector3 newVelocityVector;
-        //private Vector3 remainingVelocityVector;
         private float closestT;
         private Vector3 closestVelocityVector;
         private Vector3 closestCollisionPoint;
-
-        //private Vector3 projectOnto;
-        //private Vector3 reverseNormal;
 
         private const float minVelocityVectorLen = 2.0f;
         private const float acceptableFloatError = 0.01f;
 
         public Vector3 CollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, int remainingRecursions)
         {
-            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)// || Math.Abs(velocityVector.Length()) < minVelocityVectorLen )
+            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)
             {
                 return originalPosition;
             }

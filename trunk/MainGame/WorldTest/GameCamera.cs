@@ -29,14 +29,17 @@ namespace WorldTest
 
         public float cameraArc = -5;
         public float cameraRot = 0;
+        public float cameraRoll = 0;
         public float cameraDistance = 50;
 
         //Camera movement and rotation speeds
         public float rotationSpeed = 0.05f; 
 
         //Position and reference vectors
-        private Vector3 position; 
-        private Vector3 lookAt;
+        public Vector3 position;
+        public Vector3 up;
+        public Vector3 right;
+        public Vector3 lookAt;
         
         //Screen ratio
         public float aspectRatio = 0.0f; 
@@ -53,41 +56,44 @@ namespace WorldTest
 
         #region Constructor
 
-        public GameCamera(GraphicsDeviceManager graphics, ref Agent target)
+        public GameCamera(GraphicsDeviceManager graphics, ref Player target)
         {
             //Start aiming forward (no turn)
             cameraRot = 0;
 
             Target = target;
-            first = false;
-            if (first)
-            {
-                lookAt = new Vector3(0, 0, 1);
-            }
-            else
-            {
-                lookAt = Target.position;
-                lookAt.Y += 15.0f;
-            }
-            
-            //Starting position of the camera
+            first = true;
             if (first)
             {
                 position = Target.position;
-                position.Z += 10;
+                up = new Vector3(0, 1, 0);
+                right = new Vector3(-1, 0, 0);
+                lookAt = position + new Vector3(0, 0, 1);
+                cameraArc = 0;
+                cameraRot = 0;
+                cameraRoll = 0;
+                cameraDistance = 0;
             }
             else
             {
                 position = new Vector3(0.0f, 30.0f, -cameraDistance);
+                up = new Vector3(0, 1, 0);
+                right = new Vector3(1, 0, 0);
+                lookAt = Target.position;
+                lookAt.Y += 15.0f;
+                cameraArc = -5;
+                cameraRot = 0;
+                cameraRoll = 0;
+                cameraDistance = 50;
             }
 
             //Aspect ratio of screen
             aspectRatio = graphics.GraphicsDevice.Viewport.Width / graphics.GraphicsDevice.Viewport.Height;
-            
+
             //Initialize our camera rotation to identity
             camera_rotation = Quaternion.Identity;
             transform = Matrix.Identity;
-            
+
             //Create a general view matrix from start position and original lookat
             view = Matrix.CreateLookAt(position, lookAt, Vector3.Up);
 
@@ -99,14 +105,35 @@ namespace WorldTest
 
         #region Methods
 
-        public void UpdateCamera(GameTime gameTime, GamePadState currentGamePadState, KeyboardState currentKeyboardState)
+        public void UpdateCamera(GameTime gameTime, GamePadState currentGamePadState, GamePadState lastState, KeyboardState currentKeyboardState)
         {
             float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+
+            if (currentGamePadState.Buttons.RightStick == ButtonState.Pressed && lastState.Buttons.RightStick == ButtonState.Released)
+            {
+                first = !first;
+                cameraRot = 0.0f;
+                cameraArc = 0.0f;
+                cameraDistance = 0.0f;
+
+                Matrix trans = Matrix.CreateFromQuaternion(Target.orientation);
+                this.lookAt = Vector3.Transform(lookAt, trans);
+                this.right = Vector3.Transform(right, trans);
+                this.up = Vector3.Transform(up, trans);
+            }
 
             if (first)
             {
                 position = Target.position;
-                //position = Vector3.Transform(position, transform);
+                Vector3 look = this.lookAt;
+                look.Y = 0;
+                look.Normalize();
+                position.Y = position.Y + 22;
+                position = position + look * 5.0f;
+                cameraArc = 0;
+                cameraRot = 0;
+                cameraRoll = 0;
+                cameraDistance = 0;
             }
             else
             {
@@ -118,13 +145,23 @@ namespace WorldTest
             if (currentKeyboardState.IsKeyDown(Keys.Up) ||
                 currentKeyboardState.IsKeyDown(Keys.W))
             {
-                cameraArc += time * 0.025f;
+                if (first)
+                {
+                    cameraArc -= time * 0.025f;
+                }
+                else
+                    cameraArc += time * 0.025f;
             }
 
             if (currentKeyboardState.IsKeyDown(Keys.Down) ||
                 currentKeyboardState.IsKeyDown(Keys.S))
             {
-                cameraArc -= time * 0.025f;
+                if (first)
+                {
+                    cameraArc += time * 0.025f;
+                }
+                else
+                    cameraArc -= time * 0.025f;
             }
 
             cameraArc += currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
@@ -132,23 +169,38 @@ namespace WorldTest
             // Limit the arc movement.
             if (cameraArc > 55.0f)
                 cameraArc = 55.0f;
-            else if (cameraArc < -90.0f)
-                cameraArc = -90.0f;
+            else if (cameraArc < -55.0f)
+                cameraArc = -55.0f;
 
             // Check for input to rotate the camera around the model.
             if (currentKeyboardState.IsKeyDown(Keys.Right) ||
                 currentKeyboardState.IsKeyDown(Keys.D))
             {
-                cameraRot += time * 0.05f;
+                if (first)
+                {
+                    cameraRot -= time * 0.05f;
+                }
+                else
+                    cameraRot += time * 0.05f;
             }
 
             if (currentKeyboardState.IsKeyDown(Keys.Left) ||
                 currentKeyboardState.IsKeyDown(Keys.A))
             {
-                cameraRot -= time * 0.05f;
+                if (first)
+                {
+                    cameraRot += time * 0.05f;
+                }
+                else
+                    cameraRot -= time * 0.05f;
             }
 
-            cameraRot += currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+            if (first)
+            {
+                cameraRot -= currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+            }
+            else
+                cameraRot += currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
 
             // Check for input to zoom camera in and out.
             if (currentKeyboardState.IsKeyDown(Keys.Z))
@@ -169,16 +221,38 @@ namespace WorldTest
             if (currentGamePadState.Buttons.RightStick == ButtonState.Pressed ||
                 currentKeyboardState.IsKeyDown(Keys.R))
             {
-                cameraArc = -5;
-                cameraRot = 0;
-                cameraDistance = 50;
+                if (first)
+                {
+                    cameraArc = 0;
+                    cameraRot = 0;
+                    cameraRoll = 0;
+                    cameraDistance = 0;
+                }
+                else
+                {
+                    cameraArc = -5;
+                    cameraRot = 0;
+                    cameraDistance = 50;
+                }
             }
 
             Vector3 player = Target.position;
-            player.Y += 15.0f;
+            player.Y += 10.0f;
             if (first)
             {
-                view = Matrix.CreateLookAt(position, Target.reference, Vector3.Up);
+                Matrix rollMatrix = Matrix.CreateFromAxisAngle(lookAt, MathHelper.ToRadians(cameraRoll));
+                up = Vector3.Transform(up, rollMatrix);
+                right = Vector3.Transform(right, rollMatrix);
+                Matrix yawMatrix = Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(cameraRot));
+                //lookAt = Vector3.Transform(lookAt, yawMatrix);
+                //right = Vector3.Transform(right, yawMatrix);
+                Matrix pitchMatrix = Matrix.CreateFromAxisAngle(right, MathHelper.ToRadians(cameraArc));
+                Matrix combine = Matrix.Multiply(yawMatrix, pitchMatrix);
+                lookAt = Vector3.Transform(lookAt, combine);
+                right = Vector3.Transform(right, combine);
+                up = Vector3.Transform(up, combine);
+                Vector3 target = position + lookAt;
+                view = Matrix.CreateLookAt(position, target, up);
             }
             else
             {

@@ -33,13 +33,17 @@ namespace WorldTest
         
         //terrain stuff
         VertexPositionNormalTexture[] vertices;
+        VertexPositionNormalTexture[] collision_vertices;
 
         StaticGeometry terrain;
+        StaticGeometry collision_mesh;
 
         Texture2D terrainTexture;
 
         GameCamera camera;
-        Agent player;
+        Player player;
+        Enemy enemy;
+        
 
         List<Light> lights;
 
@@ -112,19 +116,24 @@ namespace WorldTest
 
             GraphicsDevice device = graphics.GraphicsDevice;
 
-            player = new Agent(graphics, Content);
+            player = new Player(graphics, Content);
             camera = new GameCamera(graphics, ref player);
             player.InitCamera(ref camera);
 
             player.LoadContent();
 
+            enemy = new Enemy(graphics, Content);
+            enemy.LoadContent();
+
             // Load Cel Shader
             cel_effect = Content.Load<Effect>("CelShade");
             m_celMap = Content.Load<Texture2D>("Toon");
 
-            vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("Terrain_Hi_Res.obj").ToArray(typeof(VertexPositionNormalTexture));
+            vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("Cave1.obj").ToArray(typeof(VertexPositionNormalTexture));
+            collision_vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("cave1_collision.obj").ToArray(typeof(VertexPositionNormalTexture));
 
             terrain = new StaticGeometry(graphics.GraphicsDevice, vertices, "cave1_collision.obj");
+            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, collision_vertices, "");
 
             this.terrainTexture = Content.Load<Texture2D>("tex");
 
@@ -152,7 +161,7 @@ namespace WorldTest
 
         #region Update
 
-        private float deltaFPSTime = 0;
+        //private float deltaFPSTime = 0;
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -161,6 +170,7 @@ namespace WorldTest
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            /*
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             float fps = 1 / elapsed;
@@ -169,7 +179,7 @@ namespace WorldTest
             {
                 Window.Title = "FPS: " + fps.ToString();
                 deltaFPSTime -= 1;
-            }
+            }*/
 
             // Get states for keys and pad
             currentKeyboardState = Keyboard.GetState();
@@ -180,7 +190,8 @@ namespace WorldTest
                 this.Exit();
             
             player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
-            camera.UpdateCamera(gameTime, currentGamePadState, currentKeyboardState);
+            camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState);
+            enemy.Update(gameTime, ref this.terrain);
 
             // Save previous states
             lastKeyboradState = currentKeyboardState;
@@ -234,10 +245,12 @@ namespace WorldTest
 
             //Draw Player
             player.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            enemy.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            
 
             //Draw terrain
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullClockwiseFace;
-            //this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
+            
             cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
             cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
             cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
@@ -259,17 +272,20 @@ namespace WorldTest
                 pass.Begin();
 
                 this.terrain.Draw(this.GraphicsDevice);
+                this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
+                this.collision_mesh.Draw(this.GraphicsDevice);
+                this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
 
                 pass.End();
             }
-            //this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
+            
             this.cel_effect.End();
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullCounterClockwiseFace;
 
             #region Outline Rendering
             
             graphics.GraphicsDevice.SetRenderTarget(0, null);
-            graphics.GraphicsDevice.Clear(Color.Gray);
+            graphics.GraphicsDevice.Clear(Color.Black);
             cel_effect.Parameters["ScreenResolution"].SetValue(new Vector2(sceneRenderTarget.Width,
                                                                                     sceneRenderTarget.Height));
             cel_effect.Parameters["NormalDepthTexture"].SetValue(player.render_targets[1].GetTexture());
