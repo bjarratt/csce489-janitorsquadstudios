@@ -67,6 +67,8 @@ namespace WorldTest
 
         #endregion
 
+        #region Constructor
+
         public Player(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "PlayerMarine")
         {
             position = Vector3.Zero;
@@ -84,10 +86,18 @@ namespace WorldTest
             worldTransform.Translation = position;
         }
 
+        #endregion
+
+        #region Initialize
+
         public void InitCamera(ref GameCamera cam)
         {
             camera = cam;
         }
+
+        #endregion
+
+        #region Load
 
         /// <summary>
         /// Loads the model into the skinnedModel property.
@@ -129,6 +139,8 @@ namespace WorldTest
 
             LoadSkinnedModel();
         }
+
+        #endregion
 
         #region Update
 

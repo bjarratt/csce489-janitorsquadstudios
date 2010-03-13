@@ -23,49 +23,9 @@ namespace WorldTest
     {
         #region Properties
 
-        //GraphicsDeviceManager graphics;
-        //ContentManager content;
-
-        //public GameCamera camera;
-
-        //public Vector3 position;
-        //public Vector3 velocity;
-        //public Vector3 reference;
-        //private float movement_speed_reg;
-
-        //private float rotation;
-        //private float turn_speed;
-        //private float turn_speed_reg;
-
-        //public Quaternion orientation;
-        //public Matrix worldTransform;
-
-        //public Effect shader;
-        //public SkinnedModel model;
-        //readonly string skinnedModelFile = "PlayerMarine";
-
-        //public Matrix[] absoluteBoneTransforms;
-        //public Texture2D[] textures;
-        //public int max_textures;
-        //public RenderTarget2D[] render_targets;
-        //public int max_targets;
-
-        //public AnimationController controller;
-        //public int activeAnimationClip;
-
-        //public enum Tex_Select
-        //{
-        //    model = 0,
-        //    cel_tex
-        //}
-
-        //public enum Target_Select
-        //{
-        //    scene = 0,
-        //    normalDepth
-        //}
-
         #endregion
+
+        #region Constructor
 
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "enemy_bind_pose")
         {
@@ -80,6 +40,10 @@ namespace WorldTest
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
         }
+
+        #endregion
+
+        #region Load
 
         /// <summary>
         /// Loads the model into the skinnedModel property.
@@ -122,6 +86,8 @@ namespace WorldTest
             LoadSkinnedModel();
         }
 
+        #endregion
+
         #region Update
 
         public void Update(GameTime gameTime, ref StaticGeometry terrain)
@@ -133,58 +99,6 @@ namespace WorldTest
             turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
             turn_speed *= turn_speed_reg;
 
-            /*
-            Vector4 stickL = new Vector4(currentGPState.ThumbSticks.Left, 0.0f, 0.0f);
-            Vector4 stickR = new Vector4(currentGPState.ThumbSticks.Right, 0.0f, 0.0f);
-
-            if (stickL != Vector4.Zero && stickL.Y < 0) controller.PlaybackMode = PlaybackMode.Backward;
-            else controller.PlaybackMode = PlaybackMode.Forward;
-            
-
-            // Animate Player
-            if (stickL == Vector4.Zero &&
-                    lastGPState.ThumbSticks.Left != Vector2.Zero)
-            {
-                controller.CrossFade(model.AnimationClips.Values[0],
-                    TimeSpan.FromMilliseconds(300));
-            }
-            if (lastGPState.ThumbSticks.Left == Vector2.Zero &&
-                stickL != Vector4.Zero)
-            {
-                controller.CrossFade(model.AnimationClips.Values[1],
-                    TimeSpan.FromMilliseconds(300));
-            }
-
-            if (stickL.X != 0.0f)
-            {
-                if (stickL.X > 0) rotation -= turn_speed;
-                if (stickL.X < 0) rotation += turn_speed;
-            }
-            if (!camera.first)
-            {
-                orientation = orientation * Quaternion.CreateFromAxisAngle(Vector3.UnitY, rotation);
-                worldTransform = Matrix.CreateFromQuaternion(orientation);
-                worldTransform.Translation = position;
-
-                float moveSpeed = (float)gameTime.ElapsedGameTime.Milliseconds / movement_speed_reg;
-                MoveForward(ref position, orientation, moveSpeed, stickL, ref terrain);
-
-                camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
-                camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
-                camera.camera_rotation.Normalize();
-                camera.transform = Matrix.CreateFromQuaternion(camera.camera_rotation);
-                camera.transform.Translation = position;
-            }
-            else
-            {
-                orientation = orientation * Quaternion.CreateFromRotationMatrix(Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(camera.cameraRot)));
-                worldTransform = Matrix.CreateFromQuaternion(orientation);
-                worldTransform.Translation = position;
-                float moveSpeed = (float)gameTime.ElapsedGameTime.Milliseconds / movement_speed_reg;
-                MoveForward(ref position, orientation, moveSpeed, stickL, ref terrain);
-            }
-             * */
-
             MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref terrain);
             worldTransform.Translation = position;
 
@@ -195,50 +109,6 @@ namespace WorldTest
 
         private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref StaticGeometry terrain)
         {
-            /*
-            if (camera.first)
-            {
-                Vector3 addVector = Vector3.Zero;
-                if (stick.X > 0)
-                {
-                    addVector += camera.right * speed;
-                }
-                else if (stick.X < 0)
-                {
-                    addVector -= camera.right * speed;
-                }
-                if (stick.Y > 0)
-                {
-                    addVector += camera.lookAt * speed;
-                }
-                else if (stick.Y < 0)
-                {
-                    addVector -= camera.lookAt * speed;
-                }
-                addVector.Y = 0.0f;
-
-                position = terrain.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
-            }
-            else
-            {
-                Vector3 addVector = Vector3.Transform(new Vector3(0, 0, -1), rotationQuat);
-                if (stick == Vector4.Zero)
-                {
-                    addVector = Vector3.Zero;
-                }
-
-                if (stick.Y > 0)
-                {
-                    position = terrain.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS); // + new Vector3(0,-1,0
-                    //position -= addVector * speed;
-                }
-                else
-                {
-                    position = terrain.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
-                    //position += addVector * speed;
-                }
-            }*/
-
             position = terrain.CollideWith(position, new Vector3(0, -1, 0), 0.1, StaticGeometry.MAX_RECURSIONS);
         }
 

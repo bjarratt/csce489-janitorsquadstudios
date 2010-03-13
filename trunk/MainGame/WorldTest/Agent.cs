@@ -39,8 +39,6 @@ namespace WorldTest
         protected GraphicsDeviceManager graphics;
         protected ContentManager content;
 
-        //public GameCamera camera;
-
         public Vector3 position;
         public Vector3 velocity;
         protected float movement_speed_reg;
@@ -86,43 +84,11 @@ namespace WorldTest
             graphics = Graphics;
             content = Content;
             this.skinnedModelFile = skinnedModelFile;
-
-            //position = Vector3.Zero;
-            //velocity = Vector3.Zero;
-
-            //rotation = 0.0f;
-            //turn_speed = 0.05f;
-            //turn_speed_reg = 1.6f;
-            //movement_speed_reg = 2.0f; // 14
-
-            //orientation = Quaternion.Identity;
-            //worldTransform = Matrix.Identity;
         }
 
         #endregion
 
         #region Load Content
-
-        /// <summary>
-        /// Loads the model into the skinnedModel property.
-        /// </summary>
-        //private void LoadSkinnedModel()
-        //{
-        //    // Loads an animated model
-            
-        //    model = content.Load<SkinnedModel>(skinnedModelFile);
-
-        //    // Copy the absolute transformation of each node
-        //    absoluteBoneTransforms = new Matrix[model.Model.Bones.Count];
-        //    model.Model.CopyBoneTransformsTo(absoluteBoneTransforms);
-
-        //    // Creates an animation controller
-        //    controller = new AnimationController(model.SkeletonBones);
-
-        //    // Start the first animation stored in the AnimationClips dictionary
-        //    controller.StartClip(
-        //        model.AnimationClips.Values[activeAnimationClip]);
-        //}
 
         public abstract void LoadContent();
 
