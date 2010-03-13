@@ -24,14 +24,30 @@ namespace WorldTest
         public Vector3 normal;
     }
 
+    /// <summary>
+    /// Used to store terrain and its corresponding collision mesh
+    /// </summary>
     class StaticGeometry
     {
+        #region Properties
+
         public const int MAX_RECURSIONS = 10;
         private VertexBuffer vertexBuffer;
         private VertexDeclaration vertexDeclaration;
         private int vertexCount;
         private List<CollisionPolygon> collisionMesh;
 
+        #endregion
+
+        #region Constructor
+
+        /// <summary>
+        /// StaticGeometry constructor
+        /// </summary>
+        /// <param name="device">GraphicsDevice to draw to</param>
+        /// <param name="vertices">Vertices of static geometry</param>
+        /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
+        /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
         public StaticGeometry(GraphicsDevice device, VertexPositionNormalTexture[] vertices, string collisionMeshFilename, Vector3 collisionMeshOffset)
         {
             this.vertexBuffer = new VertexBuffer(device, vertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
@@ -47,12 +63,9 @@ namespace WorldTest
             }
         }
 
-        public void Draw(GraphicsDevice device)
-        {
-            device.VertexDeclaration = this.vertexDeclaration;
-            device.Vertices[0].SetSource(this.vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
-            device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
-        }
+        #endregion
+
+        #region Load
 
         private void LoadCollisionMesh(string filename, Vector3 collisionMeshOffset)
         {
@@ -124,12 +137,9 @@ namespace WorldTest
             }
         }
 
-        private void ScaleVector(ref Vector3 v, float scalar)
-        {
-            v.X *= scalar;
-            v.Y *= scalar;
-            v.Z *= scalar;
-        }
+        #endregion
+
+        #region CollisionDetection
 
         private bool pointInsidePolygon(Vector3 point, CollisionPolygon polygon)
         {          
@@ -178,6 +188,7 @@ namespace WorldTest
             }
         }
 
+        #region CollideWidth Variables
         private Vector3 newPosition;
 
         private Vector3 collisionPoint;
@@ -188,7 +199,16 @@ namespace WorldTest
 
         private const float minVelocityVectorLen = 2.0f;
         private const float acceptableFloatError = 0.01f;
+        #endregion
 
+        /// <summary>
+        /// Calculate result of collisions with collision mesh
+        /// </summary>
+        /// <param name="originalPosition">Starting point</param>
+        /// <param name="velocityVector">Change of position this frame</param>
+        /// <param name="radius">Radius of bounding sphere</param>
+        /// <param name="remainingRecursions">Maximum number of collisions. Prevents stack overflow.</param>
+        /// <returns>Position after collisions</returns>
         public Vector3 CollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, int remainingRecursions)
         {
             if (remainingRecursions == 0 || velocityVector == Vector3.Zero)
@@ -249,5 +269,18 @@ namespace WorldTest
                 return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1);
             }
         }
+
+        #endregion
+
+        #region Draw
+
+        public void Draw(GraphicsDevice device)
+        {
+            device.VertexDeclaration = this.vertexDeclaration;
+            device.Vertices[0].SetSource(this.vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+            device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
+        }
+
+        #endregion
     }
 }
