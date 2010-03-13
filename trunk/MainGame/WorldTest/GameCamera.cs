@@ -68,7 +68,7 @@ namespace WorldTest
                 position = Target.position;
                 up = new Vector3(0, 1, 0);
                 right = new Vector3(-1, 0, 0);
-                lookAt = position + new Vector3(0, 0, 1);
+                lookAt = /*position +*/ new Vector3(0, 0, 1);
                 cameraArc = 0;
                 cameraRot = 0;
                 cameraRoll = 0;
@@ -105,7 +105,7 @@ namespace WorldTest
 
         #region Methods
 
-        public void UpdateCamera(GameTime gameTime, GamePadState currentGamePadState, GamePadState lastState, KeyboardState currentKeyboardState)
+        public void UpdateCamera(GameTime gameTime, GamePadState currentGamePadState, GamePadState lastState, KeyboardState currentKeyboardState, bool invertYAxis)
         {
             float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 
@@ -147,7 +147,14 @@ namespace WorldTest
             {
                 if (first)
                 {
-                    cameraArc -= time * 0.025f;
+                    if (invertYAxis)
+                    {
+                        cameraArc += time * 0.025f;
+                    }
+                    else
+                    {
+                        cameraArc -= time * 0.025f;
+                    }
                 }
                 else
                     cameraArc += time * 0.025f;
@@ -158,13 +165,27 @@ namespace WorldTest
             {
                 if (first)
                 {
-                    cameraArc += time * 0.025f;
+                    if (invertYAxis)
+                    {
+                        cameraArc -= time * 0.025f;
+                    }
+                    else
+                    {
+                        cameraArc += time * 0.025f;
+                    }
                 }
                 else
                     cameraArc -= time * 0.025f;
             }
 
-            cameraArc += currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+            if (invertYAxis)
+            {
+                cameraArc -= currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+            }
+            else
+            {
+                cameraArc += currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+            }
 
             // Limit the arc movement.
             if (cameraArc > 55.0f)
@@ -181,7 +202,9 @@ namespace WorldTest
                     cameraRot -= time * 0.05f;
                 }
                 else
+                {
                     cameraRot += time * 0.05f;
+                }
             }
 
             if (currentKeyboardState.IsKeyDown(Keys.Left) ||
@@ -192,7 +215,9 @@ namespace WorldTest
                     cameraRot += time * 0.05f;
                 }
                 else
+                {
                     cameraRot -= time * 0.05f;
+                }
             }
 
             if (first)
@@ -200,7 +225,9 @@ namespace WorldTest
                 cameraRot -= currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
             }
             else
+            {
                 cameraRot += currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+            }
 
             // Check for input to zoom camera in and out.
             if (currentKeyboardState.IsKeyDown(Keys.Z))

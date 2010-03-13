@@ -84,7 +84,7 @@
     </Reference>
     <Reference Include="XNAnimation, Version=0.7.0.0, Culture=neutral, PublicKeyToken=0c21691816f8c6d0, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\XNAnimation_0-1\XNAnimation\Windows\XNAnimation.dll</HintPath>
+      <HintPath>Content\XNAnimation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

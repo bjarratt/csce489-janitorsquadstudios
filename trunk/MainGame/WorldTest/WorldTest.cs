@@ -41,6 +41,7 @@ namespace WorldTest
         Texture2D terrainTexture;
 
         GameCamera camera;
+        private bool invertYAxis;
         Player player;
         Enemy enemy;
         
@@ -84,6 +85,7 @@ namespace WorldTest
             graphics.PreferMultiSampling = true;
 
             Content.RootDirectory = "Content";
+            invertYAxis = true;
         }
         #endregion
 
@@ -132,8 +134,8 @@ namespace WorldTest
             vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("Cave1.obj").ToArray(typeof(VertexPositionNormalTexture));
             collision_vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("cave1_collision.obj").ToArray(typeof(VertexPositionNormalTexture));
 
-            terrain = new StaticGeometry(graphics.GraphicsDevice, vertices, "cave1_collision.obj");
-            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, collision_vertices, "");
+            terrain = new StaticGeometry(graphics.GraphicsDevice, vertices, "cave1_collision.obj", Vector3.Zero);
+            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, collision_vertices, "", Vector3.Zero);
 
             this.terrainTexture = Content.Load<Texture2D>("tex");
 
@@ -188,9 +190,14 @@ namespace WorldTest
             // Allows the game to exit
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 this.Exit();
+
+            if (currentGamePadState.Buttons.Y == ButtonState.Pressed && lastgamepadState.Buttons.Y == ButtonState.Released)
+            {
+                invertYAxis = !invertYAxis;
+            }
             
             player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
-            camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState);
+            camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
             enemy.Update(gameTime, ref this.terrain);
 
             // Save previous states

@@ -32,7 +32,7 @@ namespace WorldTest
         private int vertexCount;
         private List<CollisionPolygon> collisionMesh;
 
-        public StaticGeometry(GraphicsDevice device, VertexPositionNormalTexture[] vertices, string collisionMeshFilename)
+        public StaticGeometry(GraphicsDevice device, VertexPositionNormalTexture[] vertices, string collisionMeshFilename, Vector3 collisionMeshOffset)
         {
             this.vertexBuffer = new VertexBuffer(device, vertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.vertexBuffer.SetData(vertices);
@@ -43,7 +43,7 @@ namespace WorldTest
 
             if (collisionMeshFilename != null && collisionMeshFilename != "")
             {
-                this.LoadCollisionMesh(collisionMeshFilename);
+                this.LoadCollisionMesh(collisionMeshFilename, collisionMeshOffset);
             }
         }
 
@@ -54,7 +54,7 @@ namespace WorldTest
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
         }
 
-        private void LoadCollisionMesh(string filename)
+        private void LoadCollisionMesh(string filename, Vector3 collisionMeshOffset)
         {
             ArrayList positionList = new ArrayList();
 
@@ -109,9 +109,9 @@ namespace WorldTest
                     Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
                     currentPolygon.normal.Normalize();
 
-                    //currentPolygon.v1.Y += 145.0f;
-                    //currentPolygon.v2.Y += 145.0f;
-                    //currentPolygon.v3.Y += 145.0f;
+                    currentPolygon.v1 += collisionMeshOffset;
+                    currentPolygon.v2 += collisionMeshOffset;
+                    currentPolygon.v3 += collisionMeshOffset;
 
                     collisionMesh.Add(currentPolygon);
                 }

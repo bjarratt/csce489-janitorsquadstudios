@@ -38,7 +38,7 @@
     </Reference>
     <Reference Include="XNAnimationPipeline, Version=0.7.0.0, Culture=neutral, PublicKeyToken=0c21691816f8c6d0, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\XNAnimation_0-1\XNAnimation\Windows\XNAnimationPipeline.dll</HintPath>
+      <HintPath>.\XNAnimationPipeline.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +128,13 @@
   <ItemGroup>
     <Compile Include="human_rig.fbx">
       <Name>human_rig</Name>
+      <Importer>FbxImporter</Importer>
+      <Processor>SkinnedModelProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="enemy_bind_pose.fbx">
+      <Name>enemy_bind_pose</Name>
       <Importer>FbxImporter</Importer>
       <Processor>SkinnedModelProcessor</Processor>
     </Compile>

@@ -70,6 +70,8 @@ namespace WorldTest
         public Player(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "PlayerMarine")
         {
             position = Vector3.Zero;
+            position.Y += 150.0f;
+            position.Z += 100.0f;
             velocity = Vector3.Zero;
 
             rotation = 0.0f;
@@ -79,6 +81,7 @@ namespace WorldTest
 
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
+            worldTransform.Translation = position;
         }
 
         public void InitCamera(ref GameCamera cam)
@@ -275,7 +278,7 @@ namespace WorldTest
 
             //Cel shading
             graphics.GraphicsDevice.SetRenderTarget(0, scene);
-            //graphics.GraphicsDevice.Clear(Color.Black);
+            graphics.GraphicsDevice.Clear(Color.Black);
             graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
             graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
             graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
