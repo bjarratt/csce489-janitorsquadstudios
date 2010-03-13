@@ -67,7 +67,7 @@ namespace WorldTest
 
         #endregion
 
-        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "human_rig")
+        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "enemy_bind_pose")
         {
             position = new Vector3(0, 100, 100);
             velocity = Vector3.Zero;
