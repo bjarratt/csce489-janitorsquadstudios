@@ -134,7 +134,7 @@ namespace WorldTest
             m_celMap = Content.Load<Texture2D>("Toon");
 
             terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero);
-            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, "cave1_collision.obj", "", Vector3.Zero);
+            //collision_mesh = new StaticGeometry(graphics.GraphicsDevice, "cave1_collision.obj", "", Vector3.Zero);
 
             this.terrainTexture = Content.Load<Texture2D>("tex");
 
@@ -371,10 +371,10 @@ namespace WorldTest
             {
                 pass.Begin();
 
-                this.terrain.Draw(this.GraphicsDevice);
-                this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
-                this.collision_mesh.Draw(this.GraphicsDevice);
-                this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
+                this.terrain.Draw(this.GraphicsDevice, false);
+                //this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
+                //this.collision_mesh.Draw(this.GraphicsDevice);
+                //this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
 
                 pass.End();
             }
