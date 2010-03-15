@@ -86,6 +86,8 @@ namespace WorldTest
 
             Content.RootDirectory = "Content";
             invertYAxis = true;
+
+            this.IsFixedTimeStep = false;
         }
         #endregion
 
@@ -254,7 +256,7 @@ namespace WorldTest
 
         #region Update
 
-        //private float deltaFPSTime = 0;
+        private float deltaFPSTime = 0;
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -263,16 +265,16 @@ namespace WorldTest
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            /*
+            
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
+            
             float fps = 1 / elapsed;
             deltaFPSTime += elapsed;
             if (deltaFPSTime > 1)
             {
                 Window.Title = "FPS: " + fps.ToString();
                 deltaFPSTime -= 1;
-            }*/
+            }
 
             // Get states for keys and pad
             currentKeyboardState = Keyboard.GetState();
