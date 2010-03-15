@@ -131,11 +131,8 @@ namespace WorldTest
             cel_effect = Content.Load<Effect>("CelShade");
             m_celMap = Content.Load<Texture2D>("Toon");
 
-            vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("Cave1.obj").ToArray(typeof(VertexPositionNormalTexture));
-            collision_vertices = (VertexPositionNormalTexture[])this.LoadFromOBJ("cave1_collision.obj").ToArray(typeof(VertexPositionNormalTexture));
-
-            terrain = new StaticGeometry(graphics.GraphicsDevice, vertices, "cave1_collision.obj", Vector3.Zero);
-            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, collision_vertices, "", Vector3.Zero);
+            terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero);
+            collision_mesh = new StaticGeometry(graphics.GraphicsDevice, "cave1_collision.obj", "", Vector3.Zero);
 
             this.terrainTexture = Content.Load<Texture2D>("tex");
 
@@ -151,99 +148,99 @@ namespace WorldTest
                 pp.BackBufferFormat, pp.MultiSampleType, pp.MultiSampleQuality);
         }
 
-        private ArrayList LoadFromOBJ(string filename)
-        {
-            ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
-            ArrayList normalList = new ArrayList();
-            ArrayList textureCoordList = new ArrayList();
+        //private ArrayList LoadFromOBJ(string filename)
+        //{
+        //    ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
+        //    ArrayList normalList = new ArrayList();
+        //    ArrayList textureCoordList = new ArrayList();
 
-            /* OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot */
-            positionList.Add(new Vector3());
-            normalList.Add(new Vector3());
-            textureCoordList.Add(new Vector3());
+        //    /* OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot */
+        //    positionList.Add(new Vector3());
+        //    normalList.Add(new Vector3());
+        //    textureCoordList.Add(new Vector3());
 
-            ArrayList triangleList = new ArrayList(); // List of triangles (every 3 vertices is a triangle)
+        //    ArrayList triangleList = new ArrayList(); // List of triangles (every 3 vertices is a triangle)
 
-            VertexPositionNormalTexture currentVertex;
+        //    VertexPositionNormalTexture currentVertex;
 
-            FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            StreamReader objFileReader = new StreamReader(objFile);
+        //    FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
+        //    StreamReader objFileReader = new StreamReader(objFile);
 
-            string line = objFileReader.ReadLine();
-            string[] splitLine;
+        //    string line = objFileReader.ReadLine();
+        //    string[] splitLine;
 
-            string[] splitVertex;
+        //    string[] splitVertex;
 
-            float textureScaleFactor = 1.0f;  //32
+        //    float textureScaleFactor = 1.0f;  //32
 
-            while (line != null)
-            {
-                if (line == "" || line == "\n")
-                {
-                    line = objFileReader.ReadLine();
-                    continue;
-                }
+        //    while (line != null)
+        //    {
+        //        if (line == "" || line == "\n")
+        //        {
+        //            line = objFileReader.ReadLine();
+        //            continue;
+        //        }
 
-                char[] splitChars = { ' ' };
-                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+        //        char[] splitChars = { ' ' };
+        //        splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
 
-                if (splitLine[0] == "v") // Position
-                {
-                    positionList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
-                }
-                else if (splitLine[0] == "vn") // Normal
-                {
-                    normalList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
-                }
-                else if (splitLine[0] == "vt") // Texture Coordinate
-                {
-                    textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
-                }
-                else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
-                {
-                    for (int i = 1; i < 4; i++)
-                    {
-                        splitVertex = splitLine[i].Split('/');
-                        if (splitVertex[0] != "")
-                        {
-                            currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
-                        }
-                        else
-                        {
-                            currentVertex.Position = new Vector3(0.0f);
-                        }
+        //        if (splitLine[0] == "v") // Position
+        //        {
+        //            positionList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+        //        }
+        //        else if (splitLine[0] == "vn") // Normal
+        //        {
+        //            normalList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+        //        }
+        //        else if (splitLine[0] == "vt") // Texture Coordinate
+        //        {
+        //            textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
+        //        }
+        //        else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
+        //        {
+        //            for (int i = 1; i < 4; i++)
+        //            {
+        //                splitVertex = splitLine[i].Split('/');
+        //                if (splitVertex[0] != "")
+        //                {
+        //                    currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
+        //                }
+        //                else
+        //                {
+        //                    currentVertex.Position = new Vector3(0.0f);
+        //                }
 
-                        if (splitVertex[2] != "")
-                        {
-                            currentVertex.Normal = (Vector3)normalList[Convert.ToInt32(splitVertex[2])];
-                        }
-                        else
-                        {
-                            currentVertex.Normal = new Vector3(0.0f);
-                        }
+        //                if (splitVertex[2] != "")
+        //                {
+        //                    currentVertex.Normal = (Vector3)normalList[Convert.ToInt32(splitVertex[2])];
+        //                }
+        //                else
+        //                {
+        //                    currentVertex.Normal = new Vector3(0.0f);
+        //                }
 
-                        if (splitVertex[1] != "")
-                        {
-                            currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
-                        }
-                        else
-                        {
-                            currentVertex.TextureCoordinate = new Vector2(0.0f);
-                        }
+        //                if (splitVertex[1] != "")
+        //                {
+        //                    currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
+        //                }
+        //                else
+        //                {
+        //                    currentVertex.TextureCoordinate = new Vector2(0.0f);
+        //                }
 
-                        triangleList.Add(currentVertex);
-                    }
-                }
-                else // Bad line format, skipping
-                {
+        //                triangleList.Add(currentVertex);
+        //            }
+        //        }
+        //        else // Bad line format, skipping
+        //        {
 
-                }
+        //        }
 
-                line = objFileReader.ReadLine();
-            }
+        //        line = objFileReader.ReadLine();
+        //    }
 
-            return triangleList;
-        }
+        //    return triangleList;
+        //}
 
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload

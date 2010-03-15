@@ -45,11 +45,12 @@ namespace WorldTest
         /// StaticGeometry constructor
         /// </summary>
         /// <param name="device">GraphicsDevice to draw to</param>
-        /// <param name="vertices">Vertices of static geometry</param>
+        /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(GraphicsDevice device, VertexPositionNormalTexture[] vertices, string collisionMeshFilename, Vector3 collisionMeshOffset)
+        public StaticGeometry(GraphicsDevice device, string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset)
         {
+            VertexPositionNormalTexture[] vertices = (VertexPositionNormalTexture[])this.LoadVisibleMesh(visibleMeshFilename).ToArray(typeof(VertexPositionNormalTexture));
             this.vertexBuffer = new VertexBuffer(device, vertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.vertexBuffer.SetData(vertices);
 
@@ -66,6 +67,100 @@ namespace WorldTest
         #endregion
 
         #region Load
+
+        private ArrayList LoadVisibleMesh(string filename)
+        {
+            ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
+            ArrayList normalList = new ArrayList();
+            ArrayList textureCoordList = new ArrayList();
+
+            /* OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot */
+            positionList.Add(new Vector3());
+            normalList.Add(new Vector3());
+            textureCoordList.Add(new Vector3());
+
+            ArrayList triangleList = new ArrayList(); // List of triangles (every 3 vertices is a triangle)
+
+            VertexPositionNormalTexture currentVertex;
+
+            FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
+            StreamReader objFileReader = new StreamReader(objFile);
+
+            string line = objFileReader.ReadLine();
+            string[] splitLine;
+
+            string[] splitVertex;
+
+            float textureScaleFactor = 1.0f;  //32
+
+            while (line != null)
+            {
+                if (line == "" || line == "\n")
+                {
+                    line = objFileReader.ReadLine();
+                    continue;
+                }
+
+                char[] splitChars = { ' ' };
+                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+
+                if (splitLine[0] == "v") // Position
+                {
+                    positionList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+                }
+                else if (splitLine[0] == "vn") // Normal
+                {
+                    normalList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+                }
+                else if (splitLine[0] == "vt") // Texture Coordinate
+                {
+                    textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
+                }
+                else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
+                {
+                    for (int i = 1; i < 4; i++)
+                    {
+                        splitVertex = splitLine[i].Split('/');
+                        if (splitVertex[0] != "")
+                        {
+                            currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
+                        }
+                        else
+                        {
+                            currentVertex.Position = new Vector3(0.0f);
+                        }
+
+                        if (splitVertex[2] != "")
+                        {
+                            currentVertex.Normal = (Vector3)normalList[Convert.ToInt32(splitVertex[2])];
+                        }
+                        else
+                        {
+                            currentVertex.Normal = new Vector3(0.0f);
+                        }
+
+                        if (splitVertex[1] != "")
+                        {
+                            currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
+                        }
+                        else
+                        {
+                            currentVertex.TextureCoordinate = new Vector2(0.0f);
+                        }
+
+                        triangleList.Add(currentVertex);
+                    }
+                }
+                else // Bad line format, skipping
+                {
+
+                }
+
+                line = objFileReader.ReadLine();
+            }
+
+            return triangleList;
+        }
 
         private void LoadCollisionMesh(string filename, Vector3 collisionMeshOffset)
         {
