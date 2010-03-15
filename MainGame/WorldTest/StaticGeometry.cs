@@ -32,10 +32,15 @@ namespace WorldTest
         #region Properties
 
         public const int MAX_RECURSIONS = 10;
-        private VertexBuffer vertexBuffer;
+        private VertexBuffer terrainVertexBuffer;
         private VertexDeclaration vertexDeclaration;
         private int vertexCount;
+
         private List<CollisionPolygon> collisionMesh;
+        private Vector3 collisionMeshOffset;
+        private VertexBuffer collisionVertexBuffer;
+        private VertexDeclaration collisionVertexDeclaration;
+        private int collisionVertexCount;
 
         #endregion
 
@@ -50,31 +55,46 @@ namespace WorldTest
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
         public StaticGeometry(GraphicsDevice device, string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset)
         {
-            VertexPositionNormalTexture[] vertices = (VertexPositionNormalTexture[])this.LoadVisibleMesh(visibleMeshFilename).ToArray(typeof(VertexPositionNormalTexture));
-            this.vertexBuffer = new VertexBuffer(device, vertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
-            this.vertexBuffer.SetData(vertices);
+            // 
+            // Initialize terrain vertex buffer
+            //
 
-            this.vertexCount = vertices.Length;
+            VertexPositionNormalTexture[] terrainVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, false).ToArray(typeof(VertexPositionNormalTexture));
+            this.terrainVertexBuffer = new VertexBuffer(device, terrainVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
+            this.terrainVertexBuffer.SetData(terrainVertices);
+
+            this.vertexCount = terrainVertices.Length;
 
             this.vertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
 
-            if (collisionMeshFilename != null && collisionMeshFilename != "")
-            {
-                this.LoadCollisionMesh(collisionMeshFilename, collisionMeshOffset);
-            }
+
+            //
+            // Initialize collision vertex buffer and collision mesh
+            //
+
+            VertexPositionNormalTexture[] collisionVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(collisionMeshFilename, true).ToArray(typeof(VertexPositionNormalTexture));
+            this.collisionVertexBuffer = new VertexBuffer(device, collisionVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
+            this.collisionVertexBuffer.SetData(collisionVertices);
+
+            this.collisionVertexCount = collisionVertices.Length;
+
+            this.collisionVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
+
+            this.collisionMeshOffset = collisionMeshOffset;
+
         }
 
         #endregion
 
         #region Load
 
-        private ArrayList LoadVisibleMesh(string filename)
+        private ArrayList LoadFromOBJ(string filename, bool isCollisionMesh)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
             ArrayList textureCoordList = new ArrayList();
 
-            /* OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot */
+            // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
             positionList.Add(new Vector3());
             normalList.Add(new Vector3());
             textureCoordList.Add(new Vector3());
@@ -82,6 +102,24 @@ namespace WorldTest
             ArrayList triangleList = new ArrayList(); // List of triangles (every 3 vertices is a triangle)
 
             VertexPositionNormalTexture currentVertex;
+
+            // Variables used for collision meshes
+            CollisionPolygon currentPolygon;
+            currentPolygon.v1 = Vector3.Zero;
+            currentPolygon.v2 = Vector3.Zero;
+            currentPolygon.v3 = Vector3.Zero;
+            currentPolygon.normal = Vector3.Zero;
+            Vector3 polygonVector1;
+            Vector3 polygonVector2;
+            if (isCollisionMesh)
+            {
+                this.collisionMesh = new List<CollisionPolygon>();
+            }
+
+            if (filename == null || filename == "")
+            {
+                return triangleList;
+            }
 
             FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
             StreamReader objFileReader = new StreamReader(objFile);
@@ -91,7 +129,7 @@ namespace WorldTest
 
             string[] splitVertex;
 
-            float textureScaleFactor = 1.0f;  //32
+            float textureScaleFactor = 1.0f;
 
             while (line != null)
             {
@@ -148,10 +186,38 @@ namespace WorldTest
                             currentVertex.TextureCoordinate = new Vector2(0.0f);
                         }
 
+                        if (isCollisionMesh)
+                        {
+                            if (i == 1)
+                            {
+                                currentPolygon.v1 = currentVertex.Position;
+                            }
+                            else if (i == 2)
+                            {
+                                currentPolygon.v2 = currentVertex.Position;
+                            }
+                            else if (i == 3)
+                            {
+                                currentPolygon.v3 = currentVertex.Position;
+
+                                polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
+                                polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
+
+                                Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
+                                currentPolygon.normal.Normalize();
+
+                                currentPolygon.v1 += this.collisionMeshOffset;
+                                currentPolygon.v2 += this.collisionMeshOffset;
+                                currentPolygon.v3 += this.collisionMeshOffset;
+
+                                collisionMesh.Add(currentPolygon);
+                            }
+                        }
+
                         triangleList.Add(currentVertex);
                     }
                 }
-                else // Bad line format, skipping
+                else // Unused line format, skipping
                 {
 
                 }
@@ -160,76 +226,6 @@ namespace WorldTest
             }
 
             return triangleList;
-        }
-
-        private void LoadCollisionMesh(string filename, Vector3 collisionMeshOffset)
-        {
-            ArrayList positionList = new ArrayList();
-
-            this.collisionMesh = new List<CollisionPolygon>();
-
-            if (filename == "")
-            {
-                return;
-            }
-
-            positionList.Add(new Vector3());
-
-            CollisionPolygon currentPolygon;
-
-            FileStream meshFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
-            StreamReader meshFileReader = new StreamReader(meshFile);
-
-            string line = meshFileReader.ReadLine();
-            string[] splitLine;
-            string[] splitVertex;
-            char[] splitChars = { ' ' };
-
-            Vector3 polygonVector1;
-            Vector3 polygonVector2;
-
-            while (line != null)
-            {
-                if (line == "" || line == "\n")
-                {
-                    line = meshFileReader.ReadLine();
-                    continue;
-                }
-
-                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
-
-                if (splitLine[0] == "v") // Position
-                {
-                    positionList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
-                }
-                else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
-                {
-                    splitVertex = splitLine[1].Split('/');
-                    currentPolygon.v1 = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
-                    splitVertex = splitLine[2].Split('/');
-                    currentPolygon.v2 = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
-                    splitVertex = splitLine[3].Split('/');
-                    currentPolygon.v3 = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
-
-                    polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
-                    polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
-
-                    Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
-                    currentPolygon.normal.Normalize();
-
-                    currentPolygon.v1 += collisionMeshOffset;
-                    currentPolygon.v2 += collisionMeshOffset;
-                    currentPolygon.v3 += collisionMeshOffset;
-
-                    collisionMesh.Add(currentPolygon);
-                }
-                else // Unused line format, skipping
-                {
-
-                }
-
-                line = meshFileReader.ReadLine();
-            }
         }
 
         #endregion
@@ -369,11 +365,21 @@ namespace WorldTest
 
         #region Draw
 
-        public void Draw(GraphicsDevice device)
+        public void Draw(GraphicsDevice device, bool drawCollisionMesh)
         {
             device.VertexDeclaration = this.vertexDeclaration;
-            device.Vertices[0].SetSource(this.vertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+            device.Vertices[0].SetSource(this.terrainVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
+
+            if (drawCollisionMesh)
+            {
+                FillMode oldMode = device.RenderState.FillMode;
+                device.RenderState.FillMode = FillMode.WireFrame;
+                device.VertexDeclaration = this.collisionVertexDeclaration;
+                device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+                device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
+                device.RenderState.FillMode = oldMode;
+            }
         }
 
         #endregion
