@@ -30,7 +30,7 @@ namespace WorldTest
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "enemy_bind_pose")
         {
             position = new Vector3(0, 100, 100);
-            velocity = Vector3.Zero;
+            speed = 0.0f;
 
             rotation = 0.0f;
             turn_speed = 0.05f;

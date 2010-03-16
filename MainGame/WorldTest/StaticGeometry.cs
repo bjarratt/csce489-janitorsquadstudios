@@ -31,7 +31,7 @@ namespace WorldTest
     {
         #region Properties
 
-        public const int MAX_RECURSIONS = 10;
+        public const int MAX_RECURSIONS = 5;
         private VertexBuffer terrainVertexBuffer;
         private VertexDeclaration vertexDeclaration;
         private int vertexCount;
@@ -116,6 +116,13 @@ namespace WorldTest
                 this.collisionMesh = new List<CollisionPolygon>();
             }
 
+            //float largestYValue = -10000.0f;
+            //float smallestYValue = 10000.0f;
+            //float largestXValue = -10000.0f;
+            //float smallestXValue = 10000.0f;
+            //float largestZValue = -10000.0f;
+            //float smallestZValue = 10000.0f;
+
             if (filename == null || filename == "")
             {
                 return triangleList;
@@ -162,6 +169,36 @@ namespace WorldTest
                         if (splitVertex[0] != "")
                         {
                             currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
+
+                            if (isCollisionMesh)
+                            {
+                                currentVertex.Position += this.collisionMeshOffset;
+                            }
+                            /*
+                            if (currentVertex.Position.Y > largestYValue)
+                            {
+                                largestYValue = currentVertex.Position.Y;
+                            }
+                            else if (currentVertex.Position.Y < smallestYValue)
+                            {
+                                smallestYValue = currentVertex.Position.Y;
+                            }
+                            if (currentVertex.Position.X > largestXValue)
+                            {
+                                largestXValue = currentVertex.Position.X;
+                            }
+                            else if (currentVertex.Position.X < smallestXValue)
+                            {
+                                smallestXValue = currentVertex.Position.X;
+                            }
+                            if (currentVertex.Position.Z > largestZValue)
+                            {
+                                largestZValue = currentVertex.Position.Z;
+                            }
+                            else if (currentVertex.Position.Z < smallestZValue)
+                            {
+                                smallestZValue = currentVertex.Position.Z;
+                            }*/
                         }
                         else
                         {
@@ -190,25 +227,21 @@ namespace WorldTest
                         {
                             if (i == 1)
                             {
-                                currentPolygon.v1 = currentVertex.Position;
+                                currentPolygon.v1 = currentVertex.Position + this.collisionMeshOffset;
                             }
                             else if (i == 2)
                             {
-                                currentPolygon.v2 = currentVertex.Position;
+                                currentPolygon.v2 = currentVertex.Position + this.collisionMeshOffset;
                             }
                             else if (i == 3)
                             {
-                                currentPolygon.v3 = currentVertex.Position;
+                                currentPolygon.v3 = currentVertex.Position + this.collisionMeshOffset;
 
                                 polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
                                 polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
 
                                 Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
                                 currentPolygon.normal.Normalize();
-
-                                currentPolygon.v1 += this.collisionMeshOffset;
-                                currentPolygon.v2 += this.collisionMeshOffset;
-                                currentPolygon.v3 += this.collisionMeshOffset;
 
                                 collisionMesh.Add(currentPolygon);
                             }
@@ -280,6 +313,7 @@ namespace WorldTest
         }
 
         #region CollideWidth Variables
+
         private Vector3 newPosition;
 
         private Vector3 collisionPoint;
@@ -287,9 +321,11 @@ namespace WorldTest
         private float closestT;
         private Vector3 closestVelocityVector;
         private Vector3 closestCollisionPoint;
+        private float distToPlane;
 
         private const float minVelocityVectorLen = 2.0f;
         private const float acceptableFloatError = 0.01f;
+
         #endregion
 
         /// <summary>
@@ -308,17 +344,29 @@ namespace WorldTest
             }
 
             bool firstTimeThrough = true;
+            this.closestT = -1;
             this.newPosition = originalPosition + velocityVector;
             this.newVelocityVector = velocityVector;
             this.newVelocityVector.Normalize();
 
-            for (int i = 0; i < this.collisionMesh.Count; i++)
+            int i;
+
+            for (i = 0; i < this.collisionMesh.Count; i++)
             {
+                this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
+
                 float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
 
                 if (tValue < 0 || tValue > 1)
                 {
-                    continue;
+                    if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
+                    {
+                        return originalPosition; // Sphere is embedded, so don't proceed
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
 
                 this.collisionPoint = originalPosition + (velocityVector * tValue);
@@ -344,7 +392,7 @@ namespace WorldTest
                     {
                         this.closestT = tValue;
                         this.closestVelocityVector = this.newVelocityVector;
-                        this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
+                        this.closestCollisionPoint = this.collisionPoint +(-this.collisionMesh[i].normal * 0.1f);
 
                         firstTimeThrough = false;
                     }
@@ -365,6 +413,11 @@ namespace WorldTest
 
         #region Draw
 
+        /// <summary>
+        /// Draws the terrain stored in the StaticGeometry vertex buffer
+        /// </summary>
+        /// <param name="device">The GraphicsDevice to draw to</param>
+        /// <param name="drawCollisionMesh">Set to true to draw a wireframe of the collision mesh</param>
         public void Draw(GraphicsDevice device, bool drawCollisionMesh)
         {
             device.VertexDeclaration = this.vertexDeclaration;

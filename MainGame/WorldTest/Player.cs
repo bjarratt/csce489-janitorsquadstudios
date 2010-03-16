@@ -23,47 +23,7 @@ namespace WorldTest
     {
         #region Properties
 
-        //GraphicsDeviceManager graphics;
-        //ContentManager content;
-
         public GameCamera camera;
-
-        //public Vector3 position;
-        //public Vector3 velocity;
-        //public Vector3 reference;
-        //private float movement_speed_reg;
-
-        //private float rotation;
-        //private float turn_speed;
-        //private float turn_speed_reg;
-
-        //public Quaternion orientation;
-        //public Matrix worldTransform;
-
-        //public Effect shader;
-        //public SkinnedModel model;
-        //readonly string skinnedModelFile = "PlayerMarine";
-
-        //public Matrix[] absoluteBoneTransforms;
-        //public Texture2D[] textures;
-        //public int max_textures;
-        //public RenderTarget2D[] render_targets;
-        //public int max_targets;
-
-        //public AnimationController controller;
-        //public int activeAnimationClip;
-
-        //public enum Tex_Select
-        //{
-        //    model = 0,
-        //    cel_tex
-        //}
-
-        //public enum Target_Select
-        //{
-        //    scene = 0,
-        //    normalDepth
-        //}
 
         #endregion
 
@@ -72,14 +32,16 @@ namespace WorldTest
         public Player(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "PlayerMarine")
         {
             position = Vector3.Zero;
-            position.Y += 150.0f;
+            //position.Y += 150.0f;
             position.Z += 100.0f;
-            velocity = Vector3.Zero;
+            speed = 2.5f; // In meters/second
 
             rotation = 0.0f;
-            turn_speed = 0.05f;
+            turn_speed = 0.10f; // 0.05
             turn_speed_reg = 1.6f;
             movement_speed_reg = 2.0f; // 14
+            this.speedScale = 200.0f;
+            this.previousVelocity = Vector3.Zero;
 
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
@@ -186,8 +148,9 @@ namespace WorldTest
                 worldTransform = Matrix.CreateFromQuaternion(orientation);
                 worldTransform.Translation = position;
 
-                float moveSpeed = (float)gameTime.ElapsedGameTime.Milliseconds / movement_speed_reg;
-                MoveForward(ref position, orientation, moveSpeed, stickL, ref terrain);
+                //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
+                float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, ref terrain);
 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
@@ -200,8 +163,9 @@ namespace WorldTest
                 orientation = orientation * Quaternion.CreateFromRotationMatrix(Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(camera.cameraRot)));
                 worldTransform = Matrix.CreateFromQuaternion(orientation);
                 worldTransform.Translation = position;
-                float moveSpeed = (float)gameTime.ElapsedGameTime.Milliseconds / movement_speed_reg;
-                MoveForward(ref position, orientation, moveSpeed, stickL, ref terrain);
+                //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
+                float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, ref terrain);
             }
 
             // Update the animation according to the elapsed time
@@ -244,7 +208,7 @@ namespace WorldTest
 
                 if (stick.Y > 0)
                 {
-                    position = terrain.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS); // + new Vector3(0,-1,0
+                    position = terrain.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
                     //position -= addVector * speed;
                 }
                 else
