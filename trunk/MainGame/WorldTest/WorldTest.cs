@@ -30,21 +30,16 @@ namespace WorldTest
         SpriteBatch spriteBatch;
 
         #region Properties
-        
-        //terrain stuff
-        VertexPositionNormalTexture[] vertices;
-        VertexPositionNormalTexture[] collision_vertices;
 
         StaticGeometry terrain;
-        StaticGeometry collision_mesh;
 
         Texture2D terrainTexture;
 
         GameCamera camera;
         private bool invertYAxis;
+
         Player player;
         Enemy enemy;
-        
 
         List<Light> lights;
 
@@ -345,7 +340,7 @@ namespace WorldTest
 
             //Draw Player
             player.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
-            enemy.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            //enemy.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
             
 
             //Draw terrain
@@ -371,7 +366,7 @@ namespace WorldTest
             {
                 pass.Begin();
 
-                this.terrain.Draw(this.GraphicsDevice, false);
+                this.terrain.Draw(this.GraphicsDevice, true);
                 //this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
                 //this.collision_mesh.Draw(this.GraphicsDevice);
                 //this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
