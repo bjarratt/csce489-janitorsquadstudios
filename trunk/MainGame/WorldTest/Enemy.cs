@@ -27,7 +27,7 @@ namespace WorldTest
 
         #region Constructor
 
-        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "enemy_bind_pose")
+        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, 100);
             speed = 0.0f;
@@ -116,38 +116,13 @@ namespace WorldTest
 
         #region Draw
 
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection,
+        public void DrawCel(GameTime gameTime, Matrix view, Matrix projection,
             ref RenderTarget2D scene, ref RenderTarget2D shadow, ref List<Light> Lights)
         {
-
-            #region NormalDepth Rendering
-
-            //NormalDepth rendering
-            graphics.GraphicsDevice.SetRenderTarget(0, render_targets[(int)Target_Select.normalDepth]);
-            graphics.GraphicsDevice.Clear(Color.Black);
-            graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
-            graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
-            graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
-            shader.CurrentTechnique = shader.Techniques["NormalDepth"];
-
-            foreach (ModelMesh mesh in model.Model.Meshes)
-            {
-                shader.Parameters["matW"].SetValue(absoluteBoneTransforms[mesh.ParentBone.Index] * worldTransform);
-                shader.Parameters["matBones"].SetValue(controller.SkinnedBoneTransforms);
-                shader.Parameters["matVP"].SetValue(view * projection);
-                foreach (ModelMeshPart part in mesh.MeshParts)
-                    part.Effect = shader;
-                mesh.Draw();
-            }
-
-            #endregion
-
 
             #region Cel Shading
 
             //Cel shading
-            graphics.GraphicsDevice.SetRenderTarget(0, scene);
-            graphics.GraphicsDevice.Clear(Color.Black);
             graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
             graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
             graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
@@ -201,7 +176,10 @@ namespace WorldTest
                 }
 
                 // Draw model mesh
-                modelMesh.Draw();
+                foreach (EffectPass pass in shader.CurrentTechnique.Passes)
+                {
+                    modelMesh.Draw();
+                }
             }
 
             #endregion

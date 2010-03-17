@@ -102,6 +102,7 @@ sampler2D ShadowMapSampler = sampler_state
 // Vertex Shaders
 // -------------------------------------------------
 
+
 void StaticModelVS_Light(
 	in float4 inPosition		: POSITION,
 	in float3 inNormal			: NORMAL,
@@ -225,6 +226,83 @@ void AnimatedModelVS_LightWithNormal(
 	
 	// Texture coordinate
 	outUV0 = inUV0;
+}
+
+struct VS_INPUT_ANIMATED
+{
+	float4 Position		: POSITION0;
+	float3 Normal		: NORMAL0;
+	float2 Texcoord		: TEXCOORD0;
+	float4 inBoneIndex	: BLENDINDICES0;
+    float4 inBoneWeight	: BLENDWEIGHT0;
+};
+
+struct VS_INPUT_STATIC
+{
+	float4 Position		: POSITION0;
+	float3 Normal		: NORMAL0;
+	float2 Texcoord		: TEXCOORD0;
+};
+
+//Output for the outline vertex shader
+struct VS_OUTPUT2
+{
+	float4 Position			: POSITION0;
+	float4 Normal			: TEXCOORD1;
+};
+
+//The outline vertex shader
+//This tranforms the model and
+//"peaks" the surface (scales it out on it's normal) 
+VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input)
+{
+	//Here's the important value. It determins the thickness of the outline.
+	//The value is completely dependent on the size of the model.
+	//My model is very tiny so my outine is very tiny.
+	//You may need to increase this or better yet, caluclate it based on the distance
+	//between your camera and your model.
+	float offset = 0.1;
+	
+	// Calculate the final bone transformation matrix
+    float4x3 matSmoothSkin = 0;
+    matSmoothSkin += matBones[Input.inBoneIndex.x] * Input.inBoneWeight.x;
+    matSmoothSkin += matBones[Input.inBoneIndex.y] * Input.inBoneWeight.y;
+    matSmoothSkin += matBones[Input.inBoneIndex.z] * Input.inBoneWeight.z;
+    matSmoothSkin += matBones[Input.inBoneIndex.w] * Input.inBoneWeight.w;
+    
+    // Combine skin and world transformations
+    float4x4 matSmoothSkinWorld = 0;
+    matSmoothSkinWorld[0] = float4(matSmoothSkin[0], 0);
+    matSmoothSkinWorld[1] = float4(matSmoothSkin[1], 0);
+    matSmoothSkinWorld[2] = float4(matSmoothSkin[2], 0);
+    matSmoothSkinWorld[3] = float4(matSmoothSkin[3], 1);
+    matSmoothSkinWorld = mul(matSmoothSkinWorld, matW);    
+	
+	float4x4 WorldViewProjection = mul(matSmoothSkinWorld, matVP);
+	VS_OUTPUT2 Output;
+	Output.Normal			= mul(Input.Normal, matSmoothSkinWorld); //POSSIBLE ERROR: dropped the cast to float3x3
+	Output.Position			= mul(Input.Position, WorldViewProjection)+(mul(offset, mul(Input.Normal, WorldViewProjection)));
+	
+	return Output;
+}
+
+// For non-skinned geometry
+VS_OUTPUT2 Outline_Static(VS_INPUT_STATIC Input)
+{
+	//Here's the important value. It determins the thickness of the outline.
+	//The value is completely dependent on the size of the model.
+	//My model is very tiny so my outine is very tiny.
+	//You may need to increase this or better yet, caluclat it based on the distance
+	//between your camera and your model.
+	float offset = 0.4;
+	
+	float4x4 WorldViewProjection = mul(matW, matVP);
+	
+	VS_OUTPUT2 Output;
+	Output.Normal			= mul(Input.Normal, matW);
+	Output.Position			= mul(Input.Position, WorldViewProjection)+(mul(offset, mul(Input.Normal, WorldViewProjection)));
+	
+	return Output;
 }
 
 
@@ -377,6 +455,12 @@ void animatedModelPS_LightWithNormal(
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 }
 
+//This is the ouline pixel shader. It just outputs unlit black.
+float4 Black() : COLOR
+{
+   return float4(0.0f, 0.0f, 0.0f, 1.0f);
+}
+
 
 // Techniques
 // -------------------------------------------------
@@ -390,6 +474,14 @@ technique StaticModel
 		
 		VertexShader = compile vs_2_0 StaticModelVS_Light();
         PixelShader = compile ps_2_0 StaticModelPS_Light(1);
+        CullMode = CW;
+	}
+	
+	pass p1
+	{
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
 	}
 }
 
@@ -403,6 +495,13 @@ technique AnimatedModel_NoLight
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_0 animatedModelPS_Light(0);
     }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
+    }
 }
 
 technique AnimatedModel_OneLight
@@ -414,6 +513,13 @@ technique AnimatedModel_OneLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_0 animatedModelPS_Light(1);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
     }
 }
 
@@ -426,6 +532,14 @@ technique AnimatedModel_TwoLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_0 animatedModelPS_Light(2);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
     }
 }
 
@@ -438,6 +552,14 @@ technique AnimatedModel_FourLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_b animatedModelPS_Light(4);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
     }
 }
 
@@ -450,6 +572,14 @@ technique AnimatedModel_SixLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_b animatedModelPS_Light(6);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
     }
 }
 
@@ -462,6 +592,14 @@ technique AnimatedModel_EightLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_b animatedModelPS_Light(8);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
     }
 }
 
@@ -523,225 +661,6 @@ technique AnimatedModel_EightLightWithNormal
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
         PixelShader = compile ps_2_b animatedModelPS_LightWithNormal(8);
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-//
-//	The rest of the file contains the shaders that render the black outlines.
-//
-/////////////////////////////////////////////////////////////////////////////////
-// -----------------------------------------------
-// Outline Renderer Constants and Textures		 
-// -----------------------------------------------
-float EdgeWidth = 1.2f;	
-float EdgeIntensity = 1;
-
-// How sensitive should the edge detection be to tiny variations in the input data?
-// Smaller settings will make it pick up more subtle edges, while larger values get
-// rid of unwanted noise.
-
-float NormalThreshold = 0.5;
-float DepthThreshold = 0.1;
-
-// How dark should the edges get in response to changes in the input data?
-
-float NormalSensitivity = 1;
-float DepthSensitivity = 10;
-
-// Pass in the current screen resolution.
-float2 ScreenResolution;
-
-texture SceneTexture;
-
-sampler SceneSampler : register(s0) = sampler_state
-{
-    Texture = (SceneTexture);
-    
-    MinFilter = Linear;
-    MagFilter = Linear;
-    
-    AddressU = Clamp;
-    AddressV = Clamp;
-};
-
-// This texture contains normals (in the color channels) and depth (in alpha)
-// for the main scene image. Differences in the normal and depth data are used
-// to detect where the edges of the model are.
-
-texture NormalDepthTexture;
-
-sampler NormalDepthSampler : register(s1) = sampler_state
-{
-    Texture = (NormalDepthTexture);
-    
-    MinFilter = Linear;
-    MagFilter = Linear;
-    
-    AddressU = Clamp;
-    AddressV = Clamp;
-};
-
-// --------------------------------------
-// Structs
-// --------------------------------------
-
-struct VertexShaderInput
-{
-    float4 Position				: POSITION0;
-    float4 Color				: COLOR0;
-    float3 Normal				: NORMAL0;
-    float2 TextureCoordinate	: TEXCOORD0;
-    float4 inBoneIndex			: BLENDINDICES0;
-    float4 inBoneWeight			: BLENDWEIGHT0;
-};
-
-struct VertexShaderInputStatic
-{
-	float4 Position				: POSITION0;
-    float4 Color				: COLOR0;
-    float3 Normal				: NORMAL0;
-    float2 TextureCoordinate	: TEXCOORD0;
-};
-
-struct NormalDepthVertexShaderOutput
-{
-    float4 Position				: POSITION0;
-    float4 Color				: COLOR0;
-};
-
-// ---------------------------------------
-// Vertex Shaders
-// ---------------------------------------
-
-NormalDepthVertexShaderOutput Static_NormalDepthVertexShader(VertexShaderInputStatic input)
-{
-	NormalDepthVertexShaderOutput output;
-	
-	// Apply camera matrices to the input position.
-    output.Position = mul(input.Position, matW);
-    output.Position = mul(output.Position, matVP);
-    
-    float3 worldNormal = mul(input.Normal, (float3x3)matW);
-
-    // The output color holds the normal, scaled to fit into a 0 to 1 range.
-    output.Color.rgb = (worldNormal + 1) / 2;
-
-    // The output alpha holds the depth, scaled to fit into a 0 to 1 range.
-    output.Color.a = output.Position.z / output.Position.w;
-    
-    return output;    
-}
-
-NormalDepthVertexShaderOutput NormalDepthVertexShader(VertexShaderInput input)
-{
-    NormalDepthVertexShaderOutput output;
-    
-    // Calculate the final bone transformation matrix
-    float4x3 matSmoothSkin = 0;
-    matSmoothSkin += matBones[input.inBoneIndex.x] * input.inBoneWeight.x;
-    matSmoothSkin += matBones[input.inBoneIndex.y] * input.inBoneWeight.y;
-    matSmoothSkin += matBones[input.inBoneIndex.z] * input.inBoneWeight.z;
-    matSmoothSkin += matBones[input.inBoneIndex.w] * input.inBoneWeight.w;
-    
-    // Combine skin and world transformations
-    float4x4 matSmoothSkinWorld = 0;
-    matSmoothSkinWorld[0] = float4(matSmoothSkin[0], 0);
-    matSmoothSkinWorld[1] = float4(matSmoothSkin[1], 0);
-    matSmoothSkinWorld[2] = float4(matSmoothSkin[2], 0);
-    matSmoothSkinWorld[3] = float4(matSmoothSkin[3], 1);
-    matSmoothSkinWorld = mul(matSmoothSkinWorld, matW);
-
-    // Apply camera matrices to the input position.
-    output.Position = mul(input.Position, matSmoothSkinWorld);
-    output.Position = mul(output.Position, matVP);
-    
-    
-    float3 worldNormal = mul(input.Normal, (float3x3)matSmoothSkinWorld);
-
-    // The output color holds the normal, scaled to fit into a 0 to 1 range.
-    output.Color.rgb = (worldNormal + 1) / 2;
-
-    // The output alpha holds the depth, scaled to fit into a 0 to 1 range.
-    output.Color.a = output.Position.z / output.Position.w;
-    
-    return output;    
-}
-
-// --------------------------------------------
-// Pixel Shaders
-// --------------------------------------------
-
-float4 NormalDepthPixelShader(float4 color : COLOR0) : COLOR0
-{
-    return color;
-}
-
-float4 OutlineShader(float2 texCoord : TEXCOORD0) : COLOR0
-{
-    // TODO: add your pixel shader code here.
-
-    // Look up the original color from the main scene.
-    float3 scene = tex2D(SceneSampler, texCoord);
-    
-    // Apply the edge detection filter?
-    // Look up four values from the normal/depth texture, offset along the
-    // four diagonals from the pixel we are currently shading.
-    float2 edgeOffset = EdgeWidth / ScreenResolution;
-    
-    float4 n1 = tex2D(NormalDepthSampler, texCoord + float2(-1, -1) * edgeOffset);
-    float4 n2 = tex2D(NormalDepthSampler, texCoord + float2( 1,  1) * edgeOffset);
-    float4 n3 = tex2D(NormalDepthSampler, texCoord + float2(-1,  1) * edgeOffset);
-    float4 n4 = tex2D(NormalDepthSampler, texCoord + float2( 1, -1) * edgeOffset);
-
-    // Work out how much the normal and depth values are changing.
-    float4 diagonalDelta = abs(n1 - n2) + abs(n3 - n4);
-
-    float normalDelta = dot(diagonalDelta.xyz, 1);
-    float depthDelta = diagonalDelta.w;
-    
-    // Filter out very small changes, in order to produce nice clean results.
-    normalDelta = saturate((normalDelta - NormalThreshold) * NormalSensitivity);
-    depthDelta = saturate((depthDelta - DepthThreshold) * DepthSensitivity);
-
-    // Does this pixel lie on an edge?
-    float edgeAmount = saturate(normalDelta + depthDelta) * EdgeIntensity;
-    
-    // Apply the edge detection result to the main scene color.
-    scene *= (1 - edgeAmount);
-
-    return float4(scene, 1);
-}
-
-// -----------------------------------------
-// Techniques
-// -----------------------------------------
-
-technique Outlines
-{
-    pass p0
-    {
-        // TODO: set renderstates here.
-
-        PixelShader = compile ps_2_0 OutlineShader();
-    }
-}
-
-technique NormalDepth
-{
-    pass p0
-    {
-        VertexShader = compile vs_1_1 NormalDepthVertexShader();
-        PixelShader = compile ps_1_1 NormalDepthPixelShader();
-    }
-}
-
-technique StaticNormalDepth
-{
-    pass p0
-    {
-        VertexShader = compile vs_1_1 Static_NormalDepthVertexShader();
-        PixelShader = compile ps_1_1 NormalDepthPixelShader();
     }
 }
 

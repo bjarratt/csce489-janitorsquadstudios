@@ -39,7 +39,7 @@ namespace WorldTest
         private bool invertYAxis;
 
         Player player;
-        Enemy enemy;
+        List<Enemy> enemies;
 
         List<Light> lights;
 
@@ -121,8 +121,13 @@ namespace WorldTest
 
             player.LoadContent();
 
-            enemy = new Enemy(graphics, Content);
-            enemy.LoadContent();
+            enemies = new List<Enemy>();
+            enemies.Add(new Enemy(graphics, Content, "human_rig"));
+
+            foreach (Enemy e in enemies)
+            {
+                e.LoadContent();
+            }
 
             // Load Cel Shader
             cel_effect = Content.Load<Effect>("CelShade");
@@ -286,7 +291,11 @@ namespace WorldTest
             
             player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
             camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
-            enemy.Update(gameTime, ref this.terrain);
+
+            foreach (Enemy e in enemies)
+            {
+                e.Update(gameTime, ref this.terrain);
+            }
 
             // Save previous states
             lastKeyboradState = currentKeyboardState;
@@ -335,14 +344,15 @@ namespace WorldTest
 
             */
             #endregion
-            
-            graphics.GraphicsDevice.SetRenderTarget(0, sceneRenderTarget);
 
-            //Draw Player
-            player.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
-            //enemy.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            //Cel Shading pass
+            graphics.GraphicsDevice.Clear(Color.Black);
+            player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            foreach (Enemy e in enemies)
+            {
+                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            }
             
-
             //Draw terrain
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullClockwiseFace;
             
@@ -376,30 +386,6 @@ namespace WorldTest
             
             this.cel_effect.End();
             this.GraphicsDevice.RenderState.CullMode = CullMode.CullCounterClockwiseFace;
-
-            #region Outline Rendering
-            
-            graphics.GraphicsDevice.SetRenderTarget(0, null);
-            graphics.GraphicsDevice.Clear(Color.Black);
-            cel_effect.Parameters["ScreenResolution"].SetValue(new Vector2(sceneRenderTarget.Width,
-                                                                                    sceneRenderTarget.Height));
-            cel_effect.Parameters["NormalDepthTexture"].SetValue(player.render_targets[1].GetTexture());
-            cel_effect.CurrentTechnique = cel_effect.Techniques["Outlines"];
-
-            // Draw a fullscreen sprite to apply the postprocessing effect.
-            spriteBatch.Begin(SpriteBlendMode.None, SpriteSortMode.Immediate, SaveStateMode.None);
-
-            cel_effect.Begin();
-            cel_effect.CurrentTechnique.Passes[0].Begin();
-            graphics.GraphicsDevice.SetRenderTarget(0, null);
-            spriteBatch.Draw(sceneRenderTarget.GetTexture(), Vector2.Zero, Color.White);
-
-            spriteBatch.End();
-
-            cel_effect.CurrentTechnique.Passes[0].End();
-            cel_effect.End();
-            
-            #endregion 
              
             base.Draw(gameTime);
         }
