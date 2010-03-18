@@ -122,7 +122,7 @@ namespace WorldTest
             player.LoadContent();
 
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, Content, "human_rig"));
+            enemies.Add(new Enemy(graphics, Content, "enemy_bind_pose"));
 
             foreach (Enemy e in enemies)
             {
