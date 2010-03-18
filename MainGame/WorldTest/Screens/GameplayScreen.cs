@@ -184,32 +184,35 @@ namespace WorldTest
         public override void Update(GameTime gameTime, bool otherScreenHasFocus,
                                                  bool coveredByOtherScreen)
         {
-            // Get states for keys and pad
-            currentKeyboardState = Keyboard.GetState();
-            currentGamePadState = GamePad.GetState(PlayerIndex.One);
-
-            // Allows the game to exit
-            //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-               // this.Exit();
-
-            if (currentGamePadState.Buttons.Y == ButtonState.Pressed && lastgamepadState.Buttons.Y == ButtonState.Released)
-            {
-                invertYAxis = !invertYAxis;
-            }
-
-            player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
-            camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
-
-            foreach (Enemy e in enemies)
-            {
-                e.Update(gameTime, ref this.terrain);
-            }
-
-            // Save previous states
-            lastKeyboradState = currentKeyboardState;
-            lastgamepadState = currentGamePadState;
-
             base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
+
+            if (IsActive)
+            {
+                // Get states for keys and pad
+                currentKeyboardState = Keyboard.GetState();
+                currentGamePadState = GamePad.GetState(PlayerIndex.One);
+
+                // Allows the game to exit
+                //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+                // this.Exit();
+
+                if (currentGamePadState.Buttons.Y == ButtonState.Pressed && lastgamepadState.Buttons.Y == ButtonState.Released)
+                {
+                    invertYAxis = !invertYAxis;
+                }
+
+                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
+                camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
+
+                foreach (Enemy e in enemies)
+                {
+                    e.Update(gameTime, ref this.terrain);
+                }
+
+                // Save previous states
+                lastKeyboradState = currentKeyboardState;
+                lastgamepadState = currentGamePadState;
+            }
         }
         #endregion
 
