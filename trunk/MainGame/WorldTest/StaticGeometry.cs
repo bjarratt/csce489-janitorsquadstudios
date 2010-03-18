@@ -72,6 +72,8 @@ namespace WorldTest
             // Initialize collision vertex buffer and collision mesh
             //
 
+            this.collisionMeshOffset = collisionMeshOffset;
+
             VertexPositionNormalTexture[] collisionVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(collisionMeshFilename, true).ToArray(typeof(VertexPositionNormalTexture));
             this.collisionVertexBuffer = new VertexBuffer(device, collisionVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.collisionVertexBuffer.SetData(collisionVertices);
@@ -79,9 +81,6 @@ namespace WorldTest
             this.collisionVertexCount = collisionVertices.Length;
 
             this.collisionVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
-
-            this.collisionMeshOffset = collisionMeshOffset;
-
         }
 
         #endregion
@@ -169,7 +168,6 @@ namespace WorldTest
                         if (splitVertex[0] != "")
                         {
                             currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
-
                             if (isCollisionMesh)
                             {
                                 currentVertex.Position += this.collisionMeshOffset;
@@ -227,15 +225,15 @@ namespace WorldTest
                         {
                             if (i == 1)
                             {
-                                currentPolygon.v1 = currentVertex.Position + this.collisionMeshOffset;
+                                currentPolygon.v1 = currentVertex.Position;// +this.collisionMeshOffset;
                             }
                             else if (i == 2)
                             {
-                                currentPolygon.v2 = currentVertex.Position + this.collisionMeshOffset;
+                                currentPolygon.v2 = currentVertex.Position;// +this.collisionMeshOffset;
                             }
                             else if (i == 3)
                             {
-                                currentPolygon.v3 = currentVertex.Position + this.collisionMeshOffset;
+                                currentPolygon.v3 = currentVertex.Position;// +this.collisionMeshOffset;
 
                                 polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
                                 polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
@@ -361,7 +359,7 @@ namespace WorldTest
                 {
                     if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
                     {
-                        return originalPosition; // Sphere is embedded, so don't proceed
+                        tValue = 0; // Sphere is embedded, so don't proceed
                     }
                     else
                     {
