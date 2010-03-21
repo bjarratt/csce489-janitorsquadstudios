@@ -69,6 +69,7 @@ namespace WorldTest
         public override void LoadContent()
         {
             // Start the sound!
+            soundBank.PlayCue("cave game_main");
             base.LoadContent();
         }
 
