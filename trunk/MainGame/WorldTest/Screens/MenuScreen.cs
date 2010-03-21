@@ -27,6 +27,9 @@ namespace WorldTest
         string menuTitle;
 
         //Sound stuff!
+        AudioEngine audioEngine;
+        WaveBank waveBank;
+        protected SoundBank soundBank;
 
         #endregion
 
@@ -57,6 +60,10 @@ namespace WorldTest
 
             TransitionOnTime = TimeSpan.FromSeconds(0.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);
+
+            audioEngine = new AudioEngine("Content/gameAudio.xgs");
+            waveBank = new WaveBank(audioEngine, "Content/Wave Bank.xwb");
+            soundBank = new SoundBank(audioEngine, "Content/Sound Bank.xsb");
         }
 
 
