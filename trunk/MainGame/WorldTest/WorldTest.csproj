@@ -89,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Game.cs" />
+    <Compile Include="Level.cs" />
     <Compile Include="ScreenManager\GameScreen.cs" />
     <Compile Include="ScreenManager\InputState.cs" />
     <Compile Include="ScreenManager\ScreenManager.cs" />
@@ -111,7 +112,6 @@
     <Compile Include="StaticGeometry.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="WorldTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />
