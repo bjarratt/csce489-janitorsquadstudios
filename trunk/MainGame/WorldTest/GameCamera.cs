@@ -117,6 +117,7 @@ namespace WorldTest
                 cameraDistance = 0.0f;
 
                 Matrix trans = Matrix.CreateFromQuaternion(Target.orientation);
+                //this is where the problem most likely resides for orientation getting jacked up when we switch views
                 this.lookAt = Vector3.Transform(lookAt, trans);
                 this.right = Vector3.Transform(right, trans);
                 this.up = Vector3.Transform(up, trans);
@@ -142,8 +143,8 @@ namespace WorldTest
             }
 
             // Check for input to rotate the camera up and down around the model.
-            if (currentKeyboardState.IsKeyDown(Keys.Up) ||
-                currentKeyboardState.IsKeyDown(Keys.W))
+            if (currentKeyboardState.IsKeyDown(Keys.Up) /*||
+                currentKeyboardState.IsKeyDown(Keys.W)*/)
             {
                 if (first)
                 {
@@ -160,8 +161,8 @@ namespace WorldTest
                     cameraArc += time * 0.025f;
             }
 
-            if (currentKeyboardState.IsKeyDown(Keys.Down) ||
-                currentKeyboardState.IsKeyDown(Keys.S))
+            if (currentKeyboardState.IsKeyDown(Keys.Down) /*||
+                currentKeyboardState.IsKeyDown(Keys.S)*/)
             {
                 if (first)
                 {
@@ -194,8 +195,8 @@ namespace WorldTest
                 cameraArc = -55.0f;
 
             // Check for input to rotate the camera around the model.
-            if (currentKeyboardState.IsKeyDown(Keys.Right) ||
-                currentKeyboardState.IsKeyDown(Keys.D))
+            if (currentKeyboardState.IsKeyDown(Keys.Right) /*||
+                currentKeyboardState.IsKeyDown(Keys.D)*/)
             {
                 if (first)
                 {
@@ -207,8 +208,8 @@ namespace WorldTest
                 }
             }
 
-            if (currentKeyboardState.IsKeyDown(Keys.Left) ||
-                currentKeyboardState.IsKeyDown(Keys.A))
+            if (currentKeyboardState.IsKeyDown(Keys.Left) /*||
+                currentKeyboardState.IsKeyDown(Keys.A)*/)
             {
                 if (first)
                 {
