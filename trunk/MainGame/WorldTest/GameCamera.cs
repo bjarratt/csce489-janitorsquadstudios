@@ -118,9 +118,9 @@ namespace WorldTest
 
                 Matrix trans = Matrix.CreateFromQuaternion(Target.orientation);
                 //this is where the problem most likely resides for orientation getting jacked up when we switch views
-                this.lookAt = Vector3.Transform(lookAt, trans);
-                this.right = Vector3.Transform(right, trans);
-                this.up = Vector3.Transform(up, trans);
+                this.lookAt = Vector3.Transform(new Vector3(0, 0, 1), trans);
+                this.right = Vector3.Transform(new Vector3(-1, 0, 0), trans);
+                this.up = Vector3.Transform(new Vector3(0, 1, 0), trans);
             }
 
             if (first)
