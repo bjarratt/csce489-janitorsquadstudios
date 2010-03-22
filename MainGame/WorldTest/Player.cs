@@ -150,7 +150,7 @@ namespace WorldTest
 
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, ref terrain);
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref terrain);
 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
@@ -165,7 +165,7 @@ namespace WorldTest
                 worldTransform.Translation = position;
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, ref terrain);
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref terrain);
             }
 
             // Update the animation according to the elapsed time
@@ -173,24 +173,24 @@ namespace WorldTest
 
         }
 
-        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref StaticGeometry terrain)
+        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, KeyboardState currentKeyState, ref StaticGeometry terrain)
         {
             if (camera.first)
             {
                 Vector3 addVector = Vector3.Zero;
-                if (stick.X > 0)
+                if (stick.X > 0 || currentKeyState.IsKeyDown(Keys.D))
                 {
                     addVector += camera.right * speed;
                 }
-                else if (stick.X < 0)
+                else if (stick.X < 0 || currentKeyState.IsKeyDown(Keys.A))
                 {
                     addVector -= camera.right * speed;
                 }
-                if (stick.Y > 0)
+                if (stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W))
                 {
                     addVector += camera.lookAt * speed;
                 }
-                else if (stick.Y < 0)
+                else if (stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S))
                 {
                     addVector -= camera.lookAt * speed;
                 }
