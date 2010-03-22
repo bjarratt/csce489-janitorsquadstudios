@@ -42,6 +42,10 @@ namespace WorldTest
         private VertexDeclaration collisionVertexDeclaration;
         private int collisionVertexCount;
 
+        private Effect cel_effect;
+        private Texture2D m_celMap;
+        private Texture2D terrainTexture;
+
         #endregion
 
         #region Constructor
@@ -53,7 +57,7 @@ namespace WorldTest
         /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(GraphicsDevice device, string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset)
+        public StaticGeometry(GraphicsDevice device, string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset, ref ContentManager content)
         {
             // 
             // Initialize terrain vertex buffer
@@ -81,6 +85,10 @@ namespace WorldTest
             this.collisionVertexCount = collisionVertices.Length;
 
             this.collisionVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
+
+            cel_effect = content.Load<Effect>("CelShade");
+            m_celMap = content.Load<Texture2D>("Toon");
+            terrainTexture = content.Load<Texture2D>("tex");
         }
 
         #endregion
@@ -416,21 +424,49 @@ namespace WorldTest
         /// </summary>
         /// <param name="device">The GraphicsDevice to draw to</param>
         /// <param name="drawCollisionMesh">Set to true to draw a wireframe of the collision mesh</param>
-        public void Draw(GraphicsDevice device, bool drawCollisionMesh)
+        public void Draw(GraphicsDevice device, bool drawCollisionMesh, ref GameCamera camera)
         {
-            device.VertexDeclaration = this.vertexDeclaration;
-            device.Vertices[0].SetSource(this.terrainVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
-            device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
+            CullMode previousCullMode = device.RenderState.CullMode;
+            device.RenderState.CullMode = CullMode.CullClockwiseFace;
 
-            if (drawCollisionMesh)
+            cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
+            cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
+            cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
+            cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
+            //cel_effect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
+            cel_effect.Parameters["diffuseMap0"].SetValue(terrainTexture);
+            cel_effect.Parameters["CelMap"].SetValue(m_celMap);
+            cel_effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
+            cel_effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
+            cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
+            cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
+            cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(new Vector3(1.0f));
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(new Vector3(100, 100, 100));
+
+            this.cel_effect.Begin();
+            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
             {
-                FillMode oldMode = device.RenderState.FillMode;
-                device.RenderState.FillMode = FillMode.WireFrame;
-                device.VertexDeclaration = this.collisionVertexDeclaration;
-                device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
-                device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
-                device.RenderState.FillMode = oldMode;
+                pass.Begin();
+
+                device.VertexDeclaration = this.vertexDeclaration;
+                device.Vertices[0].SetSource(this.terrainVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+                device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
+
+                if (drawCollisionMesh)
+                {
+                    FillMode oldFillMode = device.RenderState.FillMode;
+                    device.RenderState.FillMode = FillMode.WireFrame;
+                    device.VertexDeclaration = this.collisionVertexDeclaration;
+                    device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+                    device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
+                    device.RenderState.FillMode = oldFillMode;
+                }
+
+                pass.End();
             }
+            this.cel_effect.End();
+            device.RenderState.CullMode = previousCullMode;
         }
 
         #endregion

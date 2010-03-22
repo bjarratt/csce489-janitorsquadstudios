@@ -33,7 +33,7 @@ namespace WorldTest
 
         StaticGeometry terrain;
 
-        Texture2D terrainTexture;
+        //Texture2D terrainTexture;
 
         GameCamera camera;
         static public bool invertYAxis;
@@ -57,8 +57,8 @@ namespace WorldTest
         /// This is the cel shader effect... basically the same as
         /// SkinnedModelBasicEffect.
         ///</summary>
-        Effect cel_effect;
-        Texture2D m_celMap;
+        //Effect cel_effect;
+        //Texture2D m_celMap;
 
         /// <summary>
         /// Render targets for the different shaders... 
@@ -131,13 +131,13 @@ namespace WorldTest
             }
 
             // Load Cel Shader
-            cel_effect = content.Load<Effect>("CelShade");
-            m_celMap = content.Load<Texture2D>("Toon");
+            //cel_effect = content.Load<Effect>("CelShade");
+            //m_celMap = content.Load<Texture2D>("Toon");
 
-            terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero);
+            terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
             //collision_mesh = new StaticGeometry(graphics.GraphicsDevice, "cave1_collision.obj", "", Vector3.Zero);
 
-            this.terrainTexture = content.Load<Texture2D>("tex");
+            //this.terrainTexture = content.Load<Texture2D>("tex");
 
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
@@ -299,47 +299,9 @@ namespace WorldTest
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
             }
 
-            //Draw terrain
-            graphics.GraphicsDevice.RenderState.CullMode = CullMode.CullClockwiseFace;
-
-            cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
-            cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
-            cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
-            cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
-            //cel_effect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
-            cel_effect.Parameters["diffuseMap0"].SetValue(terrainTexture);
-            cel_effect.Parameters["CelMap"].SetValue(m_celMap);
-            cel_effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
-            cel_effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
-            cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
-            cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
-            cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(new Vector3(1.0f));
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(new Vector3(100, 100, 100));
-
-            this.cel_effect.Begin();
-            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
-            {
-                pass.Begin();
-
-                this.terrain.Draw(graphics.GraphicsDevice, true);
-                //this.GraphicsDevice.RenderState.FillMode = FillMode.WireFrame;
-                //this.collision_mesh.Draw(this.GraphicsDevice);
-                //this.GraphicsDevice.RenderState.FillMode = FillMode.Solid;
-
-                pass.End();
-            }
-
-            this.cel_effect.End();
-            graphics.GraphicsDevice.RenderState.CullMode = CullMode.CullCounterClockwiseFace;
+            terrain.Draw(graphics.GraphicsDevice, true, ref camera);
 
             base.Draw(gameTime);
-
-            // create a new spritebatch for any on-screen text
-            //SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
-            //spriteBatch.Begin();
-            ////draw any necessary content
-            //spriteBatch.End();
 
             // If the game is transitioning on or off, fade it out to black.
             if (TransitionPosition > 0)
