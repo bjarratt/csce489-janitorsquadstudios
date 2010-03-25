@@ -108,7 +108,7 @@ namespace WorldTest
 
         public void Update(GameTime gameTime, GamePadState currentGPState,
             GamePadState lastGPState, KeyboardState currentKBState,
-            KeyboardState lastKBState, ref StaticGeometry terrain)
+            KeyboardState lastKBState, ref Level currentLevel)
         {
             //reset rotation
             rotation = 0.0f;
@@ -150,7 +150,7 @@ namespace WorldTest
 
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref terrain);
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref currentLevel);
 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
@@ -165,7 +165,7 @@ namespace WorldTest
                 worldTransform.Translation = position;
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref terrain);
+                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref currentLevel);
             }
 
             // Update the animation according to the elapsed time
@@ -173,7 +173,7 @@ namespace WorldTest
 
         }
 
-        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, KeyboardState currentKeyState, ref StaticGeometry terrain)
+        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, KeyboardState currentKeyState, ref Level currentLevel)
         {
             if (camera.first)
             {
@@ -196,7 +196,7 @@ namespace WorldTest
                 }
                 addVector.Y = 0.0f;
 
-                position = terrain.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
+                position = currentLevel.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8);
             }
             else
             {
@@ -208,12 +208,12 @@ namespace WorldTest
 
                 if (stick.Y > 0)
                 {
-                    position = terrain.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
+                    position = currentLevel.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8);
                     //position -= addVector * speed;
                 }
                 else
                 {
-                    position = terrain.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8, StaticGeometry.MAX_RECURSIONS);
+                    position = currentLevel.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8);
                     //position += addVector * speed;
                 }
             }

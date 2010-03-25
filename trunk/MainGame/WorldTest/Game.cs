@@ -38,10 +38,10 @@ namespace WorldTest
 
             graphics = new GraphicsDeviceManager(this);
 
-            graphics.PreferredBackBufferWidth =1280;
-            graphics.PreferredBackBufferHeight = 1024;
+            graphics.PreferredBackBufferWidth = 1024;
+            graphics.PreferredBackBufferHeight = 768;
 
-            graphics.IsFullScreen = true;
+            graphics.IsFullScreen = false;
 
             // Create the screen manager component.
             this.screenManager = new ScreenManager(this, graphics);

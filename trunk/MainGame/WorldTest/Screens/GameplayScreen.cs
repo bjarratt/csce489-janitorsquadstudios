@@ -31,7 +31,7 @@ namespace WorldTest
 
         SpriteFont gameFont;
 
-        StaticGeometry terrain;
+        Level firstLevel;
 
         //Texture2D terrainTexture;
 
@@ -130,14 +130,8 @@ namespace WorldTest
                 e.LoadContent();
             }
 
-            // Load Cel Shader
-            //cel_effect = content.Load<Effect>("CelShade");
-            //m_celMap = content.Load<Texture2D>("Toon");
-
-            terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            //collision_mesh = new StaticGeometry(graphics.GraphicsDevice, "cave1_collision.obj", "", Vector3.Zero);
-
-            //this.terrainTexture = content.Load<Texture2D>("tex");
+            //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
 
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
@@ -201,12 +195,12 @@ namespace WorldTest
                     invertYAxis = !invertYAxis;
                 }
 
-                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.terrain);
+                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.firstLevel);
                 camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
 
                 foreach (Enemy e in enemies)
                 {
-                    e.Update(gameTime, ref this.terrain);
+                    e.Update(gameTime, ref this.firstLevel);
                 }
 
                 // Save previous states
@@ -299,7 +293,8 @@ namespace WorldTest
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
             }
 
-            terrain.Draw(graphics.GraphicsDevice, true, ref camera);
+            //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera);
 
             base.Draw(gameTime);
 

@@ -32,10 +32,13 @@ namespace WorldTest
         #region Properties
 
         public const int MAX_RECURSIONS = 5;
+
+        private string visibleMeshFilename;
         private VertexBuffer terrainVertexBuffer;
         private VertexDeclaration vertexDeclaration;
         private int vertexCount;
 
+        private string collisionMeshFilename;
         private List<CollisionPolygon> collisionMesh;
         private Vector3 collisionMeshOffset;
         private VertexBuffer collisionVertexBuffer;
@@ -57,13 +60,24 @@ namespace WorldTest
         /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(GraphicsDevice device, string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset, ref ContentManager content)
+        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset)
+        {
+            this.visibleMeshFilename = visibleMeshFilename;
+            this.collisionMeshFilename = collisionMeshFilename;
+            this.collisionMeshOffset = collisionMeshOffset;
+        }
+
+        #endregion
+
+        #region Load
+
+        public void Load(GraphicsDevice device, ref ContentManager content, Matrix worldMatrix)
         {
             // 
             // Initialize terrain vertex buffer
             //
 
-            VertexPositionNormalTexture[] terrainVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, false).ToArray(typeof(VertexPositionNormalTexture));
+            VertexPositionNormalTexture[] terrainVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, worldMatrix, false).ToArray(typeof(VertexPositionNormalTexture));
             this.terrainVertexBuffer = new VertexBuffer(device, terrainVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.terrainVertexBuffer.SetData(terrainVertices);
 
@@ -76,9 +90,7 @@ namespace WorldTest
             // Initialize collision vertex buffer and collision mesh
             //
 
-            this.collisionMeshOffset = collisionMeshOffset;
-
-            VertexPositionNormalTexture[] collisionVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(collisionMeshFilename, true).ToArray(typeof(VertexPositionNormalTexture));
+            VertexPositionNormalTexture[] collisionVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(collisionMeshFilename, worldMatrix, true).ToArray(typeof(VertexPositionNormalTexture));
             this.collisionVertexBuffer = new VertexBuffer(device, collisionVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.collisionVertexBuffer.SetData(collisionVertices);
 
@@ -91,11 +103,7 @@ namespace WorldTest
             terrainTexture = content.Load<Texture2D>("tex");
         }
 
-        #endregion
-
-        #region Load
-
-        private ArrayList LoadFromOBJ(string filename, bool isCollisionMesh)
+        private ArrayList LoadFromOBJ(string filename, Matrix worldMatrix, bool isCollisionMesh)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
@@ -158,11 +166,13 @@ namespace WorldTest
 
                 if (splitLine[0] == "v") // Position
                 {
-                    positionList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+                    Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
                 else if (splitLine[0] == "vn") // Normal
                 {
-                    normalList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3])));
+                    Vector3 normal = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
                 }
                 else if (splitLine[0] == "vt") // Texture Coordinate
                 {
