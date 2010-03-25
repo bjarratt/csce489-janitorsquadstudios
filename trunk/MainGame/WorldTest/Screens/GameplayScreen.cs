@@ -41,7 +41,7 @@ namespace WorldTest
         Player player;
         List<Enemy> enemies;
 
-        List<Light> lights;
+        private List<Light> lights;
 
         /// <summary>
         /// Stores the last keyboard state and gamepad state.
@@ -131,7 +131,7 @@ namespace WorldTest
             }
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, ref lights, "first_level.txt");
 
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;

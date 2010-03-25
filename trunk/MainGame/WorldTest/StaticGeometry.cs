@@ -33,6 +33,8 @@ namespace WorldTest
 
         public const int MAX_RECURSIONS = 5;
 
+        private List<Light> lights;
+
         private string visibleMeshFilename;
         private VertexBuffer terrainVertexBuffer;
         private VertexDeclaration vertexDeclaration;
@@ -60,8 +62,9 @@ namespace WorldTest
         /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset)
+        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename, Vector3 collisionMeshOffset, ref List<Light> lights)
         {
+            this.lights = lights;
             this.visibleMeshFilename = visibleMeshFilename;
             this.collisionMeshFilename = collisionMeshFilename;
             this.collisionMeshOffset = collisionMeshOffset;
@@ -451,8 +454,8 @@ namespace WorldTest
             cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
             cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
             cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(new Vector3(1.0f));
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(new Vector3(100, 100, 100));
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(lights[0].color);
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(lights[0].position);
 
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
