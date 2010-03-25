@@ -32,17 +32,18 @@ namespace WorldTest
 
         private List<List<GeometryConnector>> adjacencyList;
         private List<StaticGeometry> levelPieces;
-
+        private List<Light> lights;
         #endregion
 
         #region Constructor
 
-        public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
+        public Level(GraphicsDevice device, ref ContentManager content, ref List<Light> lights, string levelFilename)
         {
+            this.lights = lights;
             this.ReadInLevel(levelFilename);
 
             // Load the StaticGeometry elements
-
+            
             if (levelPieces.Count == 0)
             {
                 return;
@@ -134,7 +135,7 @@ namespace WorldTest
                 adjacencyList.Add(currentList);
 
                 // Load the StaticGeometry from file name
-                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], Vector3.Zero);
+                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], Vector3.Zero, ref lights);
 
                 levelPieces.Add(levelPiece);
 
