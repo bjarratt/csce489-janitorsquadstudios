@@ -90,7 +90,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ref StaticGeometry terrain)
+        public void Update(GameTime gameTime, ref Level currentLevel)
         {
             //reset rotation
             rotation = 0.0f;
@@ -99,7 +99,7 @@ namespace WorldTest
             turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
             turn_speed *= turn_speed_reg;
 
-            MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref terrain);
+            MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref currentLevel);
             worldTransform.Translation = position;
 
             // Update the animation according to the elapsed time
@@ -107,9 +107,9 @@ namespace WorldTest
 
         }
 
-        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref StaticGeometry terrain)
+        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref Level currentLevel)
         {
-            position = terrain.CollideWith(position, new Vector3(0, -1, 0), 0.1, StaticGeometry.MAX_RECURSIONS);
+            position = currentLevel.CollideWith(position, new Vector3(0, -1, 0), 0.1);
         }
 
         #endregion
