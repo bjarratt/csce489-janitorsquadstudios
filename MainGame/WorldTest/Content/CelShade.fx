@@ -410,6 +410,41 @@ void animatedModelPS_Light(
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 }
 
+void animatedModelGrayPS_Light(
+	uniform int lightCount,
+    in float3 inPosition	: TEXCOORD0,
+    in float3 inNormal		: TEXCOORD1,
+    in float2 inUV0			: TEXCOORD2,
+    in float3 inEyeVector	: TEXCOORD3,
+
+	out float4 outColor0	: COLOR0)
+{
+    // Normalize all input vectors
+    float3 position = normalize(inPosition);
+	float3 normal = normalize(inNormal);
+    float3 eyeVector = normalize(inEyeVector);
+    
+    // Reads texture diffuse color
+    float3 diffuseColor = material.diffuseColor;
+    if (diffuseMapEnabled)
+        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    
+    // Reads texture specular color
+    float3 specularColor = material.specularColor;
+    if (specularMapEnabled)
+        specularColor *= tex2D(specularMapSampler, inUV0);
+        	
+    // Calculate final color
+    outColor0.a = 1.0f;
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
+		eyeVector, diffuseColor, specularColor, material.specularPower);
+		
+	float luma = (outColor0.r * 0.3 + outColor0.g * 0.59 + outColor0.b * 0.11);
+	outColor0.r = luma;
+	outColor0.g = luma;
+	outColor0.b = luma;
+}
+
 
 void animatedModelPS_LightWithNormal(
 	uniform int lightCount,
@@ -513,6 +548,25 @@ technique AnimatedModel_OneLight
 		
         VertexShader = compile vs_2_0 AnimatedModelVS_Light();
         PixelShader = compile ps_2_0 animatedModelPS_Light(1);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Animated();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_OneLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_2_0 animatedModelGrayPS_Light(1);
         CullMode = CCW;
     }
     pass p1
