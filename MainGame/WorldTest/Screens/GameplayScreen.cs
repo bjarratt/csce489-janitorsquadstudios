@@ -256,7 +256,7 @@ namespace WorldTest
                              KeyboardState current_k_state, KeyboardState prev_k_state)
         {
 
-            if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
+            if ((current_g_state.Buttons.B == ButtonState.Pressed || current_k_state.IsKeyDown(Keys.Space)) && (prev_g_state.Buttons.B == ButtonState.Released || prev_k_state.IsKeyUp(Keys.Space)))
             {
                 // Create a new projectile once per second. The real work of moving
                 // and creating particles is handled inside the Projectile class.
