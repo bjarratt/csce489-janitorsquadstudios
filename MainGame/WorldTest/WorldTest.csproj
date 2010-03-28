@@ -90,6 +90,17 @@
   <ItemGroup>
     <Compile Include="Game.cs" />
     <Compile Include="Level.cs" />
+    <Compile Include="ParticleClasses1\Attack.cs" />
+    <Compile Include="ParticleClasses1\ParticleEmitter.cs" />
+    <Compile Include="ParticleClasses1\ParticleSettings.cs" />
+    <Compile Include="ParticleClasses1\ParticleSystem.cs" />
+    <Compile Include="ParticleClasses1\ParticleVertex.cs" />
+    <Compile Include="ParticleClasses1\Projectile.cs" />
+    <Compile Include="ParticleSystems1\ExplosionParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\ExplosionSmokeParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\FireParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\ProjectileTrailParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\SmokePlumeParticleSystem.cs" />
     <Compile Include="ScreenManager\GameScreen.cs" />
     <Compile Include="ScreenManager\InputState.cs" />
     <Compile Include="ScreenManager\ScreenManager.cs" />

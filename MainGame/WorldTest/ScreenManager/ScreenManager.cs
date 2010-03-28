@@ -34,6 +34,8 @@ namespace WorldTest
         SpriteFont font;
         Texture2D blankTexture;
 
+        public Game game;
+
         public GraphicsDeviceManager graphics;
 
         bool isInitialized;
@@ -87,6 +89,7 @@ namespace WorldTest
         public ScreenManager(Game game, GraphicsDeviceManager graphics)
             : base(game)
         {
+            this.game = game;
             this.graphics = graphics;
         }
 
