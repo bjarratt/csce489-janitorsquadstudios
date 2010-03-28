@@ -41,6 +41,8 @@ namespace WorldTest
         Player player;
         List<Enemy> enemies;
 
+        private EnemyStats ENEMY_STATS;
+
         private List<Light> lights;
 
         /// <summary>
@@ -138,7 +140,7 @@ namespace WorldTest
             player.LoadContent();
 
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy_bind_pose"));
+            enemies.Add(new Enemy(graphics, content, "enemy_bind_pose", ENEMY_STATS));
 
             foreach (Enemy e in enemies)
             {

@@ -19,18 +19,45 @@ using XNAnimation.Effects;
 
 namespace WorldTest
 {
+    #region Enums and enemy state info
+
+    enum EnemyAiState
+    {
+        Chasing, //chasing the player
+        Caught,  //has caught the player and can stop chasing
+        Idle,    //enemy can't see the player and wanders
+        Weakened //the enemy can be banished to the other dimension
+    }
+
+    struct EnemyStats
+    {
+        public float chaseDistance;
+        public float caughtDistance;
+        public float hysteresis;
+        public float maxSpeed;
+        public float turnSpeed;
+    }
+
+    #endregion
+
     class Enemy : Agent
     {
         #region Properties
+
+        public EnemyStats stats;
+        public EnemyAiState state;
 
         #endregion
 
         #region Constructor
 
-        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name) : base(Graphics, Content, enemy_name)
+        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, 100);
             speed = 0.0f;
+
+            this.stats = stats;
+            this.state = EnemyAiState.Chasing;
 
             rotation = 0.0f;
             turn_speed = 0.05f;

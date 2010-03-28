@@ -42,6 +42,7 @@ namespace WorldTest
 
         private string collisionMeshFilename;
         private List<CollisionPolygon> collisionMesh;
+        public List<CollisionPolygon> navigationMesh;
         private Vector3 collisionMeshOffset;
         private VertexBuffer collisionVertexBuffer;
         private VertexDeclaration collisionVertexDeclaration;
@@ -263,6 +264,9 @@ namespace WorldTest
                                 currentPolygon.normal.Normalize();
 
                                 collisionMesh.Add(currentPolygon);
+                                if(currentPolygon.normal.Equals(Vector3.Up)){
+                                    navigationMesh.Add(currentPolygon);
+                                }
                             }
                         }
 
