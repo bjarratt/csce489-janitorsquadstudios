@@ -6,6 +6,7 @@
 
 #region Using Statements
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 #endregion
 
@@ -47,10 +48,16 @@ namespace WorldTest
             Llama,
         }
 
-        static Shader currentShader = Shader.Toony;
+        public static MultiSampleType[] AA_SETTINGS = {
+                                                          MultiSampleType.None,
+                                                          MultiSampleType.TwoSamples,
+                                                          MultiSampleType.FourSamples,
+                                                          MultiSampleType.EightSamples
+                                                      };
+
+        public static MultiSampleType CURRENT_AA_SETTING = MultiSampleType.None;
 
         static string[] languages = { "English", "French", "Spanish" };
-        static int currentLanguage = 0;
 
         static bool antialias = true;
 
@@ -119,8 +126,27 @@ namespace WorldTest
         {
             MenuEntry1.Text = "Resolution: " + screenManager.GraphicsDevice.Viewport.Width + "x" + screenManager.GraphicsDevice.Viewport.Height;
             MenuEntry2.Text = "Fullscreen: " + (screenManager.graphics.IsFullScreen ? "on" : "off");
-            MenuEntry3.Text = "Anti-aliasing: " + (antialias ? "on" : "off"); ;
-            MenuEntry4.Text = "Sound FX: " + (sfx ? "on" : "off"); ;
+            MenuEntry3.Text = "Invert Y axis: " + (GameplayScreen.invertYAxis ? "on" : "off");
+
+            string aaText = "";
+            if (OptionsMenuScreen.CURRENT_AA_SETTING == MultiSampleType.TwoSamples)
+            {
+                aaText = "2X";
+            }
+            else if (OptionsMenuScreen.CURRENT_AA_SETTING == MultiSampleType.FourSamples)
+            {
+                aaText = "4X";
+            }
+            else if (OptionsMenuScreen.CURRENT_AA_SETTING == MultiSampleType.EightSamples)
+            {
+                aaText = "8X";
+            }
+            else
+            {
+                aaText = "off";
+            }
+
+            MenuEntry4.Text = "Antialiasing: " + aaText;
         }
 
 
@@ -163,7 +189,7 @@ namespace WorldTest
         /// </summary>
         void MenuEntry3Selected(object sender, PlayerIndexEventArgs e)
         {
-            antialias = !antialias;
+            GameplayScreen.invertYAxis = !GameplayScreen.invertYAxis;
 
             SetMenuEntryText();
         }
@@ -174,7 +200,27 @@ namespace WorldTest
         /// </summary>
         void MenuEntry4Selected(object sender, PlayerIndexEventArgs e)
         {
-            sfx = !sfx;
+            ScreenManager.graphics.GraphicsDevice.PresentationParameters.MultiSampleType = MultiSampleType.None;
+
+            ScreenManager.graphics.PreferMultiSampling = true;
+
+            for (int i = 0; i < OptionsMenuScreen.AA_SETTINGS.Length; i++)
+            {
+                if (OptionsMenuScreen.CURRENT_AA_SETTING == OptionsMenuScreen.AA_SETTINGS[i])
+                {
+                    OptionsMenuScreen.CURRENT_AA_SETTING = OptionsMenuScreen.AA_SETTINGS[(i + 1) % OptionsMenuScreen.AA_SETTINGS.Length];
+                    break;
+                }
+            }
+
+            if (OptionsMenuScreen.CURRENT_AA_SETTING == MultiSampleType.None)
+            {
+                ScreenManager.graphics.PreferMultiSampling = false;
+            }
+
+            ScreenManager.graphics.GraphicsDevice.PresentationParameters.MultiSampleType = OptionsMenuScreen.CURRENT_AA_SETTING;
+
+            ScreenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }
