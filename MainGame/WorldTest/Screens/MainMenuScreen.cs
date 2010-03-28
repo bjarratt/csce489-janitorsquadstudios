@@ -23,8 +23,8 @@ namespace WorldTest
         /// <summary>
         /// Constructor fills in the menu contents.
         /// </summary>
-        public MainMenuScreen()
-            : base("")
+        public MainMenuScreen(ScreenManager sm)
+            : base("", sm)
         {
             // Create our menu entries.
             MenuEntry playGameMenuEntry = new MenuEntry("Start");
@@ -63,7 +63,7 @@ namespace WorldTest
         /// </summary>
         void OptionsMenuEntrySelected(object sender, PlayerIndexEventArgs e)
         {
-            ScreenManager.AddScreen(new OptionsMenuScreen(), e.PlayerIndex);
+            ScreenManager.AddScreen(new OptionsMenuScreen(this.screenManager), e.PlayerIndex);
         }
 
         public override void LoadContent()

@@ -6,6 +6,7 @@
 
 #region Using Statements
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 #endregion
 
 namespace WorldTest
@@ -18,6 +19,21 @@ namespace WorldTest
     class OptionsMenuScreen : MenuScreen
     {
         #region Fields
+
+        public struct Resolution
+        {
+            public int width;
+            public int height;
+
+            public Resolution(int w, int h)
+            {
+                width = w;
+                height = h;
+            }
+        }
+
+        private List<Resolution> validResolutions;
+        private int currentResolution;
 
         MenuEntry MenuEntry1;
         MenuEntry MenuEntry2;
@@ -48,9 +64,28 @@ namespace WorldTest
         /// <summary>
         /// Constructor.
         /// </summary>
-        public OptionsMenuScreen()
-            : base("Options")
+        public OptionsMenuScreen(ScreenManager sm)
+            : base("Options", sm)
         {
+            this.validResolutions = new List<Resolution>();
+
+            this.validResolutions.Add(new Resolution(800, 600));
+            this.validResolutions.Add(new Resolution(1024, 768));
+            this.validResolutions.Add(new Resolution(1280, 1024));
+            this.validResolutions.Add(new Resolution(1440, 900));
+            this.validResolutions.Add(new Resolution(1680, 1050));
+
+            this.currentResolution = 0;
+
+            for (int i = 0; i < this.validResolutions.Count; i++)
+            {
+                if (screenManager.GraphicsDevice.Viewport.Width == this.validResolutions[i].width &&
+                    screenManager.GraphicsDevice.Viewport.Height == this.validResolutions[i].height)
+                {
+                    this.currentResolution = i;
+                }
+            }
+
             // Create our menu entries.
             MenuEntry1 = new MenuEntry(string.Empty);
             MenuEntry2 = new MenuEntry(string.Empty);
@@ -82,8 +117,8 @@ namespace WorldTest
         /// </summary>
         void SetMenuEntryText()
         {
-            MenuEntry1.Text = "Shader: " + currentShader;
-            MenuEntry2.Text = "Language: " + languages[currentLanguage];
+            MenuEntry1.Text = "Resolution: " + screenManager.GraphicsDevice.Viewport.Width + "x" + screenManager.GraphicsDevice.Viewport.Height;
+            MenuEntry2.Text = "Fullscreen: " + (screenManager.graphics.IsFullScreen ? "on" : "off");
             MenuEntry3.Text = "Anti-aliasing: " + (antialias ? "on" : "off"); ;
             MenuEntry4.Text = "Sound FX: " + (sfx ? "on" : "off"); ;
         }
@@ -99,10 +134,12 @@ namespace WorldTest
         /// </summary>
         void MenuEntry1Selected(object sender, PlayerIndexEventArgs e)
         {
-            currentShader++;
+            currentResolution = (currentResolution + 1) % this.validResolutions.Count;
 
-            if (currentShader > Shader.Llama)
-                currentShader = 0;
+            ScreenManager.graphics.PreferredBackBufferWidth = this.validResolutions[currentResolution].width;
+            ScreenManager.graphics.PreferredBackBufferHeight = this.validResolutions[currentResolution].height;
+
+            screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }
@@ -113,7 +150,9 @@ namespace WorldTest
         /// </summary>
         void MenuEntry2Selected(object sender, PlayerIndexEventArgs e)
         {
-            currentLanguage = (currentLanguage + 1) % languages.Length;
+            screenManager.graphics.IsFullScreen = !screenManager.graphics.IsFullScreen;
+
+            screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }

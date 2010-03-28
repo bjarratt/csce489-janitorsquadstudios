@@ -318,7 +318,7 @@ namespace WorldTest
 
             if (input.IsPauseGame(ControllingPlayer) || gamePadDisconnected)
             {
-               ScreenManager.AddScreen(new PauseMenuScreen(), ControllingPlayer);
+               ScreenManager.AddScreen(new PauseMenuScreen(this.ScreenManager), ControllingPlayer);
             }
             else
             {

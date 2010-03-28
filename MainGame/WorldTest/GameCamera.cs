@@ -46,7 +46,7 @@ namespace WorldTest
         public Vector3 lookAt;
         
         //Screen ratio
-        public float aspectRatio = 0.0f; 
+        //public float aspectRatio = 0.0f; 
         
         //Any camera rotations
         public Quaternion camera_rotation;
@@ -55,6 +55,8 @@ namespace WorldTest
         //Projection and view matrix
         private Matrix projection; 
         private Matrix view;
+
+        private GraphicsDeviceManager graphics;
         
         #endregion
 
@@ -62,6 +64,8 @@ namespace WorldTest
 
         public GameCamera(GraphicsDeviceManager graphics, ref Player target)
         {
+            this.graphics = graphics;
+
             //Start aiming forward (no turn)
             cameraRot = 0;
 
@@ -96,7 +100,7 @@ namespace WorldTest
             }
 
             //Aspect ratio of screen
-            aspectRatio = graphics.GraphicsDevice.Viewport.Width / graphics.GraphicsDevice.Viewport.Height;
+            //aspectRatio = (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height;
 
             //Initialize our camera rotation to identity
             camera_rotation = Quaternion.Identity;
@@ -106,7 +110,7 @@ namespace WorldTest
             view = Matrix.CreateLookAt(position, lookAt, Vector3.Up);
 
             //Create general projection matrix for the screen
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), aspectRatio, 0.01f, 10000.0f);
+            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45.0f), (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height, 0.01f, 10000.0f);
         }
 
         #endregion
@@ -300,7 +304,7 @@ namespace WorldTest
             }
 
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4,
-                                                                  aspectRatio,
+                                                                  (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height,
                                                                   1, 10000);
         }
 

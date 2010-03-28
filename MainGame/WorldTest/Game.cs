@@ -50,7 +50,7 @@ namespace WorldTest
             Components.Add(screenManager);
 
             GameScreen bg = new BackgroundScreen();
-            GameScreen menu = new MainMenuScreen();
+            GameScreen menu = new MainMenuScreen(this.screenManager);
 
             // Activate the first screens.
             screenManager.AddScreen(bg, null);

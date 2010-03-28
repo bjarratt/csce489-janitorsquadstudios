@@ -45,6 +45,7 @@ namespace WorldTest
             get { return menuEntries; }
         }
 
+        protected ScreenManager screenManager;
 
         #endregion
 
@@ -54,9 +55,10 @@ namespace WorldTest
         /// <summary>
         /// Constructor.
         /// </summary>
-        public MenuScreen(string menuTitle)
+        public MenuScreen(string menuTitle, ScreenManager sm)
         {
             this.menuTitle = menuTitle;
+            this.screenManager = sm;
 
             TransitionOnTime = TimeSpan.FromSeconds(0.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);

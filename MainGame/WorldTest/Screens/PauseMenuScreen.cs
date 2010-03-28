@@ -22,8 +22,8 @@ namespace WorldTest
         /// <summary>
         /// Constructor.
         /// </summary>
-        public PauseMenuScreen()
-            : base("Paused")
+        public PauseMenuScreen(ScreenManager sm)
+            : base("Paused", sm)
         {
             // Flag that there is no need for the game to transition
             // off when the pause menu is on top of it.
@@ -70,7 +70,7 @@ namespace WorldTest
         /// </summary>
         void optionMenuEntrySelected(object sender, PlayerIndexEventArgs e)
         {
-            ScreenManager.AddScreen(new InGameOptionsScreen(), e.PlayerIndex);
+            ScreenManager.AddScreen(new InGameOptionsScreen(this.screenManager), e.PlayerIndex);
         }
 
 
@@ -82,7 +82,7 @@ namespace WorldTest
         void ConfirmQuitMessageBoxAccepted(object sender, PlayerIndexEventArgs e)
         {
             LoadingScreen.Load(ScreenManager, false, null, new BackgroundScreen(),
-                                                           new MainMenuScreen());
+                                                           new MainMenuScreen(this.screenManager));
         }
 
 
