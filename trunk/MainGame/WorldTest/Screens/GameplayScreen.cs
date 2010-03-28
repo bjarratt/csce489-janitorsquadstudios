@@ -51,7 +51,22 @@ namespace WorldTest
         KeyboardState lastKeyboradState;
         GamePadState lastgamepadState;
 
+        /// <summary>
+        /// Particle Effects
+        /// </summary>
+        ParticleSystem explosionParticles;
+        ParticleSystem explosionSmokeParticles;
+        ParticleSystem projectileTrailParticles;
+        ParticleSystem smokePlumeParticles;
+        ParticleSystem fireParticles;
 
+        /// <summary>
+        /// List of attacks
+        /// </summary>
+        List<Projectile> projectiles = new List<Projectile>();
+
+        // Random number generator for the fire effect.
+        Random random = new Random();
 
         ///<summary>
         /// This is the cel shader effect... basically the same as
@@ -133,6 +148,21 @@ namespace WorldTest
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
             firstLevel = new Level(graphics.GraphicsDevice, ref content, ref lights, "first_level.txt");
 
+            // Construct our particle system components.
+            explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content);
+            explosionSmokeParticles = new ExplosionSmokeParticleSystem(this.ScreenManager.game, content);
+            projectileTrailParticles = new ProjectileTrailParticleSystem(this.ScreenManager.game, content);
+            smokePlumeParticles = new SmokePlumeParticleSystem(this.ScreenManager.game, content);
+            fireParticles = new FireParticleSystem(this.ScreenManager.game, content);
+
+            // Set the draw order so the explosions and fire
+            // will appear over the top of the smoke.
+            smokePlumeParticles.DrawOrder = 100;
+            explosionSmokeParticles.DrawOrder = 200;
+            projectileTrailParticles.DrawOrder = 300;
+            explosionParticles.DrawOrder = 400;
+            fireParticles.DrawOrder = 500;
+
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
@@ -149,6 +179,13 @@ namespace WorldTest
 
             // Simulate loading time (if necessary)
             //Thread.Sleep(1000);
+
+            // Register the particle system components.
+            this.ScreenManager.game.Components.Add(explosionParticles);
+            this.ScreenManager.game.Components.Add(explosionSmokeParticles);
+            this.ScreenManager.game.Components.Add(projectileTrailParticles);
+            this.ScreenManager.game.Components.Add(smokePlumeParticles);
+            this.ScreenManager.game.Components.Add(fireParticles);
 
             // once the load has finished, we use ResetElapsedTime to tell the game's
             // timing mechanism that we have just finished a very long frame, and that
@@ -203,11 +240,54 @@ namespace WorldTest
                     e.Update(gameTime, ref this.firstLevel);
                 }
 
+                UpdateAttacks(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState);
+                UpdateProjectiles(gameTime);
+
                 // Save previous states
                 lastKeyboradState = currentKeyboardState;
                 lastgamepadState = currentGamePadState;
             }
         }
+
+        /// <summary>
+        /// Helper for updating the explosions effect.
+        /// </summary>
+        void UpdateAttacks(GameTime gameTime, GamePadState current_g_state, GamePadState prev_g_state, 
+                             KeyboardState current_k_state, KeyboardState prev_k_state)
+        {
+
+            if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
+            {
+                // Create a new projectile once per second. The real work of moving
+                // and creating particles is handled inside the Projectile class.
+                projectiles.Add(new Attack(player.position + new Vector3(0,20,0), camera.lookAt * 100.0f, 200, 30, 20, 60f, 0, explosionParticles,
+                                               explosionSmokeParticles,
+                                               projectileTrailParticles));
+            }
+        }
+
+        /// <summary>
+        /// Helper for updating the list of active projectiles.
+        /// </summary>
+        void UpdateProjectiles(GameTime gameTime)
+        {
+            int i = 0;
+
+            while (i < projectiles.Count)
+            {
+                if (!projectiles[i].Update(gameTime, ref firstLevel))
+                {
+                    // Remove projectiles at the end of their life.
+                    projectiles.RemoveAt(i);
+                }
+                else
+                {
+                    // Advance to the next projectile.
+                    i++;
+                }
+            }
+        }
+
         #endregion
 
         #region Handle Input
@@ -284,6 +364,13 @@ namespace WorldTest
 
             */
             #endregion
+
+            // Pass camera matrices through to the particle system components.
+            explosionParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            explosionSmokeParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            projectileTrailParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            smokePlumeParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            fireParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
 
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);

@@ -437,10 +437,6 @@ namespace WorldTest
         /// <returns>This returns either true or false in one pass with no recursion.</returns>
         public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius)
         {
-            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)
-            {
-                return originalPosition;
-            }
 
             bool firstTimeThrough = true;
             this.closestT = -1;
