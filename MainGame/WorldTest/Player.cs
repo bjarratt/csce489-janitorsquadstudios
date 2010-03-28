@@ -25,6 +25,20 @@ namespace WorldTest
 
         public GameCamera camera;
 
+        public enum State
+        {
+            idle = 0,
+            running
+        };
+
+        State state = State.idle;
+
+        public State Status
+        {
+            get { return state; }
+            set { state = value; }
+        }
+
         #endregion
 
         #region Constructor
@@ -151,7 +165,7 @@ namespace WorldTest
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
                 MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref currentLevel);
-
+                
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
                 camera.camera_rotation.Normalize();
@@ -188,11 +202,17 @@ namespace WorldTest
                 }
                 if (stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W))
                 {
+                    this.Status = State.running;
                     addVector += camera.lookAt * speed;
                 }
                 else if (stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S))
                 {
+                    this.Status = State.running;
                     addVector -= camera.lookAt * speed;
+                }
+                else
+                {
+                    this.Status = State.idle;
                 }
                 addVector.Y = 0.0f;
 
