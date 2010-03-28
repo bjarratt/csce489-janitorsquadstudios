@@ -26,6 +26,14 @@ namespace WorldTest
         public Vector3 p3;
     }
 
+    struct CollisionPolygon
+    {
+        public Vector3 v1;
+        public Vector3 v2;
+        public Vector3 v3;
+        public Vector3 normal;
+    }
+
     class Level
     {
         #region Properties
@@ -33,6 +41,22 @@ namespace WorldTest
         private List<List<GeometryConnector>> adjacencyList;
         private List<StaticGeometry> levelPieces;
         private List<Light> lights;
+
+        private Effect cel_effect;
+        private Texture2D m_celMap;
+        private Texture2D terrainTexture;
+
+        // Collision variables
+        private List<CollisionPolygon> collisionMesh;
+        private Vector3 collisionMeshOffset;
+        private VertexBuffer collisionVertexBuffer;
+        private VertexDeclaration collisionVertexDeclaration;
+        private int collisionVertexCount;
+
+        public List<CollisionPolygon> navigationMesh;
+
+        public const int MAX_COLLISIONS = 5;
+
         #endregion
 
         #region Constructor
@@ -40,6 +64,13 @@ namespace WorldTest
         public Level(GraphicsDevice device, ref ContentManager content, ref List<Light> lights, string levelFilename)
         {
             this.lights = lights;
+            this.collisionMesh = new List<CollisionPolygon>();
+            this.collisionMeshOffset = Vector3.Zero;
+
+            List<VertexPositionNormalTexture> collisionVertices = new List<VertexPositionNormalTexture>(); // Stores collision vertices for VertexBuffer creation
+
+            this.navigationMesh = new List<CollisionPolygon>();
+
             this.ReadInLevel(levelFilename);
 
             // Load the StaticGeometry elements
@@ -50,12 +81,13 @@ namespace WorldTest
             }
 
             levelPieces[0].Load(device, ref content, Matrix.Identity);
+            collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[0].CollisionMeshFilename, Matrix.Identity));
 
             for ( int i = 1; i < adjacencyList.Count; i++ )
             {
                 int currentIndex = adjacencyList[i][0].index;
                 Matrix worldMatrix = Matrix.Identity;
-                bool success = false;
+
                 for ( int j = 0; j < adjacencyList[currentIndex].Count; j++ )
                 {
                     if (adjacencyList[currentIndex][j].index == i)
@@ -72,15 +104,34 @@ namespace WorldTest
                                                        baseNormal,
                                                        adjacencyList[currentIndex][j].p1,
                                                        childNormal);
-                        success = true;
+
+                        // Load the StaticGeometry piece
+                        levelPieces[i].Load(device, ref content, worldMatrix);
+
+                        // Add the piece's collision mesh to the level's collision mesh
+                        collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[i].CollisionMeshFilename, worldMatrix));
+
+                        break;
                     }
                 }
-                if (success)
-                {
-                    levelPieces[i].Load(device, ref content, worldMatrix);
-                }
             }
+
+            //
+            // Initialize collision vertex buffer and collision mesh
+            //
+
+            VertexPositionNormalTexture[] collisionVerticesArray = collisionVertices.ToArray();
+            this.collisionVertexBuffer = new VertexBuffer(device, collisionVerticesArray.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
+            this.collisionVertexBuffer.SetData(collisionVerticesArray);
+
+            this.collisionVertexCount = collisionVerticesArray.Length;
+
+            this.collisionVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
         }
+        
+        #endregion
+
+        #region Initialization
 
         private void ReadInLevel(string levelFilename)
         {
@@ -135,15 +186,13 @@ namespace WorldTest
                 adjacencyList.Add(currentList);
 
                 // Load the StaticGeometry from file name
-                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], Vector3.Zero, ref lights);
+                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], ref lights); // splitLine[1] is collisionMeshFilename
 
                 levelPieces.Add(levelPiece);
 
                 line = levelFileReader.ReadLine();
             }
         }
-
-        #endregion
 
         private Matrix CreateSnapMatrix(Vector3 basePoint, Vector3 baseNormal, Vector3 childPoint, Vector3 childNormal)
         {
@@ -156,42 +205,455 @@ namespace WorldTest
             return rotationMatrix;
         }
 
-        #region Collision Detection
+        #endregion
 
-        public Vector3 CollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        #region Load
+
+        public void Load(GraphicsDevice device, ref ContentManager content)
         {
-            Vector3 newPosition = levelPieces[0].CollideWith(originalPosition, velocityVector, radius, StaticGeometry.MAX_RECURSIONS);
-            //if (newPosition == originalPosition + velocityVector)
-            //{
-            //    newPosition = levelPieces[1].CollideWith(newPosition, velocityVector, radius, StaticGeometry.MAX_RECURSIONS);
-            //}
-            return newPosition;
+            cel_effect = content.Load<Effect>("CelShade");
+            m_celMap = content.Load<Texture2D>("Toon");
+            terrainTexture = content.Load<Texture2D>("tex");
+        }
+
+        private List<VertexPositionNormalTexture> LoadFromOBJ(string filename, Matrix worldMatrix)
+        {
+            ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
+            ArrayList normalList = new ArrayList();
+            ArrayList textureCoordList = new ArrayList();
+
+            // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
+            positionList.Add(new Vector3());
+            normalList.Add(new Vector3());
+            textureCoordList.Add(new Vector3());
+
+            List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of triangles (every 3 vertices is a triangle)
+
+            VertexPositionNormalTexture currentVertex;
+
+            // Variables used for collision meshes
+            CollisionPolygon currentPolygon;
+            currentPolygon.v1 = Vector3.Zero;
+            currentPolygon.v2 = Vector3.Zero;
+            currentPolygon.v3 = Vector3.Zero;
+            currentPolygon.normal = Vector3.Zero;
+            Vector3 polygonVector1;
+            Vector3 polygonVector2;
+
+            if (filename == null || filename == "")
+            {
+                return triangleList;
+            }
+
+            FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
+            StreamReader objFileReader = new StreamReader(objFile);
+
+            string line = objFileReader.ReadLine();
+            string[] splitLine;
+
+            string[] splitVertex;
+
+            float textureScaleFactor = 1.0f;
+
+            while (line != null)
+            {
+                if (line == "" || line == "\n")
+                {
+                    line = objFileReader.ReadLine();
+                    continue;
+                }
+
+                char[] splitChars = { ' ' };
+                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+
+                if (splitLine[0] == "v") // Position
+                {
+                    Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    positionList.Add(Vector3.Transform(position, worldMatrix));
+                }
+                else if (splitLine[0] == "vn") // Normal
+                {
+                    Vector3 normal = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
+                }
+                else if (splitLine[0] == "vt") // Texture Coordinate
+                {
+                    textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
+                }
+                else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
+                {
+                    for (int i = 1; i < 4; i++)
+                    {
+                        splitVertex = splitLine[i].Split('/');
+                        if (splitVertex[0] != "")
+                        {
+                            currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
+                            currentVertex.Position += this.collisionMeshOffset;
+                        }
+                        else
+                        {
+                            currentVertex.Position = new Vector3(0.0f);
+                        }
+
+                        if (splitVertex[2] != "")
+                        {
+                            currentVertex.Normal = (Vector3)normalList[Convert.ToInt32(splitVertex[2])];
+                        }
+                        else
+                        {
+                            currentVertex.Normal = new Vector3(0.0f);
+                        }
+
+                        if (splitVertex[1] != "")
+                        {
+                            currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
+                        }
+                        else
+                        {
+                            currentVertex.TextureCoordinate = new Vector2(0.0f);
+                        }
+
+                        if (i == 1)
+                        {
+                            currentPolygon.v1 = currentVertex.Position;// +this.collisionMeshOffset;
+                        }
+                        else if (i == 2)
+                        {
+                            currentPolygon.v2 = currentVertex.Position;// +this.collisionMeshOffset;
+                        }
+                        else if (i == 3)
+                        {
+                            currentPolygon.v3 = currentVertex.Position;// +this.collisionMeshOffset;
+
+                            polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
+                            polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
+
+                            Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
+                            currentPolygon.normal.Normalize();
+
+                            collisionMesh.Add(currentPolygon);
+
+                            if (currentPolygon.normal.Equals(Vector3.Up))
+                            {
+                                navigationMesh.Add(currentPolygon);
+                            }
+                        }
+
+                        triangleList.Add(currentVertex);
+                    }
+                }
+                else // Unused line format, skipping
+                {
+
+                }
+
+                line = objFileReader.ReadLine();
+            }
+
+            return triangleList;
+        }
+
+        #endregion
+
+        #region CollisionDetection
+
+        private bool pointInsidePolygon(Vector3 point, CollisionPolygon polygon)
+        {
+            Vector3 vec1;
+            Vector3 vec2;
+
+            double currentAngle = 0.0f;
+            double angle1;
+            double angle2;
+            double angle3;
+
+            vec1 = polygon.v1 - point;
+            vec2 = polygon.v2 - point;
+
+            vec1.Normalize();
+            vec2.Normalize();
+
+            angle1 = Math.Acos(Vector3.Dot(vec1, vec2)) * Vector3.Dot(polygon.normal, Vector3.Cross(vec1, vec2));
+            currentAngle += angle1;
+
+            vec1 = vec2;
+            vec2 = polygon.v3 - point;
+
+            vec1.Normalize();
+            vec2.Normalize();
+
+            angle2 = Math.Acos(Vector3.Dot(vec1, vec2)) * Vector3.Dot(polygon.normal, Vector3.Cross(vec1, vec2));
+            currentAngle += angle2;
+
+            vec1 = vec2;
+            vec2 = polygon.v1 - point;
+
+            vec1.Normalize();
+            vec2.Normalize();
+
+            angle3 = Math.Acos(Vector3.Dot(vec1, vec2)) * Vector3.Dot(polygon.normal, Vector3.Cross(vec1, vec2));
+            currentAngle += angle3;
+
+            if (Math.Abs(currentAngle) > 1)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        #region CollideWidth Variables
+
+        private Vector3 newPosition;
+
+        private Vector3 collisionPoint;
+        private Vector3 newVelocityVector;
+        private float closestT;
+        private Vector3 closestVelocityVector;
+        private Vector3 closestCollisionPoint;
+        private float distToPlane;
+
+        private const float minVelocityVectorLen = 2.0f;
+        private const float acceptableFloatError = 0.01f;
+
+        #endregion
+
+        /// <summary>
+        /// Calculate result of collisions with collision mesh
+        /// </summary>
+        /// <param name="originalPosition">Starting point</param>
+        /// <param name="velocityVector">Change of position this frame</param>
+        /// <param name="radius">Radius of bounding sphere</param>
+        /// <param name="remainingRecursions">Maximum number of collisions. Prevents stack overflow.</param>
+        /// <returns>Position after collisions</returns>
+        public Vector3 CollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, int remainingRecursions)
+        {
+            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)
+            {
+                return originalPosition;
+            }
+
+            bool firstTimeThrough = true;
+            this.closestT = -1;
+            this.newPosition = originalPosition + velocityVector;
+            this.newVelocityVector = velocityVector;
+            this.newVelocityVector.Normalize();
+
+            int i;
+
+            for (i = 0; i < this.collisionMesh.Count; i++)
+            {
+                this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
+
+                float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
+
+                if (tValue < 0 || tValue > 1)
+                {
+                    if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
+                    {
+                        tValue = 0; // Sphere is embedded, so don't proceed
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                this.collisionPoint = originalPosition + (velocityVector * tValue);
+
+                float scaleFactor = Vector3.Dot(this.newPosition - this.collisionPoint, this.collisionMesh[i].normal);
+
+                Vector3 tempPoint = collisionPoint + (this.collisionMesh[i].normal * scaleFactor);
+
+                if (this.newPosition == tempPoint)
+                {
+                    this.newVelocityVector = Vector3.Zero;
+                }
+                else
+                {
+                    this.newVelocityVector = this.newPosition - tempPoint;
+                    this.newVelocityVector.Normalize();
+                    this.newVelocityVector *= (tValue * velocityVector.Length());
+                }
+
+                if (firstTimeThrough || tValue < this.closestT)
+                {
+                    if (pointInsidePolygon(this.collisionPoint /*+ ((float)radius * this.collisionMesh[i].normal)*/, this.collisionMesh[i]))
+                    {
+                        this.closestT = tValue;
+                        this.closestVelocityVector = this.newVelocityVector;
+                        this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
+
+                        firstTimeThrough = false;
+                    }
+                }
+            }
+
+            if (firstTimeThrough)
+            {
+                return this.newPosition; // No collisions, just apply velocity vector
+            }
+            else
+            {
+                return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1);
+            }
         }
 
         public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
         {
-            bool collide = levelPieces[0].EmitterCollideWithGeometry(originalPosition, velocityVector, radius);
-            
+            bool collide = this.EmitterCollideWithGeometry(originalPosition, velocityVector, radius);
+
             return collide;
+        }
+
+        /// <summary>
+        /// Determine whether or not a particle emitter collided with the geometry.
+        /// </summary>
+        /// <param name="originalPosition">The original position of the particle emitter</param>
+        /// <param name="velocityVector">The velocity of the particle emitter</param>
+        /// <param name="radius">Effective radius of the emitter</param>
+        /// <returns>This returns either true or false in one pass with no recursion.</returns>
+        public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        {
+
+            bool firstTimeThrough = true;
+            this.closestT = -1;
+            this.newPosition = originalPosition + velocityVector;
+            this.newVelocityVector = velocityVector;
+            this.newVelocityVector.Normalize();
+
+            int i;
+
+            for (i = 0; i < this.collisionMesh.Count; i++)
+            {
+                this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
+
+                float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
+
+                if (tValue < 0 || tValue > 1)
+                {
+                    if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
+                    {
+                        tValue = 0; // Sphere is embedded, so don't proceed
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                this.collisionPoint = originalPosition + (velocityVector * tValue);
+
+                float scaleFactor = Vector3.Dot(this.newPosition - this.collisionPoint, this.collisionMesh[i].normal);
+
+                Vector3 tempPoint = collisionPoint + (this.collisionMesh[i].normal * scaleFactor);
+
+                if (this.newPosition == tempPoint)
+                {
+                    this.newVelocityVector = Vector3.Zero;
+                }
+                else
+                {
+                    this.newVelocityVector = this.newPosition - tempPoint;
+                    this.newVelocityVector.Normalize();
+                    this.newVelocityVector *= (tValue * velocityVector.Length());
+                }
+
+                if (firstTimeThrough || tValue < this.closestT)
+                {
+                    if (pointInsidePolygon(this.collisionPoint /*+ ((float)radius * this.collisionMesh[i].normal)*/, this.collisionMesh[i]))
+                    {
+                        this.closestT = tValue;
+                        this.closestVelocityVector = this.newVelocityVector;
+                        this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
+
+                        firstTimeThrough = false;
+                    }
+                }
+            }
+
+            if (firstTimeThrough)
+            {
+                return false; // No collisions, just return false.
+            }
+            else
+            {
+                return true;
+            }
         }
 
         #endregion
 
         #region Draw
 
-        public void Draw(GraphicsDevice device, ref GameCamera camera)
+        public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh)
         {
             //int currentLocationIndex = 0;
-            //levelPieces[currentLocationIndex].Draw(device, true, ref camera);
+            //levelPieces[currentLocationIndex].Draw(device, ref camera);
+
+            //for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
+            //{
+            //    levelPieces[adjacencyList[currentLocationIndex][i].index].Draw(device, ref camera);
+            //}
+            //levelPieces[1].Draw(device, true, ref camera);
+
+            //
+            // COPIED FROM STATICGEOMETRY
+            //
 
             int currentLocationIndex = 0;
-            levelPieces[currentLocationIndex].Draw(device, true, ref camera);
+
+            CullMode previousCullMode = device.RenderState.CullMode;
+            device.RenderState.CullMode = CullMode.CullClockwiseFace;
+
+            cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
+            cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
+            cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
+            cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
+            //cel_effect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
+            cel_effect.Parameters["diffuseMap0"].SetValue(terrainTexture);
+            cel_effect.Parameters["CelMap"].SetValue(m_celMap);
+            cel_effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
+            cel_effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
+            cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
+            cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
+            cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(lights[0].color);
+            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(lights[0].position);
+
+            this.cel_effect.Begin();
+            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+                levelPieces[currentLocationIndex].Draw(device, ref camera);
+
+                if (drawCollisionMesh)
+                {
+                    FillMode oldFillMode = device.RenderState.FillMode;
+                    device.RenderState.FillMode = FillMode.WireFrame;
+                    device.VertexDeclaration = this.collisionVertexDeclaration;
+                    device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+                    device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
+                    device.RenderState.FillMode = oldFillMode;
+                }
+                pass.End();
+            }
 
             for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
             {
-                levelPieces[adjacencyList[currentLocationIndex][i].index].Draw(device, true, ref camera);
+                foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+                {
+                    pass.Begin();
+
+                    levelPieces[adjacencyList[currentLocationIndex][i].index].Draw(device, ref camera);
+
+                    pass.End();
+                }
             }
-            //levelPieces[1].Draw(device, true, ref camera);
+            this.cel_effect.End();
+            device.RenderState.CullMode = previousCullMode;
         }
 
         #endregion

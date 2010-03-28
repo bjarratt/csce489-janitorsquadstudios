@@ -149,6 +149,7 @@ namespace WorldTest
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
             firstLevel = new Level(graphics.GraphicsDevice, ref content, ref lights, "first_level.txt");
+            firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // Construct our particle system components.
             explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content);
@@ -383,7 +384,7 @@ namespace WorldTest
             }
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, true);
 
             base.Draw(gameTime);
 

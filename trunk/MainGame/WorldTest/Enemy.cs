@@ -136,7 +136,7 @@ namespace WorldTest
 
         private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref Level currentLevel)
         {
-            position = currentLevel.CollideWith(position, new Vector3(0, -1, 0), 0.1);
+            position = currentLevel.CollideWith(position, new Vector3(0, -1, 0), 0.1, Level.MAX_COLLISIONS);
         }
 
         #endregion

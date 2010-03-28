@@ -216,7 +216,7 @@ namespace WorldTest
                 }
                 addVector.Y = 0.0f;
 
-                position = currentLevel.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8);
+                position = currentLevel.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
             }
             else
             {
@@ -228,12 +228,12 @@ namespace WorldTest
 
                 if (stick.Y > 0)
                 {
-                    position = currentLevel.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8);
+                    position = currentLevel.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
                     //position -= addVector * speed;
                 }
                 else
                 {
-                    position = currentLevel.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8);
+                    position = currentLevel.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
                     //position += addVector * speed;
                 }
             }
