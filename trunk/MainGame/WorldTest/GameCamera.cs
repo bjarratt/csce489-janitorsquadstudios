@@ -23,14 +23,18 @@ namespace WorldTest
         #region Properties
 
         //3rd person target
-        Agent Target;
+        private Player Target;
 
         public bool first;
+        public bool cam_movementup;
+        public bool cam_movementside;
 
         public float cameraArc = -5;
         public float cameraRot = 0;
         public float cameraRoll = 0;
         public float cameraDistance = 50;
+        public float cameraMovementUp = 0;
+        public float cameraMovementSide = 0;
 
         //Camera movement and rotation speeds
         public float rotationSpeed = 0.05f; 
@@ -63,6 +67,8 @@ namespace WorldTest
 
             Target = target;
             first = true;
+            cam_movementup = true;
+            cam_movementside = false;
             if (first)
             {
                 position = Target.position;
@@ -73,6 +79,8 @@ namespace WorldTest
                 cameraRot = 0;
                 cameraRoll = 0;
                 cameraDistance = 0;
+                cameraMovementUp = 0;
+                cameraMovementSide = 0;
             }
             else
             {
@@ -115,6 +123,8 @@ namespace WorldTest
                 cameraRot = 0.0f;
                 cameraArc = 0.0f;
                 cameraDistance = 0.0f;
+                cameraMovementUp = 0.0f;
+                cameraMovementSide = 0.0f;
 
                 Matrix trans = Matrix.CreateFromQuaternion(Target.orientation);
                 //this is where the problem most likely resides for orientation getting jacked up when we switch views
@@ -195,8 +205,7 @@ namespace WorldTest
                 cameraArc = -55.0f;
 
             // Check for input to rotate the camera around the model.
-            if (currentKeyboardState.IsKeyDown(Keys.Right) /*||
-                currentKeyboardState.IsKeyDown(Keys.D)*/)
+            if (currentKeyboardState.IsKeyDown(Keys.Right))
             {
                 if (first)
                 {
@@ -208,8 +217,7 @@ namespace WorldTest
                 }
             }
 
-            if (currentKeyboardState.IsKeyDown(Keys.Left) /*||
-                currentKeyboardState.IsKeyDown(Keys.A)*/)
+            if (currentKeyboardState.IsKeyDown(Keys.Left))
             {
                 if (first)
                 {
@@ -255,6 +263,8 @@ namespace WorldTest
                     cameraRot = 0;
                     cameraRoll = 0;
                     cameraDistance = 0;
+                    cameraMovementUp = 0;
+                    cameraMovementSide = 0;
                 }
                 else
                 {
@@ -266,8 +276,10 @@ namespace WorldTest
 
             Vector3 player = Target.position;
             player.Y += 10.0f;
+            
             if (first)
             {
+                PlayerCameraMovement(cam_movementup, cam_movementside, Target.Status);
                 Matrix rollMatrix = Matrix.CreateFromAxisAngle(lookAt, MathHelper.ToRadians(cameraRoll));
                 up = Vector3.Transform(up, rollMatrix);
                 right = Vector3.Transform(right, rollMatrix);
@@ -290,6 +302,58 @@ namespace WorldTest
             projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4,
                                                                   aspectRatio,
                                                                   1, 10000);
+        }
+
+        private void PlayerCameraMovement(bool cam_up, bool cam_side, Player.State state)
+        {
+            if (state == Player.State.running)
+            {
+                if (cam_movementup)
+                {
+                    cameraMovementUp += 0.2f;
+                }
+                else
+                {
+                    cameraMovementUp += 0.2f;
+                }
+
+                if (cam_movementside)
+                {
+                    cameraMovementSide += 0.1f;
+                }
+                else
+                {
+                    cameraMovementSide -= 0.1f;
+                }
+
+                if (cameraMovementUp > (MathHelper.TwoPi * 2) || cameraMovementUp < (-MathHelper.TwoPi * 2))
+                {
+                    cam_movementup = !cam_movementup;
+                    cameraMovementUp = 0;
+                }
+
+                if (cameraMovementSide > MathHelper.TwoPi || cameraMovementSide < -MathHelper.TwoPi)
+                {
+                    cam_movementside = !cam_movementside;
+                    cameraMovementSide = 0;
+                }
+
+                position += right * (float)Math.Cos((double)cameraMovementSide) * 3.0f;
+                position += up * (float)Math.Sin((double)cameraMovementUp) * 1.5f;
+            }
+            else if (state == Player.State.idle)
+            {
+                cameraMovementUp += 0.04f;
+                cameraMovementSide = MathHelper.PiOver2;
+
+                if (cameraMovementUp > MathHelper.TwoPi)
+                {
+                    cameraMovementUp = 0;
+                }
+
+                position += right * (float)Math.Cos((double)cameraMovementSide);
+                position += up * (float)Math.Sin((double)cameraMovementUp);
+            }
         }
 
         public Matrix GetProjectionMatrix() 

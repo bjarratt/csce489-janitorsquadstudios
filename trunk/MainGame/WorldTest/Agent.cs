@@ -65,13 +65,13 @@ namespace WorldTest
         public AnimationController controller;
         public int activeAnimationClip;
 
-        public enum Tex_Select
+        protected enum Tex_Select
         {
             model = 0,
             cel_tex
         }
 
-        public enum Target_Select
+        protected enum Target_Select
         {
             scene = 0,
             normalDepth
