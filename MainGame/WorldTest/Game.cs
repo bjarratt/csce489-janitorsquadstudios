@@ -42,6 +42,7 @@ namespace WorldTest
             graphics.PreferredBackBufferHeight = 600;
 
             graphics.IsFullScreen = false;
+            graphics.SynchronizeWithVerticalRetrace = true;
 
             // Create the screen manager component.
             this.screenManager = new ScreenManager(this, graphics);
