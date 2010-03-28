@@ -428,6 +428,86 @@ namespace WorldTest
             }
         }
 
+        /// <summary>
+        /// Determine whether or not a particle emitter collided with the geometry.
+        /// </summary>
+        /// <param name="originalPosition">The original position of the particle emitter</param>
+        /// <param name="velocityVector">The velocity of the particle emitter</param>
+        /// <param name="radius">Effective radius of the emitter</param>
+        /// <returns>This returns either true or false in one pass with no recursion.</returns>
+        public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        {
+            if (remainingRecursions == 0 || velocityVector == Vector3.Zero)
+            {
+                return originalPosition;
+            }
+
+            bool firstTimeThrough = true;
+            this.closestT = -1;
+            this.newPosition = originalPosition + velocityVector;
+            this.newVelocityVector = velocityVector;
+            this.newVelocityVector.Normalize();
+
+            int i;
+
+            for (i = 0; i < this.collisionMesh.Count; i++)
+            {
+                this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
+
+                float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
+
+                if (tValue < 0 || tValue > 1)
+                {
+                    if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
+                    {
+                        tValue = 0; // Sphere is embedded, so don't proceed
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                this.collisionPoint = originalPosition + (velocityVector * tValue);
+
+                float scaleFactor = Vector3.Dot(this.newPosition - this.collisionPoint, this.collisionMesh[i].normal);
+
+                Vector3 tempPoint = collisionPoint + (this.collisionMesh[i].normal * scaleFactor);
+
+                if (this.newPosition == tempPoint)
+                {
+                    this.newVelocityVector = Vector3.Zero;
+                }
+                else
+                {
+                    this.newVelocityVector = this.newPosition - tempPoint;
+                    this.newVelocityVector.Normalize();
+                    this.newVelocityVector *= (tValue * velocityVector.Length());
+                }
+
+                if (firstTimeThrough || tValue < this.closestT)
+                {
+                    if (pointInsidePolygon(this.collisionPoint /*+ ((float)radius * this.collisionMesh[i].normal)*/, this.collisionMesh[i]))
+                    {
+                        this.closestT = tValue;
+                        this.closestVelocityVector = this.newVelocityVector;
+                        this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
+
+                        firstTimeThrough = false;
+                    }
+                }
+            }
+
+            if (firstTimeThrough)
+            {
+                return false; // No collisions, just return false.
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         #endregion
 
         #region Draw

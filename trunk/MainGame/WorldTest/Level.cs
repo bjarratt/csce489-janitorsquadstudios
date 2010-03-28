@@ -168,6 +168,13 @@ namespace WorldTest
             return newPosition;
         }
 
+        public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        {
+            bool collide = levelPieces[0].EmitterCollideWithGeometry(originalPosition, velocityVector, radius);
+            
+            return collide;
+        }
+
         #endregion
 
         #region Draw
