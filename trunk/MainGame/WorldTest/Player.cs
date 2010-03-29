@@ -28,7 +28,8 @@ namespace WorldTest
         public enum State
         {
             idle = 0,
-            running
+            running,
+            jumping
         };
 
         State state = State.idle;
@@ -46,6 +47,7 @@ namespace WorldTest
         public Player(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "PlayerMarine")
         {
             position = Vector3.Zero;
+            velocity = Vector3.Zero;
             position.Y += 100.0f;
             //position.Z += 100.0f;
             speed = 2.5f; // In meters/second
@@ -164,7 +166,8 @@ namespace WorldTest
 
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref currentLevel);
+                InputState input = new InputState();
+                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, currentKBState, currentGPState, lastGPState, ref currentLevel);
                 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
@@ -179,7 +182,7 @@ namespace WorldTest
                 worldTransform.Translation = position;
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(ref position, orientation, moveSpeed_ms, stickL, currentKBState, ref currentLevel);
+                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, currentKBState, currentGPState, lastGPState, ref currentLevel);
             }
 
             // Update the animation according to the elapsed time
@@ -187,36 +190,81 @@ namespace WorldTest
 
         }
 
-        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, KeyboardState currentKeyState, ref Level currentLevel)
+        private void MoveForward(GameTime gameTime, ref Vector3 position, Quaternion rotationQuat, float speed, 
+            Vector4 stick, KeyboardState currentKeyState, GamePadState current_gamepad, GamePadState prev_gamepad, ref Level currentLevel)
         {
             if (camera.first)
             {
-                Vector3 addVector = Vector3.Zero;
-                if (stick.X > 0 || currentKeyState.IsKeyDown(Keys.D))
+                if (!(Status == State.jumping))
                 {
-                    addVector += camera.right * speed;
+                    velocity.X = 0.0f;
+                    velocity.Z = 0.0f;
                 }
-                else if (stick.X < 0 || currentKeyState.IsKeyDown(Keys.A))
+                if ((stick.X > 0 || currentKeyState.IsKeyDown(Keys.D)) && !(Status == State.jumping))
                 {
-                    addVector -= camera.right * speed;
+                    Status = State.running;
+                    velocity += camera.right * speed;
                 }
-                if (stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W))
+                else if ((stick.X < 0 || currentKeyState.IsKeyDown(Keys.A)) && !(Status == State.jumping))
+                {
+                    Status = State.running;
+                    velocity -= camera.right * speed;
+                }
+
+                if ((stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
-                    addVector += camera.lookAt * speed;
+                    velocity.X += camera.lookAt.X * speed;
+                    velocity.Z += camera.lookAt.Z * speed;
                 }
-                else if (stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S))
+                else if ((stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
-                    addVector -= camera.lookAt * speed;
+                    velocity.X -= camera.lookAt.X * speed;
+                    velocity.Z -= camera.lookAt.Z * speed;
                 }
-                else
+                else if (Status == State.jumping)
+                {
+                    float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
+                }
+                else 
                 {
                     this.Status = State.idle;
                 }
-                addVector.Y = 0.0f;
 
-                position = currentLevel.CollideWith(position, addVector + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
+                if (Status == State.running || Status == State.idle)
+                {
+                    velocity.Y = -0.5f;
+                }
+
+                if (current_gamepad.Buttons.A == ButtonState.Pressed && prev_gamepad.Buttons.A == ButtonState.Released && !(Status == State.jumping))
+                {
+                    this.Status = State.jumping;
+                    velocity.Y += 8;
+                    velocity.X *= 0.5f;
+                    velocity.Z *= 0.5f;
+                }
+
+                Vector3 oldpos = position;
+                position = currentLevel.CollideWith(position, velocity, 0.8, Level.MAX_COLLISIONS);
+
+                if ((oldpos + velocity) == position)    //no collisions
+                {
+                    Status = State.jumping;
+                }
+                else if ((stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
+                {
+                    Status = State.running;
+                }
+                else if ((stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
+                {
+                    Status = State.running;
+                }
+                else
+                {
+                    Status = State.idle;
+                }
             }
             else
             {
