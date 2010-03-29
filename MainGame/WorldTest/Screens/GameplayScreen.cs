@@ -263,7 +263,7 @@ namespace WorldTest
             {
                 // Create a new projectile once per second. The real work of moving
                 // and creating particles is handled inside the Projectile class.
-                projectiles.Add(new Attack(player.position + new Vector3(0,20,0), camera.lookAt * 100.0f, 200, 30, 20, 60f, 0, explosionParticles,
+                projectiles.Add(new Attack(player.position + new Vector3(0,20,0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
                                                explosionSmokeParticles,
                                                projectileTrailParticles));
             }

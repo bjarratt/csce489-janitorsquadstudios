@@ -40,6 +40,7 @@ namespace WorldTest
         protected ContentManager content;
 
         public Vector3 position;
+        public Vector3 velocity;
         protected float speed; // In meters per second
         protected float speedScale; // Scaling factor for speed (to make speed be actual m/s)
         protected float movement_speed_reg;
