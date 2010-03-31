@@ -48,13 +48,20 @@ namespace WorldTest
         private EnemyStats ENEMY_STATS;
 
         private List<Light> lights;
+        private List<Light> explosionLights;
+        private Light relicLight;
+        private bool relicLightOn = false;
+        public static int MAX_LIGHTS = 8;
+        private static float MIN_LIGHT_ATTENUATION = 0.0f;
+
+        private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
         /// <summary>
         /// Stores the last keyboard state and gamepad state.
         /// </summary>
         KeyboardState currentKeyboardState;
         GamePadState currentGamePadState;
-        KeyboardState lastKeyboradState;
+        KeyboardState lastKeyboardState;
         GamePadState lastgamepadState;
 
         /// <summary>
@@ -119,9 +126,12 @@ namespace WorldTest
         {
             //initialize content
             lights = new List<Light>();
+            explosionLights = new List<Light>();
+            relicLight = new Light();
             Light newLight = new Light();
             newLight.color = new Vector3(1, 1, 1);
-            newLight.position = new Vector3(0, 50, 0);
+            newLight.position = new Vector3(0, 100, 0);
+            newLight.attenuationRadius = 1000.0f;
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
         }
@@ -151,7 +161,7 @@ namespace WorldTest
             player.LoadContent();
 
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_attack_final", ENEMY_STATS));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS));
 
             foreach (Enemy e in enemies)
             {
@@ -159,7 +169,7 @@ namespace WorldTest
             }
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            firstLevel = new Level(graphics.GraphicsDevice, ref content, ref lights, "first_level.txt");
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
             firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // Construct our particle system components.
@@ -229,7 +239,6 @@ namespace WorldTest
         public override void Update(GameTime gameTime, bool otherScreenHasFocus,
                                                  bool coveredByOtherScreen)
         {
-            base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
 
             if (IsActive)
             {
@@ -246,23 +255,38 @@ namespace WorldTest
                     invertYAxis = !invertYAxis;
                 }
 
-                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.firstLevel);
+                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel);
+                //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
                 camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
                 //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
                 
 
                 foreach (Enemy e in enemies)
                 {
-                    e.Update(gameTime, ref this.firstLevel);
+                    e.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel);
                 }
 
-                UpdateAttacks(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState);
+                for (int i = 0; i < explosionLights.Count; i++)
+                {
+                    explosionLights[i].currentExplosionTick += GameplayScreen.EXPLOSION_INCR;
+                }
+
+                explosionLights.RemoveAll(explosionLightHasExpired);
+
+                UpdateAttacks(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState);
                 UpdateProjectiles(gameTime);
 
                 // Save previous states
-                lastKeyboradState = currentKeyboardState;
+                lastKeyboardState = currentKeyboardState;
                 lastgamepadState = currentGamePadState;
             }
+
+            base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
+        }
+
+        private static bool explosionLightHasExpired(Light light)
+        {
+            return (light.currentExplosionTick > GameplayScreen.EXPLOSION_INCR * 40.0f);
         }
 
         /// <summary>
@@ -273,11 +297,14 @@ namespace WorldTest
         {
             if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
             {
-                // and creating particles is handled inside the Projectile class.
-                
-                //projectiles.Add(new Attack(ref player, player.position + new Vector3(0,20,0), Vector3.Zero, 10, 30, 20, 100f, -10f, explosionParticles,
-                //                               explosionSmokeParticles,
-                //                               projectileTrailParticles));
+                relicLight.attenuationRadius = 1000.0f;
+                relicLight.color = new Vector3(0.87f, 0.2f, 0.0f) * 2.0f;
+                relicLight.currentExplosionTick = 0.0f;
+                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                pos += camera.right * 5;
+                pos += camera.lookAt * 20;
+                relicLight.position = pos;
+                this.relicLightOn = true;
             }
             else if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Pressed)
             {
@@ -286,6 +313,7 @@ namespace WorldTest
                 {
                     pos += camera.right * 4;
                     pos += camera.lookAt * 22;
+                    relicLight.position = pos;
                     for (int i = 0; i < 20; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);
@@ -295,6 +323,7 @@ namespace WorldTest
                 {
                     pos += camera.right * 4;
                     pos += camera.lookAt * 20;
+                    relicLight.position = pos;
                     for (int i = 0; i < 3; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);
@@ -303,6 +332,8 @@ namespace WorldTest
             }
             if (current_g_state.Buttons.B == ButtonState.Released && prev_g_state.Buttons.B == ButtonState.Pressed)
             {
+                this.relicLightOn = false;
+
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
@@ -337,6 +368,7 @@ namespace WorldTest
                 if (!projectiles[i].Update(gameTime, ref firstLevel))
                 {
                     // Remove projectiles at the end of their life.
+                    explosionLights.Add(new Light(projectiles[i].Position, new Vector3(0.87f, 0.2f, 0.0f) * 5.5f, 500.0f, 0.0f));
                     projectiles.RemoveAt(i);
                 }
                 else
@@ -394,6 +426,11 @@ namespace WorldTest
                                                Color.CornflowerBlue, 0, 0);
             List<Light> projLightList = new List<Light>();
             projLightList.AddRange(lights);
+            if (this.relicLightOn)
+            {
+                projLightList.Add(this.relicLight);
+            }
+            projLightList.AddRange(explosionLights);
             foreach (Projectile projectile in projectiles)
             {
                 projLightList.Add(projectile.light);
@@ -439,14 +476,14 @@ namespace WorldTest
 
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
-            player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+            player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
-                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref lights);
+                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             }
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, true);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, ref projLightList);
 
             //Draw lights
             DrawLights();

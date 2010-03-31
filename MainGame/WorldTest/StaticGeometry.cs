@@ -23,8 +23,6 @@ namespace WorldTest
     {
         #region Properties
 
-        private List<Light> lights;
-
         private string visibleMeshFilename;
         private VertexBuffer terrainVertexBuffer;
         private VertexDeclaration vertexDeclaration;
@@ -43,9 +41,8 @@ namespace WorldTest
         /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename, ref List<Light> lights)
+        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename)
         {
-            this.lights = lights;
             this.visibleMeshFilename = visibleMeshFilename;
             this.CollisionMeshFilename = collisionMeshFilename;
             //this.collisionMeshOffset = collisionMeshOffset;
@@ -114,6 +111,8 @@ namespace WorldTest
                 if (splitLine[0] == "v") // Position
                 {
                     Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+
+
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
                 else if (splitLine[0] == "vn") // Normal

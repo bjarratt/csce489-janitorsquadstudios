@@ -46,7 +46,7 @@ namespace WorldTest
 
         public Player(GraphicsDeviceManager Graphics, ContentManager Content) : base(Graphics, Content, "PlayerMarine")
         {
-            position = Vector3.Zero;
+            position = new Vector3(0, 40, 0);
             velocity = Vector3.Zero;
             speed = 2.5f; // In meters/second
 
@@ -105,7 +105,7 @@ namespace WorldTest
 
             shader = content.Load<Effect>("CelShade");
             textures.SetValue(content.Load<Texture2D>("ColorMap"), (int)Tex_Select.model);
-            textures.SetValue(content.Load<Texture2D>("Toon"), (int)Tex_Select.cel_tex);
+            textures.SetValue(content.Load<Texture2D>("Toon2"), (int)Tex_Select.cel_tex);
 
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
@@ -321,16 +321,20 @@ namespace WorldTest
                     //effect.Parameters["shadowMap"].SetValue(shadow.GetTexture());
                     effect.Parameters["diffuseMap0"].SetValue(textures[(int)Tex_Select.model]);
                     effect.Parameters["CelMap"].SetValue(textures[(int)Tex_Select.cel_tex]);
-                    effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
+                    effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.01f));
                     effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
                     effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                     effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
                     for (int i = 0; i < Lights.Count; i++)
                     {
-                        //Vector3 pos = Vector3.Transform(Lights[i].position, worldTransform);
-                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights.ElementAt(i).color);
+                        if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                        {
+                            break;
+                        }
+                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights.ElementAt(i).color * (1 - Lights[i].currentExplosionTick));
                         effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights.ElementAt(i).position);
+                        effect.Parameters["lightRadii"].Elements[i].SetValue(Lights.ElementAt(i).attenuationRadius);
                     }
                     switch (Lights.Count)
                     {
@@ -338,13 +342,19 @@ namespace WorldTest
                             break;
                         case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight"];
                             break;
+                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight"];
+                            break;
                         case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight"];
+                            break;
+                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight"];
                             break;
                         case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight"];
                             break;
+                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight"];
+                            break;
                         case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
                             break;
-                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight"];
+                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
                             break;
                     }
                 }

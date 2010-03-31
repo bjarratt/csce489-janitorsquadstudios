@@ -40,7 +40,7 @@ namespace WorldTest
 
         private List<List<GeometryConnector>> adjacencyList;
         private List<StaticGeometry> levelPieces;
-        private List<Light> lights;
+        //private List<Light> lights;
 
         private Effect cel_effect;
         private Texture2D m_celMap;
@@ -61,9 +61,8 @@ namespace WorldTest
 
         #region Constructor
 
-        public Level(GraphicsDevice device, ref ContentManager content, ref List<Light> lights, string levelFilename)
+        public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
         {
-            this.lights = lights;
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
 
@@ -186,7 +185,7 @@ namespace WorldTest
                 adjacencyList.Add(currentList);
 
                 // Load the StaticGeometry from file name
-                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], ref lights); // splitLine[1] is collisionMeshFilename
+                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1]); // splitLine[1] is collisionMeshFilename
 
                 levelPieces.Add(levelPiece);
 
@@ -196,7 +195,9 @@ namespace WorldTest
 
         private Matrix CreateSnapMatrix(Vector3 basePoint, Vector3 baseNormal, Vector3 childPoint, Vector3 childNormal)
         {
-            Quaternion rotationQuat = Quaternion.CreateFromAxisAngle(Vector3.Up, (float)Math.Acos(Vector3.Dot(baseNormal, childNormal)));
+            float baseDotChild = Vector3.Dot(baseNormal, childNormal);
+            MathHelper.Clamp(baseDotChild, -1.0f, 1.0f);
+            Quaternion rotationQuat = Quaternion.CreateFromAxisAngle(Vector3.Up, (float)Math.Acos(MathHelper.Clamp(baseDotChild, -1.0f, 1.0f)));
             Matrix rotationMatrix = Matrix.CreateFromQuaternion(rotationQuat);
             Vector3 rotatedChildPoint = Vector3.Transform(childPoint, rotationMatrix);
             Vector3 translation = basePoint - rotatedChildPoint;
@@ -212,7 +213,7 @@ namespace WorldTest
         public void Load(GraphicsDevice device, ref ContentManager content)
         {
             cel_effect = content.Load<Effect>("CelShade");
-            m_celMap = content.Load<Texture2D>("Toon");
+            m_celMap = content.Load<Texture2D>("Toon2");
             terrainTexture = content.Load<Texture2D>("tex");
         }
 
@@ -230,6 +231,9 @@ namespace WorldTest
             List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of triangles (every 3 vertices is a triangle)
 
             VertexPositionNormalTexture currentVertex;
+
+            Vector3 largestValues = new Vector3(-10000);
+            Vector3 smallestValues = new Vector3(10000);
 
             // Variables used for collision meshes
             CollisionPolygon currentPolygon;
@@ -269,6 +273,34 @@ namespace WorldTest
                 if (splitLine[0] == "v") // Position
                 {
                     Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    if (position.X > largestValues.X)
+                    {
+                        largestValues = position;
+                    }
+                    /*
+                    if (position.Y > largestValues.Y)
+                    {
+                        largestValues.Y = position.Y;
+                    }
+                    if (position.Z > largestValues.Z)
+                    {
+                        largestValues.Z = position.Z;
+                    }
+                     */
+
+                    if (position.X < smallestValues.X)
+                    {
+                        smallestValues = position;
+                    }
+                    /*
+                    if (position.Y < smallestValues.Y)
+                    {
+                        smallestValues.Y = position.Y;
+                    }
+                    if (position.Z < smallestValues.Z)
+                    {
+                        smallestValues.Z = position.Z;
+                    }*/
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
                 else if (splitLine[0] == "vn") // Normal
@@ -501,9 +533,9 @@ namespace WorldTest
             }
         }
 
-        public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, out Vector3 collisionPoint)
         {
-            bool collide = this.EmitterCollideWithGeometry(originalPosition, velocityVector, radius);
+            bool collide = this.EmitterCollideWithGeometry(originalPosition, velocityVector, radius, out collisionPoint);
 
             return collide;
         }
@@ -515,7 +547,7 @@ namespace WorldTest
         /// <param name="velocityVector">The velocity of the particle emitter</param>
         /// <param name="radius">Effective radius of the emitter</param>
         /// <returns>This returns either true or false in one pass with no recursion.</returns>
-        public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius)
+        public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius, out Vector3 outCollisionPoint)
         {
 
             bool firstTimeThrough = true;
@@ -576,10 +608,12 @@ namespace WorldTest
 
             if (firstTimeThrough)
             {
+                outCollisionPoint = this.newPosition;
                 return false; // No collisions, just return false.
             }
             else
             {
+                outCollisionPoint = this.closestCollisionPoint;
                 return true;
             }
         }
@@ -588,7 +622,7 @@ namespace WorldTest
 
         #region Draw
 
-        public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh)
+        public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh, ref List<Light> lights)
         {
             //int currentLocationIndex = 0;
             //levelPieces[currentLocationIndex].Draw(device, ref camera);
@@ -608,14 +642,14 @@ namespace WorldTest
             CullMode previousCullMode = device.RenderState.CullMode;
             device.RenderState.CullMode = CullMode.CullClockwiseFace;
 
-            cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
+            cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_OneLight"];
             cel_effect.Parameters["matW"].SetValue(Matrix.Identity);
             cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
             cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
             //cel_effect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
             cel_effect.Parameters["diffuseMap0"].SetValue(terrainTexture);
             cel_effect.Parameters["CelMap"].SetValue(m_celMap);
-            cel_effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
+            cel_effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.0f));
             cel_effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
             cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
             cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
@@ -623,9 +657,34 @@ namespace WorldTest
 
             for (int i = 0; i < lights.Count; i++)
             {
-                //Vector3 pos = Vector3.Transform(lights[i].position, 
-                cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(lights[i].color);
-                cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(lights[i].position);
+                if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                {
+                    break;
+                }
+                cel_effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(lights[i].color * (1 - lights[i].currentExplosionTick));
+                cel_effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(lights[i].position);
+                cel_effect.Parameters["lightRadii"].Elements[i].SetValue(lights.ElementAt(i).attenuationRadius);
+            }
+            switch (lights.Count)
+            {
+                case 1: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_OneLight"];
+                    break;
+                case 2: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_TwoLight"];
+                    break;
+                case 3: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_ThreeLight"];
+                    break;
+                case 4: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FourLight"];
+                    break;
+                case 5: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FiveLight"];
+                    break;
+                case 6: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SixLight"];
+                    break;
+                case 7: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SevenLight"];
+                    break;
+                case 8: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight"];
+                    break;
+                default: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight"];
+                    break;
             }
 
             this.cel_effect.Begin();

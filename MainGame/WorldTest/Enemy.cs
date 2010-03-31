@@ -53,7 +53,7 @@ namespace WorldTest
 
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
         {
-            position = new Vector3(0, 100, 100);
+            position = new Vector3(0, 100, -100);
             speed = 0.0f;
 
             this.stats = stats;
@@ -103,7 +103,7 @@ namespace WorldTest
 
             shader = content.Load<Effect>("CelShade");
             textures.SetValue(content.Load<Texture2D>("ColorMap"), (int)Tex_Select.model);
-            textures.SetValue(content.Load<Texture2D>("Toon"), (int)Tex_Select.cel_tex);
+            textures.SetValue(content.Load<Texture2D>("Toon2"), (int)Tex_Select.cel_tex);
 
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
@@ -118,7 +118,9 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ref Level currentLevel)
+        public void Update(GameTime gameTime, GamePadState currentGPState,
+            GamePadState lastGPState, KeyboardState currentKBState,
+            KeyboardState lastKBState, ref Level currentLevel)
         {
             //reset rotation
             rotation = 0.0f;
@@ -129,6 +131,17 @@ namespace WorldTest
 
             MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref currentLevel);
             worldTransform.Translation = position;
+
+            if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
+            {
+                controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
+                controller.Speed = 1.0f;
+            }
+            else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
+            {
+                controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
+                controller.Speed = 3.0f;
+            }
 
             // Update the animation according to the elapsed time
             controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
@@ -176,15 +189,20 @@ namespace WorldTest
                     //effect.Parameters["shadowMap"].SetValue(shadow.GetTexture());
                     effect.Parameters["diffuseMap0"].SetValue(textures[(int)Tex_Select.model]);
                     effect.Parameters["CelMap"].SetValue(textures[(int)Tex_Select.cel_tex]);
-                    effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.1f));
+                    effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.01f));
                     effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
                     effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                     effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
                     for (int i = 0; i < Lights.Count; i++)
                     {
-                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights[i].color);
+                        if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                        {
+                            break;
+                        }
+                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights[i].color * (1 - Lights[i].currentExplosionTick));
                         effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights[i].position);
+                        effect.Parameters["lightRadii"].Elements[i].SetValue(Lights[i].attenuationRadius);
                     }
                     switch (Lights.Count)
                     {
@@ -192,13 +210,19 @@ namespace WorldTest
                             break;
                         case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight"];
                             break;
+                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight"];
+                            break;
                         case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight"];
+                            break;
+                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight"];
                             break;
                         case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight"];
                             break;
+                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight"];
+                            break;
                         case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
                             break;
-                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight"];
+                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
                             break;
                     }
                 }
