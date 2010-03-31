@@ -28,7 +28,6 @@ namespace WorldTest
         #region Fields
 
         public bool is_released = false;
-        protected Player source_entity;
 
         protected float trailParticlesPerSecond; //200
         protected int numContactParticles; //30

@@ -28,23 +28,23 @@ namespace WorldTest
 
         protected override void InitializeSettings(ParticleSettings settings)
         {
-            settings.TextureName = "explosion";
+            settings.TextureName = "fire";
 
-            settings.MaxParticles = 100;
+            settings.MaxParticles = 10000;
 
             settings.Duration = TimeSpan.FromSeconds(2);
             settings.DurationRandomness = 1;
 
-            settings.MinHorizontalVelocity = 20;
-            settings.MaxHorizontalVelocity = 30;
+            settings.MinHorizontalVelocity = 40;
+            settings.MaxHorizontalVelocity = 50;
 
-            settings.MinVerticalVelocity = -20;
-            settings.MaxVerticalVelocity = 20;
+            settings.MinVerticalVelocity = -50;
+            settings.MaxVerticalVelocity = 50;
 
             settings.EndVelocity = 0;
 
-            settings.MinColor = Color.DarkGray;
-            settings.MaxColor = Color.Gray;
+            settings.MinColor = Color.White;
+            settings.MaxColor = Color.White;
 
             settings.MinRotateSpeed = -1;
             settings.MaxRotateSpeed = 1;
