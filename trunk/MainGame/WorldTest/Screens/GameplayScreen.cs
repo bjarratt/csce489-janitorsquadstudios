@@ -52,7 +52,9 @@ namespace WorldTest
         private Light relicLight;
         private bool relicLightOn = false;
         public static int MAX_LIGHTS = 8;
-        private static float MIN_LIGHT_ATTENUATION = 0.0f;
+
+        public static Vector3 FIRE_COLOR = new Vector3(0.87f, 0.2f, 0.0f);
+        public static Vector3 ICE_COLOR = new Vector3(0.2f, 0.8f, 1.0f);
 
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
@@ -298,7 +300,7 @@ namespace WorldTest
             if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
             {
                 relicLight.attenuationRadius = 1000.0f;
-                relicLight.color = new Vector3(0.87f, 0.2f, 0.0f) * 2.0f;
+                relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 pos += camera.right * 5;
@@ -368,7 +370,7 @@ namespace WorldTest
                 if (!projectiles[i].Update(gameTime, ref firstLevel))
                 {
                     // Remove projectiles at the end of their life.
-                    explosionLights.Add(new Light(projectiles[i].Position, new Vector3(0.87f, 0.2f, 0.0f) * 5.5f, 500.0f, 0.0f));
+                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 500.0f, 0.0f));
                     projectiles.RemoveAt(i);
                 }
                 else
@@ -494,7 +496,6 @@ namespace WorldTest
             if (TransitionPosition > 0)
                 ScreenManager.FadeBackBufferToBlack(255 - TransitionAlpha);
         }
-        #endregion
 
         /// <summary>
         /// This simple draw function is used to draw the on-screen
@@ -536,5 +537,7 @@ namespace WorldTest
             pointLightMeshEffect.CurrentTechnique.Passes[0].End();
             pointLightMeshEffect.End();
         }
+
+        #endregion
     }
 }
