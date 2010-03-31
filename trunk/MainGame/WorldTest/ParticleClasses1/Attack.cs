@@ -29,6 +29,7 @@ namespace WorldTest
             this.extraContactParticles = extraContactParticles;
             trailEmitter = new ParticleEmitter(projectileTrailParticles,
                                                trailParticlesPerSecond, position);
+            light = new Light(position, new Vector3(1, 1, 1));
         }
 
         public override bool Update(GameTime gameTime, ref Level level)

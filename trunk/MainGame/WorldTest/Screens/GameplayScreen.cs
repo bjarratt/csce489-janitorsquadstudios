@@ -355,6 +355,12 @@ namespace WorldTest
             // This game has a blue background. Why? Because!
             ScreenManager.GraphicsDevice.Clear(ClearOptions.Target,
                                                Color.CornflowerBlue, 0, 0);
+            List<Light> projLightList = new List<Light>();
+            projLightList.AddRange(lights);
+            foreach (Projectile projectile in projectiles)
+            {
+                projLightList.Add(projectile.light);
+            }
 
             GraphicsDevice device = graphics.GraphicsDevice;
 
