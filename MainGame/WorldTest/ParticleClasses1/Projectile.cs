@@ -10,6 +10,7 @@
 #region Using Statements
 using System;
 using Microsoft.Xna.Framework;
+using System.Collections.Generic;
 #endregion
 
 namespace WorldTest
@@ -39,8 +40,15 @@ namespace WorldTest
         protected ParticleEmitter trailEmitter;
 
         protected Vector3 position;
+        public Vector3 Position
+        {
+            get { return position; }
+            internal set { position = value; }
+        }
         protected Vector3 velocity;
         protected float age;
+
+        public Light light;
 
         static Random random = new Random();
 
@@ -67,6 +75,7 @@ namespace WorldTest
             position += velocity * elapsedTime;
             velocity.Y -= elapsedTime * gravity;
             age += elapsedTime;
+            light.position = new Vector3(this.position.X, this.position.Y, this.position.Z);
 
             // Update the particle emitter, which will create our particle trail.
             trailEmitter.Update(gameTime, position);
