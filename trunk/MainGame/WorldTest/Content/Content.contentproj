@@ -70,13 +70,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Toon.bmp">
-      <Name>Toon</Name>
-      <Importer>TextureImporter</Importer>
-      <Processor>TextureProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="PlayerMarine.fbx">
       <Name>PlayerMarine</Name>
       <Importer>FbxImporter</Importer>
@@ -189,13 +182,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="enemy1_idle_final.fbx">
-      <Name>enemy1_idle_final</Name>
-      <Importer>FbxImporter</Importer>
-      <Processor>SkinnedModelProcessor</Processor>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="SphereLowPoly.fbx">
       <Name>SphereLowPoly</Name>
       <Importer>FbxImporter</Importer>
@@ -210,15 +196,17 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="enemy1_attack_final.fbx">
-      <Name>enemy1_attack_final</Name>
+    <Compile Include="enemy1_all_final.fbx">
+      <Name>enemy1_all_final</Name>
       <Importer>FbxImporter</Importer>
       <Processor>SkinnedModelProcessor</Processor>
     </Compile>
-    <Compile Include="enemy1_walk_final.fbx">
-      <Name>enemy1_walk_final</Name>
-      <Importer>FbxImporter</Importer>
-      <Processor>SkinnedModelProcessor</Processor>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Toon2.bmp">
+      <Name>Toon2</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Microsoft\XNA Game Studio\$(XnaFrameworkVersion)\Microsoft.Xna.GameStudio.ContentPipeline.targets" />

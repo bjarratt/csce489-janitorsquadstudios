@@ -42,6 +42,7 @@ Material material;
 float3 ambientLightColor;
 PointLight lights[MAX_LIGHTS];
 float4x4 lightview[MAX_LIGHTS];
+float lightRadii[MAX_LIGHTS];
 
 // Textures and Samplers
 // -------------------------------------------------
@@ -318,8 +319,8 @@ float3 PhongShadingPS(
 	in float3 inSpecularColor,
 	in float  inSpecularPower)
 {
-	float3 diffuseLightColor = ambientLightColor * inDiffuseColor;
-	float3 specularLightColor = float3(1,1,1);
+	float3 diffuseLightColor = float3(0,0,0);
+	float3 specularLightColor = float3(0,0,0);
 	float4 CelColor = float4(0,0,0,0);
 	//float4 light_pos = mul(inPosition, lightview[0]);
 	//float shadow_test = light_pos.z / light_pos.w;
@@ -331,8 +332,12 @@ float3 PhongShadingPS(
 		for (int i = 0; i < lightCount; i++)
 		{
 			// Light vector
-			float3 lightVector = normalize(lights[i].position - inPosition);
+			float3 lightVector = lights[i].position - inPosition;
+			//float attenuation = 1.0 + 0.007 * length(lightVector) + 0.0002 * length(lightVector) * length(lightVector); 
+			float attenuation = saturate(1 - dot(lightVector/lightRadii[i], lightVector/lightRadii[i]));
 
+			lightVector = normalize(lightVector);
+			
 			// Diffuse intensity
 			float diffuseIntensity = saturate(dot(inNormal, lightVector));
 			float3 reflect = normalize(2*diffuseIntensity*inNormal - lightVector);
@@ -342,8 +347,8 @@ float3 PhongShadingPS(
 			// Specular intensity
 			float specularIntensity = pow(saturate(dot(reflect, inEyeVector)), inSpecularPower);
 		
-			diffuseLightColor += lights[i].color * diffuseIntensity;
-			specularLightColor += lights[i].color * specularIntensity;
+			diffuseLightColor += (lights[i].color * diffuseIntensity * attenuation);
+			specularLightColor += (lights[i].color * specularIntensity * attenuation);
 		}
 
 		return (diffuseLightColor * inDiffuseColor + specularLightColor * inSpecularColor) * CelColor;
@@ -376,7 +381,7 @@ void StaticModelPS_Light(
     // Calculate final color
     outColor0.a = 1.0f;
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
-		eyeVector, diffuseColor, specularColor, material.specularPower);
+		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 }
 
 void animatedModelPS_Light(
@@ -405,7 +410,7 @@ void animatedModelPS_Light(
     // Calculate final color
     outColor0.a = 1.0f;
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
-		eyeVector, diffuseColor, specularColor, material.specularPower);
+		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 }
 
 void animatedModelGrayPS_Light(
@@ -497,15 +502,15 @@ float4 Black() : COLOR
 // Techniques
 // -------------------------------------------------
 
-technique StaticModel
+technique StaticModel_OneLight
 < string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
 {
 	pass p0
 	{
 		AlphaBlendEnable = FALSE;
 		
-		VertexShader = compile vs_2_0 StaticModelVS_Light();
-        PixelShader = compile ps_2_0 StaticModelPS_Light(1);
+		VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(1);
         CullMode = CW;
 	}
 	
@@ -517,6 +522,146 @@ technique StaticModel
 	}
 }
 
+technique StaticModel_TwoLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(2);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_ThreeLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(3);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FourLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(4);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FiveLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(5);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SixLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(6);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SevenLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(7);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_EightLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelPS_Light(8);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
 technique AnimatedModel_NoLight 
 < string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
 {
@@ -524,14 +669,14 @@ technique AnimatedModel_NoLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_0 animatedModelPS_Light(0);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(0);
     }
     
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -543,14 +688,14 @@ technique AnimatedModel_OneLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_0 animatedModelPS_Light(1);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(1);
         CullMode = CCW;
     }
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -562,14 +707,14 @@ technique AnimatedModel_OneLight_Gray
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_0 animatedModelGrayPS_Light(1);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(1);
         CullMode = CCW;
     }
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -581,15 +726,34 @@ technique AnimatedModel_TwoLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_0 animatedModelPS_Light(2);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(2);
         CullMode = CCW;
     }
     
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_ThreeLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(3);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -601,15 +765,34 @@ technique AnimatedModel_FourLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_b animatedModelPS_Light(4);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(4);
         CullMode = CCW;
     }
     
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_FiveLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(5);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -621,15 +804,34 @@ technique AnimatedModel_SixLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_b animatedModelPS_Light(6);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(6);
         CullMode = CCW;
     }
     
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_SevenLight
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(7);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -641,15 +843,15 @@ technique AnimatedModel_EightLight
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_Light();
-        PixelShader = compile ps_2_b animatedModelPS_Light(8);
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelPS_Light(8);
         CullMode = CCW;
     }
     
     pass p1
     {
-		VertexShader = compile vs_2_0 Outline_Animated();
-		PixelShader  = compile ps_2_0 Black();
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
 		CullMode = CW;
     }
 }
@@ -661,8 +863,8 @@ technique AnimatedModel_OneLightWithNormal
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
-        PixelShader = compile ps_2_0 animatedModelPS_LightWithNormal(1);
+        VertexShader = compile vs_3_0 AnimatedModelVS_LightWithNormal();
+        PixelShader = compile ps_3_0 animatedModelPS_LightWithNormal(1);
     }
 }
 
@@ -673,8 +875,8 @@ technique AnimatedModel_TwoLightWithNormal
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
-        PixelShader = compile ps_2_0 animatedModelPS_LightWithNormal(2);
+        VertexShader = compile vs_3_0 AnimatedModelVS_LightWithNormal();
+        PixelShader = compile ps_3_0 animatedModelPS_LightWithNormal(2);
     }
 }
 
@@ -685,7 +887,7 @@ technique AnimatedModel_FourLightWithNormal
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
+        VertexShader = compile vs_3_0 AnimatedModelVS_LightWithNormal();
         PixelShader = compile ps_2_b animatedModelPS_LightWithNormal(4);
     }
 }
@@ -697,7 +899,7 @@ technique AnimatedModel_SixLightWithNormal
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
+        VertexShader = compile vs_3_0 AnimatedModelVS_LightWithNormal();
         PixelShader = compile ps_2_b animatedModelPS_LightWithNormal(6);
         
     }
@@ -710,7 +912,7 @@ technique AnimatedModel_EightLightWithNormal
     {
 		AlphaBlendEnable = FALSE;
 		
-        VertexShader = compile vs_2_0 AnimatedModelVS_LightWithNormal();
+        VertexShader = compile vs_3_0 AnimatedModelVS_LightWithNormal();
         PixelShader = compile ps_2_b animatedModelPS_LightWithNormal(8);
     }
 }
@@ -754,7 +956,7 @@ technique ShadowMap
 {
     pass Pass0
     {
-        VertexShader = compile vs_2_0 ShadowMapVertexShader();
-        PixelShader = compile ps_2_0 ShadowMapPixelShader();
+        VertexShader = compile vs_3_0 ShadowMapVertexShader();
+        PixelShader = compile ps_3_0 ShadowMapPixelShader();
     }
 }

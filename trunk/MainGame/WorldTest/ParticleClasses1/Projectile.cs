@@ -104,13 +104,15 @@ namespace WorldTest
             }
             velocity.Y -= elapsedTime * gravity;
             age += elapsedTime;
-            light.position = new Vector3(this.position.X, this.position.Y, this.position.Z);
+            light.position = this.position;
 
             // Update the particle emitter, which will create our particle trail.
             trailEmitter.Update(gameTime, position);
 
+            Vector3 collidedPosition = this.position;
+
             //collision detect whether emitter collided with geometry or agents
-            if (level.EmitterCollideWith(this.position, this.velocity, 0.2f))
+            if (level.EmitterCollideWith(this.position, this.velocity, 0.2f, out collidedPosition))
             {
                 age = projectileLifespan + 1;
             }
@@ -125,6 +127,8 @@ namespace WorldTest
 
                 for (int i = 0; i < numExtraContactParticles; i++)
                     extraContactParticles.AddParticle(position, velocity);
+
+                this.position = this.position + ((collidedPosition - this.position) / 2.0f);
 
                 return false;
             }
