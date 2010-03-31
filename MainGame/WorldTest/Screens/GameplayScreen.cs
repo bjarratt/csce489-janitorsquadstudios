@@ -33,6 +33,10 @@ namespace WorldTest
 
         Level firstLevel;
 
+        private Model pointLightMesh;
+        private Effect pointLightMeshEffect;
+        private Matrix lightMeshWorld;
+
         //Texture2D terrainTexture;
 
         GameCamera camera;
@@ -115,7 +119,11 @@ namespace WorldTest
         {
             //initialize content
             lights = new List<Light>();
-            lights.Add(new Light(new Vector3(100, 100, 100), new Vector3(1, 1, 1)));
+            Light newLight = new Light();
+            newLight.color = new Vector3(1, 1, 1);
+            newLight.position = new Vector3(100, 50, 100);
+            lights.Add(newLight);
+            lightMeshWorld = Matrix.Identity;
         }
 
         /// <summary>
@@ -132,6 +140,9 @@ namespace WorldTest
             // Create a new SpriteBatch, which can be used to draw textures.
 
             GraphicsDevice device = graphics.GraphicsDevice;
+
+            pointLightMeshEffect = content.Load<Effect>("PointLightMesh");
+            pointLightMesh = content.Load<Model>("SphereLowPoly");
 
             player = new Player(graphics, content);
             camera = new GameCamera(graphics, ref player);
@@ -237,6 +248,8 @@ namespace WorldTest
 
                 player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboradState, ref this.firstLevel);
                 camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
+                //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
+                
 
                 foreach (Enemy e in enemies)
                 {
@@ -386,6 +399,9 @@ namespace WorldTest
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
             firstLevel.Draw(graphics.GraphicsDevice, ref camera, true);
 
+            //Draw lights
+            DrawLights();
+
             base.Draw(gameTime);
 
             // If the game is transitioning on or off, fade it out to black.
@@ -393,5 +409,46 @@ namespace WorldTest
                 ScreenManager.FadeBackBufferToBlack(255 - TransitionAlpha);
         }
         #endregion
+
+        /// <summary>
+        /// This simple draw function is used to draw the on-screen
+        /// representation of the lights affecting the meshes in the scene.
+        /// </summary>
+        public void DrawLights()
+        {
+            ModelMesh mesh = pointLightMesh.Meshes[0];
+            ModelMeshPart meshPart = mesh.MeshParts[0];
+
+            graphics.GraphicsDevice.Vertices[0].SetSource(
+                mesh.VertexBuffer, meshPart.StreamOffset, meshPart.VertexStride);
+            graphics.GraphicsDevice.VertexDeclaration = meshPart.VertexDeclaration;
+            graphics.GraphicsDevice.Indices = mesh.IndexBuffer;
+
+
+            pointLightMeshEffect.Begin(SaveStateMode.None);
+            pointLightMeshEffect.CurrentTechnique.Passes[0].Begin();
+
+
+            for (int i = 0; i < lights.Count; i++)
+            {
+                lightMeshWorld.M41 = lights[i].position.X;
+                lightMeshWorld.M42 = lights[i].position.Y;
+                lightMeshWorld.M43 = lights[i].position.Z;
+
+                pointLightMeshEffect.Parameters["world"].SetValue(lightMeshWorld);
+                pointLightMeshEffect.Parameters["view"].SetValue(camera.GetViewMatrix());
+                pointLightMeshEffect.Parameters["projection"].SetValue(camera.GetProjectionMatrix());
+                pointLightMeshEffect.Parameters["lightColor"].SetValue(
+                   new Vector4(lights[i].color, 1f));
+                pointLightMeshEffect.CommitChanges();
+
+                graphics.GraphicsDevice.DrawIndexedPrimitives(
+                    PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
+                    meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
+
+            }
+            pointLightMeshEffect.CurrentTechnique.Passes[0].End();
+            pointLightMeshEffect.End();
+        }
     }
 }

@@ -609,7 +609,7 @@ namespace WorldTest
             device.RenderState.CullMode = CullMode.CullClockwiseFace;
 
             cel_effect.CurrentTechnique = cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel"];
-            cel_effect.Parameters["matW"].SetValue(Matrix.CreateScale(1.0f));
+            cel_effect.Parameters["matW"].SetValue(Matrix.Identity);
             cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
             cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
             //cel_effect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
@@ -620,8 +620,13 @@ namespace WorldTest
             cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
             cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
             cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(lights[0].color);
-            cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(lights[0].position);
+
+            for (int i = 0; i < lights.Count; i++)
+            {
+                //Vector3 pos = Vector3.Transform(lights[i].position, 
+                cel_effect.Parameters["lights"].Elements[0].StructureMembers["color"].SetValue(lights[i].color);
+                cel_effect.Parameters["lights"].Elements[0].StructureMembers["position"].SetValue(lights[i].position);
+            }
 
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
