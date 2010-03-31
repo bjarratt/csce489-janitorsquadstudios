@@ -28,7 +28,7 @@ namespace WorldTest
 
         protected override void InitializeSettings(ParticleSettings settings)
         {
-            settings.TextureName = "smoke";
+            settings.TextureName = "fire";
 
             settings.MaxParticles = 100000;
 
@@ -55,6 +55,10 @@ namespace WorldTest
 
             settings.MinEndSize = 5;
             settings.MaxEndSize = 15;
+
+            // Use additive blending.
+            settings.SourceBlend = Blend.SourceAlpha;
+            settings.DestinationBlend = Blend.One;
         }
     }
 }

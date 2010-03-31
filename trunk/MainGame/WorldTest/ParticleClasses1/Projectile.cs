@@ -27,13 +27,26 @@ namespace WorldTest
 
         #region Fields
 
+        public bool is_released = false;
+        protected Player source_entity;
+
         protected float trailParticlesPerSecond; //200
         protected int numContactParticles; //30
         protected int numExtraContactParticles; //10
         protected float projectileLifespan; //1.5
+        public float LifeSpan
+        {
+            get { return projectileLifespan; }
+            set { projectileLifespan = value; }
+        }
         protected float sidewaysVelocityRange = 60;
         protected float verticalVelocityRange = 40;
         protected float gravity; //15
+        public float Gravity
+        {
+            get { return gravity; }
+            set { gravity = value; }
+        }
 
         protected ParticleSystem contactParticles;
         protected ParticleSystem extraContactParticles;
@@ -43,10 +56,20 @@ namespace WorldTest
         public Vector3 Position
         {
             get { return position; }
-            internal set { position = value; }
+            set { position = value; }
         }
         protected Vector3 velocity;
+        public Vector3 Velocity
+        {
+            get { return velocity; }
+            set { velocity = value; }
+        }
         protected float age;
+        public float Age
+        {
+            get { return age; }
+            set { age = value; }
+        }
 
         public Light light;
 
@@ -72,7 +95,14 @@ namespace WorldTest
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // Simple projectile physics.
-            position += velocity * elapsedTime;
+            if (!is_released)
+            {
+                
+            }
+            else
+            {
+                position += velocity * elapsedTime;
+            }
             velocity.Y -= elapsedTime * gravity;
             age += elapsedTime;
             light.position = new Vector3(this.position.X, this.position.Y, this.position.Z);
