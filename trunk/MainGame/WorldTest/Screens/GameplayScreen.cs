@@ -121,7 +121,7 @@ namespace WorldTest
             lights = new List<Light>();
             Light newLight = new Light();
             newLight.color = new Vector3(1, 1, 1);
-            newLight.position = new Vector3(100, 50, 100);
+            newLight.position = new Vector3(0, 50, 0);
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
         }
@@ -151,7 +151,7 @@ namespace WorldTest
             player.LoadContent();
 
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_idle_final", ENEMY_STATS));
+            enemies.Add(new Enemy(graphics, content, "enemy1_attack_final", ENEMY_STATS));
 
             foreach (Enemy e in enemies)
             {
@@ -272,11 +272,17 @@ namespace WorldTest
                              KeyboardState current_k_state, KeyboardState prev_k_state)
         {
 
-            if ((current_g_state.Buttons.B == ButtonState.Pressed || current_k_state.IsKeyDown(Keys.Space)) && (prev_g_state.Buttons.B == ButtonState.Released || prev_k_state.IsKeyUp(Keys.Space)))
+            if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
             {
-                // Create a new projectile once per second. The real work of moving
                 // and creating particles is handled inside the Projectile class.
                 projectiles.Add(new Attack(player.position + new Vector3(0,20,0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
+                                               explosionSmokeParticles,
+                                               projectileTrailParticles));
+            }
+            if (current_k_state.IsKeyDown(Keys.Space) && prev_k_state.IsKeyUp(Keys.Space))
+            {
+                // and creating particles is handled inside the Projectile class.
+                projectiles.Add(new Attack(player.position + new Vector3(0, 20, 0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
                                                explosionSmokeParticles,
                                                projectileTrailParticles));
             }

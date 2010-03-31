@@ -360,7 +360,6 @@ void StaticModelPS_Light(
 	out float4 outColor0	: COLOR0)
 {
     // Normalize all input vectors
-    float3 position = normalize(inPosition);
 	float3 normal = normalize(inNormal);
     float3 eyeVector = normalize(inEyeVector);
     
@@ -376,7 +375,7 @@ void StaticModelPS_Light(
        	
     // Calculate final color
     outColor0.a = 1.0f;
-	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 }
 
@@ -390,7 +389,6 @@ void animatedModelPS_Light(
 	out float4 outColor0	: COLOR0)
 {
     // Normalize all input vectors
-    float3 position = normalize(inPosition);
 	float3 normal = normalize(inNormal);
     float3 eyeVector = normalize(inEyeVector);
     
@@ -406,7 +404,7 @@ void animatedModelPS_Light(
         	
     // Calculate final color
     outColor0.a = 1.0f;
-	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 }
 
@@ -420,7 +418,6 @@ void animatedModelGrayPS_Light(
 	out float4 outColor0	: COLOR0)
 {
     // Normalize all input vectors
-    float3 position = normalize(inPosition);
 	float3 normal = normalize(inNormal);
     float3 eyeVector = normalize(inEyeVector);
     
@@ -436,7 +433,7 @@ void animatedModelGrayPS_Light(
         	
     // Calculate final color
     outColor0.a = 1.0f;
-	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 		
 	float luma = (outColor0.r * 0.3 + outColor0.g * 0.59 + outColor0.b * 0.11);

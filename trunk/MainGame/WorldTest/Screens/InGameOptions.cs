@@ -27,13 +27,6 @@ namespace WorldTest
         MenuEntry MenuEntry4;
         MenuEntry MenuEntry5;
 
-        enum Option
-        {
-            Toony,
-            reallyToony,
-            Llama,
-        }
-
         public struct Resolution
         {
             public int width;
@@ -48,15 +41,6 @@ namespace WorldTest
 
         private List<Resolution> validResolutions;
         private int currentResolution;
-
-        static Option currentShader = Option.Toony;
-
-        static string[] languages = { "English", "French", "Spanish" };
-        static int currentLanguage = 0;
-
-        static bool antialias = true;
-
-        static bool sfx = true;
 
         #endregion
 

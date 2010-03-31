@@ -28,9 +28,9 @@ namespace WorldTest
 
         protected override void InitializeSettings(ParticleSettings settings)
         {
-            settings.TextureName = "Smoke1";
+            settings.TextureName = "smoke";
 
-            settings.MaxParticles = 10000;
+            settings.MaxParticles = 100000;
 
             settings.Duration = TimeSpan.FromSeconds(3);
 

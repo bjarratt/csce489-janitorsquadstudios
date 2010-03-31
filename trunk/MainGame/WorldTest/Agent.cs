@@ -64,7 +64,7 @@ namespace WorldTest
         public int max_targets;
 
         public AnimationController controller;
-        public int activeAnimationClip;
+        public int activeAnimationClip = 0;
 
         protected enum Tex_Select
         {

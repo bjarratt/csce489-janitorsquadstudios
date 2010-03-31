@@ -31,7 +31,7 @@ namespace WorldTest
                                                trailParticlesPerSecond, position);
         }
 
-        public bool Update(GameTime gameTime, ref Level level)
+        public override bool Update(GameTime gameTime, ref Level level)
         {
             return base.Update(gameTime, ref level);
         }

@@ -42,13 +42,6 @@ namespace WorldTest
         MenuEntry MenuEntry4;
         MenuEntry MenuEntry5;
 
-        enum Shader
-        {
-            Toony,
-            reallyToony,
-            Llama,
-        }
-
         public static MultiSampleType[] AA_SETTINGS = {
                                                           MultiSampleType.None,
                                                           MultiSampleType.TwoSamples,
@@ -57,12 +50,6 @@ namespace WorldTest
                                                       };
 
         public static MultiSampleType CURRENT_AA_SETTING = MultiSampleType.None;
-
-        static string[] languages = { "English", "French", "Spanish" };
-
-        static bool antialias = true;
-
-        static bool sfx = true;
 
         #endregion
 
