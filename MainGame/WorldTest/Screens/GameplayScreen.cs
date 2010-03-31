@@ -275,29 +275,46 @@ namespace WorldTest
             {
                 // and creating particles is handled inside the Projectile class.
                 
-                projectiles.Add(new Attack(ref player, player.position + new Vector3(0,20,0), Vector3.Zero, 50, 30, 20, 100f, -1f, explosionParticles,
-                                               explosionSmokeParticles,
-                                               projectileTrailParticles));
+                //projectiles.Add(new Attack(ref player, player.position + new Vector3(0,20,0), Vector3.Zero, 10, 30, 20, 100f, -10f, explosionParticles,
+                //                               explosionSmokeParticles,
+                //                               projectileTrailParticles));
             }
             else if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Pressed)
             {
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
-                pos +=  camera.right * 5;
-                pos += camera.lookAt * 5;
-                projectiles[projectiles.Count - 1].Position = pos;
+                if (player.velocity.X != 0 || player.velocity.Z != 0)
+                {
+                    pos += camera.right * 4;
+                    pos += camera.lookAt * 22;
+                    for (int i = 0; i < 20; i++)
+                    {
+                        fireParticles.AddParticle(pos, Vector3.Zero);
+                    }
+                }
+                else
+                {
+                    pos += camera.right * 4;
+                    pos += camera.lookAt * 20;
+                    for (int i = 0; i < 3; i++)
+                    {
+                        fireParticles.AddParticle(pos, Vector3.Zero);
+                    }
+                }
             }
             if (current_g_state.Buttons.B == ButtonState.Released && prev_g_state.Buttons.B == ButtonState.Pressed)
             {
+                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                pos += camera.right * 5;
+                pos += camera.lookAt * 20;
+                projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
+                                               explosionSmokeParticles,
+                                               projectileTrailParticles));
                 projectiles[projectiles.Count - 1].is_released = true;
-                projectiles[projectiles.Count - 1].LifeSpan = 5f;
-                projectiles[projectiles.Count - 1].Velocity = camera.lookAt * 400f;
-                projectiles[projectiles.Count - 1].Gravity = 0;
-                projectiles[projectiles.Count - 1].Age = 0;
             }
             if (current_k_state.IsKeyDown(Keys.Space) && prev_k_state.IsKeyUp(Keys.Space))
             {
                 // and creating particles is handled inside the Projectile class.
-                projectiles.Add(new Attack(ref player, player.position + new Vector3(0, 20, 0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
+                projectiles.Add(new Attack(player.position + new Vector3(0, 20, 0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
                                                explosionSmokeParticles,
                                                projectileTrailParticles));
             }

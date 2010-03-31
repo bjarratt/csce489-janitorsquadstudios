@@ -32,11 +32,11 @@ namespace WorldTest
 
             settings.MaxParticles = 100000;
 
-            settings.Duration = TimeSpan.FromSeconds(3);
+            settings.Duration = TimeSpan.FromSeconds(0.5);
 
-            settings.DurationRandomness = 1.5f;
+            settings.DurationRandomness = 0.0f;
 
-            settings.EmitterVelocitySensitivity = 0.1f;
+            settings.EmitterVelocitySensitivity = 0.0f;
 
             settings.MinHorizontalVelocity = 0;
             settings.MaxHorizontalVelocity = 1;
@@ -50,11 +50,11 @@ namespace WorldTest
             settings.MinRotateSpeed = -4;
             settings.MaxRotateSpeed = 4;
 
-            settings.MinStartSize = 2;
-            settings.MaxStartSize = 4;
+            settings.MinStartSize = 40;
+            settings.MaxStartSize = 50;
 
-            settings.MinEndSize = 5;
-            settings.MaxEndSize = 15;
+            settings.MinEndSize = 2;
+            settings.MaxEndSize = 3;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;

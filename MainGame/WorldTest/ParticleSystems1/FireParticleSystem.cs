@@ -32,27 +32,27 @@ namespace WorldTest
 
             settings.MaxParticles = 2400;
 
-            settings.Duration = TimeSpan.FromSeconds(2);
+            settings.Duration = TimeSpan.FromSeconds(1.5);
 
             settings.DurationRandomness = 1;
 
             settings.MinHorizontalVelocity = 0;
-            settings.MaxHorizontalVelocity = 15;
+            settings.MaxHorizontalVelocity = 2;
 
-            settings.MinVerticalVelocity = -10;
-            settings.MaxVerticalVelocity = 10;
+            settings.MinVerticalVelocity = -2;
+            settings.MaxVerticalVelocity = 2;
 
             // Set gravity upside down, so the flames will 'fall' upward.
-            settings.Gravity = new Vector3(0, 15, 0);
+            settings.Gravity = new Vector3(0, 3, 0);
 
             settings.MinColor = new Color(255, 255, 255, 10);
             settings.MaxColor = new Color(255, 255, 255, 40);
 
-            settings.MinStartSize = 5;
-            settings.MaxStartSize = 10;
+            settings.MinStartSize = 4;
+            settings.MaxStartSize = 5;
 
-            settings.MinEndSize = 10;
-            settings.MaxEndSize = 40;
+            settings.MinEndSize = 2;
+            settings.MaxEndSize = 2;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;

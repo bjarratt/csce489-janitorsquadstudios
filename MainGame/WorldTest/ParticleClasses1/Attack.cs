@@ -11,7 +11,7 @@ namespace WorldTest
         /// <summary>
         /// Constructs a new attack.
         /// </summary>
-        public Attack(ref Player source_ent, Vector3 position, Vector3 velocity, float trail_particles_per_s,
+        public Attack(Vector3 position, Vector3 velocity, float trail_particles_per_s,
                             int num_contact_parts, int num_ext_contact_parts, 
                             float lifespan, float gravity,
                             ParticleSystem contactParticles,
@@ -31,7 +31,6 @@ namespace WorldTest
                                                trailParticlesPerSecond, position);
             light = new Light(position, new Vector3(1, 1, 1));
             is_released = false;
-            this.source_entity = source_ent;
         }
 
         public override bool Update(GameTime gameTime, ref Level level)
