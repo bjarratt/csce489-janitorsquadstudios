@@ -48,8 +48,6 @@ namespace WorldTest
         {
             position = Vector3.Zero;
             velocity = Vector3.Zero;
-            position.Y += 100.0f;
-            //position.Z += 100.0f;
             speed = 2.5f; // In meters/second
 
             rotation = 0.0f;
@@ -330,8 +328,9 @@ namespace WorldTest
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
                     for (int i = 0; i < Lights.Count; i++)
                     {
-                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights[i].color);
-                        effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights[i].position);
+                        //Vector3 pos = Vector3.Transform(Lights[i].position, worldTransform);
+                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights.ElementAt(i).color);
+                        effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights.ElementAt(i).position);
                     }
                     switch (Lights.Count)
                     {
