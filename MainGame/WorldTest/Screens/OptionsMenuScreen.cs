@@ -40,6 +40,7 @@ namespace WorldTest
         MenuEntry MenuEntry2;
         MenuEntry MenuEntry3;
         MenuEntry MenuEntry4;
+        MenuEntry MenuEntry5;
 
         enum Shader
         {
@@ -77,10 +78,30 @@ namespace WorldTest
             this.validResolutions = new List<Resolution>();
 
             this.validResolutions.Add(new Resolution(800, 600));
-            this.validResolutions.Add(new Resolution(1024, 768));
-            this.validResolutions.Add(new Resolution(1280, 1024));
-            this.validResolutions.Add(new Resolution(1440, 900));
-            this.validResolutions.Add(new Resolution(1680, 1050));
+
+            if (screenManager.GraphicsDevice.DisplayMode.Width >= 1024 &&
+                screenManager.GraphicsDevice.DisplayMode.Height >= 768)
+            {
+                this.validResolutions.Add(new Resolution(1024, 768));
+
+                if (screenManager.GraphicsDevice.DisplayMode.Width >= 1280 &&
+                    screenManager.GraphicsDevice.DisplayMode.Height >= 1024)
+                {
+                    this.validResolutions.Add(new Resolution(1280, 1024));
+
+                    if (screenManager.GraphicsDevice.DisplayMode.Width >= 1440 &&
+                        screenManager.GraphicsDevice.DisplayMode.Height >= 900)
+                    {
+                        this.validResolutions.Add(new Resolution(1440, 900));
+
+                        if (screenManager.GraphicsDevice.DisplayMode.Width >= 1680 &&
+                            screenManager.GraphicsDevice.DisplayMode.Height >= 1050)
+                        {
+                            this.validResolutions.Add(new Resolution(1680, 1050));
+                        }
+                    }
+                }
+            }
 
             this.currentResolution = 0;
 
@@ -98,6 +119,7 @@ namespace WorldTest
             MenuEntry2 = new MenuEntry(string.Empty);
             MenuEntry3 = new MenuEntry(string.Empty);
             MenuEntry4 = new MenuEntry(string.Empty);
+            MenuEntry5 = new MenuEntry(string.Empty);
 
             SetMenuEntryText();
 
@@ -108,6 +130,7 @@ namespace WorldTest
             MenuEntry2.Selected += MenuEntry2Selected;
             MenuEntry3.Selected += MenuEntry3Selected;
             MenuEntry4.Selected += MenuEntry4Selected;
+            MenuEntry5.Selected += MenuEntry5Selected;
             backMenuEntry.Selected += OnCancel;
             
             // Add entries to the menu.
@@ -115,6 +138,7 @@ namespace WorldTest
             MenuEntries.Add(MenuEntry2);
             MenuEntries.Add(MenuEntry3);
             MenuEntries.Add(MenuEntry4);
+            MenuEntries.Add(MenuEntry5);
             MenuEntries.Add(backMenuEntry);
         }
 
@@ -124,7 +148,14 @@ namespace WorldTest
         /// </summary>
         void SetMenuEntryText()
         {
-            MenuEntry1.Text = "Resolution: " + screenManager.GraphicsDevice.Viewport.Width + "x" + screenManager.GraphicsDevice.Viewport.Height;
+            if (ScreenManager == null)
+            {
+                MenuEntry1.Text = "Resolution: " + screenManager.GraphicsDevice.Viewport.Width + "x" + screenManager.GraphicsDevice.Viewport.Height;
+            }
+            else
+            {
+                MenuEntry1.Text = "Resolution: " + ScreenManager.graphics.PreferredBackBufferWidth + "x" + ScreenManager.graphics.PreferredBackBufferHeight;
+            }
             MenuEntry2.Text = "Fullscreen: " + (screenManager.graphics.IsFullScreen ? "on" : "off");
             MenuEntry3.Text = "Invert Y axis: " + (GameplayScreen.invertYAxis ? "on" : "off");
 
@@ -147,6 +178,8 @@ namespace WorldTest
             }
 
             MenuEntry4.Text = "Antialiasing: " + aaText;
+
+            MenuEntry5.Text = "Apply Changes";
         }
 
 
@@ -165,7 +198,7 @@ namespace WorldTest
             ScreenManager.graphics.PreferredBackBufferWidth = this.validResolutions[currentResolution].width;
             ScreenManager.graphics.PreferredBackBufferHeight = this.validResolutions[currentResolution].height;
 
-            screenManager.graphics.ApplyChanges();
+            //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }
@@ -178,7 +211,7 @@ namespace WorldTest
         {
             screenManager.graphics.IsFullScreen = !screenManager.graphics.IsFullScreen;
 
-            screenManager.graphics.ApplyChanges();
+            //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }
@@ -220,7 +253,17 @@ namespace WorldTest
 
             ScreenManager.graphics.GraphicsDevice.PresentationParameters.MultiSampleType = OptionsMenuScreen.CURRENT_AA_SETTING;
 
-            ScreenManager.graphics.ApplyChanges();
+            //ScreenManager.graphics.ApplyChanges();
+
+            SetMenuEntryText();
+        }
+
+        /// <summary>
+        /// Event handler for when the 5th menu entry is selected.
+        /// </summary>
+        void MenuEntry5Selected(object sender, PlayerIndexEventArgs e)
+        {
+            screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
         }

@@ -89,8 +89,9 @@ namespace WorldTest
             controller = new AnimationController(model.SkeletonBones);
 
             // Start the first animation stored in the AnimationClips dictionary
-            controller.StartClip(
-                model.AnimationClips.Values[activeAnimationClip]);
+            //controller.StartClip(
+            //    model.AnimationClips.Values[activeAnimationClip]);
+            controller.PlayClip(model.AnimationClips.Values[0]);
         }
 
         public override void LoadContent()
