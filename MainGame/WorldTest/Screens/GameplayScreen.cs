@@ -299,7 +299,7 @@ namespace WorldTest
         {
             if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
             {
-                relicLight.attenuationRadius = 1000.0f;
+                relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
@@ -370,7 +370,7 @@ namespace WorldTest
                 if (!projectiles[i].Update(gameTime, ref firstLevel))
                 {
                     // Remove projectiles at the end of their life.
-                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 500.0f, 0.0f));
+                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
                     projectiles.RemoveAt(i);
                 }
                 else
