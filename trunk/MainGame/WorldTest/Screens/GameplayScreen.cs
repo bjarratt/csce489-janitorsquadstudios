@@ -270,7 +270,7 @@ namespace WorldTest
 
                 foreach (Enemy e in enemies)
                 {
-                    e.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel);
+                    e.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel, ref player);
                 }
 
                 for (int i = 0; i < explosionLights.Count; i++)
