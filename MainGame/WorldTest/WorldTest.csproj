@@ -91,6 +91,7 @@
     <Compile Include="Game.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Light.cs" />
+    <Compile Include="NavigationMesh.cs" />
     <Compile Include="ParticleClasses1\Attack.cs" />
     <Compile Include="ParticleClasses1\ParticleEmitter.cs" />
     <Compile Include="ParticleClasses1\ParticleSettings.cs" />

@@ -45,6 +45,8 @@ namespace WorldTest
         Player player;
         List<Enemy> enemies;
 
+        NavigationMesh Nav_Mesh;
+
         private EnemyStats ENEMY_STATS;
 
         private List<Light> lights;
@@ -164,6 +166,9 @@ namespace WorldTest
 
             enemies = new List<Enemy>();
             enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS));
+
+            // Load the navigation mesh.
+            Nav_Mesh = new NavigationMesh("nav_mesh");
 
             foreach (Enemy e in enemies)
             {
@@ -385,6 +390,93 @@ namespace WorldTest
                 }
             }
         }
+
+        public Path<NavMeshNode> FindPath(NavMeshNode start, NavMeshNode destination)
+        {
+            var closed = new HashSet<NavMeshNode>();
+            var queue = new PriorityQueue<double, Path<NavMeshNode>>();
+            queue.Enqueue(0, new Path<NavMeshNode>(start));
+            while (!queue.IsEmpty)
+            {
+                var path = queue.Dequeue();
+                if (closed.Contains(path.LastStep))
+                    continue;
+                if (path.LastStep.Equals(destination))
+                    return path;
+                closed.Add(path.LastStep);
+                foreach (int n in path.LastStep.Adjacent)
+                {
+                    // There is an obstacle in Nav_Mesh.NavMesh[n]... avoid it.
+                    if (Nav_Mesh.NavMesh[n].Obstacle == true) continue;
+
+                    double d = (double)Vector3.Distance(path.LastStep.Centroid, Nav_Mesh.NavMesh[n].Centroid);
+                    double e = (double)Vector3.Distance(Nav_Mesh.NavMesh[n].Centroid, destination.Centroid);
+                    var newPath = path.AddStep(Nav_Mesh.NavMesh[n], d);
+                    queue.Enqueue(newPath.TotalCost + e, newPath);
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// This is the wrapper for the enemy pathfinding AI using A*.  It takes the player and
+        /// the enemy as arguments.  First it casts a ray straight down to determine which polygons
+        /// the player and enemy are in (with respect to the NavigationMesh data structure).  Both the
+        /// player and enemy keep information about which polygons they are currently in and which ones
+        /// they were in last.  The rigourous initial calculations of this data occurs at game initialization.
+        /// This allows us to only have to check polygons that are adjacent to the player and enemy current 
+        /// polygons for the ray casting, rather than the entire collision mesh.  From there we call
+        /// FindPath which returns the optimal path from the start node to the destination node.  Then 
+        /// we do processing to orient the enemy and smooth his traversal of the path.
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="enemy"></param>
+        void RunAStar(Player player, Enemy enemy)
+        {
+            //player... first check current current_poly
+            if (Nav_Mesh.intersect_RayTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+                Nav_Mesh.NavMesh[player.current_poly_index]))
+            {
+                // do nothing... player is still in his current polygon.
+            }
+            else
+            {
+                foreach (int n in Nav_Mesh.NavMesh[player.current_poly_index].Adjacent)
+                {
+                    if (Nav_Mesh.intersect_RayTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+                        Nav_Mesh.NavMesh[n]))
+                    {
+                        player.prev_poly_index = player.current_poly_index;
+                        player.current_poly_index = Nav_Mesh.NavMesh[n].Index;
+                    }
+                }
+            }
+
+            //enemy... same process as player.
+            if (Nav_Mesh.intersect_RayTriangle(new Ray(enemy.position + new Vector3(0, 5, 0), Vector3.Down),
+                Nav_Mesh.NavMesh[player.current_poly_index]))
+            {
+                // do nothing... player is still in his current polygon.
+            }
+            else
+            {
+                foreach (int n in Nav_Mesh.NavMesh[enemy.current_poly_index].Adjacent)
+                {
+                    if (Nav_Mesh.intersect_RayTriangle(new Ray(enemy.position + new Vector3(0, 5, 0), Vector3.Down),
+                        Nav_Mesh.NavMesh[n]))
+                    {
+                        player.prev_poly_index = enemy.current_poly_index;
+                        player.current_poly_index = Nav_Mesh.NavMesh[n].Index;
+                    }
+                }
+            }
+
+            Path<NavMeshNode> optimal_path = FindPath(Nav_Mesh.NavMesh[enemy.current_poly_index], Nav_Mesh.NavMesh[player.current_poly_index]);
+
+            //Do stuff to smooth the path and have enemy move accordingly.
+        }
+
+
 
         #endregion
 

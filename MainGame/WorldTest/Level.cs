@@ -393,7 +393,7 @@ namespace WorldTest
         {
             Vector3 vec1;
             Vector3 vec2;
-
+            
             double currentAngle = 0.0f;
             double angle1;
             double angle2;

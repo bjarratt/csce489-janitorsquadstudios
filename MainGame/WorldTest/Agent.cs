@@ -29,6 +29,13 @@ namespace WorldTest
 
         public Vector3 position;
         public Vector3 velocity;
+
+        /// <summary>
+        /// These keep track of which polygons the agent is on in the NavigationMesh.
+        /// </summary>
+        public int current_poly_index;
+        public int prev_poly_index;
+
         protected float speed; // In meters per second
         protected float speedScale; // Scaling factor for speed (to make speed be actual m/s)
         protected float movement_speed_reg;
