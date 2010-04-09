@@ -66,13 +66,13 @@ namespace WorldTest
 
             this.vertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
         }
-
+        
         private ArrayList LoadFromOBJ(string filename, Matrix worldMatrix)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
             ArrayList textureCoordList = new ArrayList();
-
+            
             // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
             positionList.Add(new Vector3());
             normalList.Add(new Vector3());

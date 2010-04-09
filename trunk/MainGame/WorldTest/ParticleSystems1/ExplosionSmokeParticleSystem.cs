@@ -21,8 +21,8 @@ namespace WorldTest
     /// </summary>
     class ExplosionSmokeParticleSystem : ParticleSystem
     {
-        public ExplosionSmokeParticleSystem(Game game, ContentManager content)
-            : base(game, content)
+        public ExplosionSmokeParticleSystem(Game game, ContentManager content, bool attached)
+            : base(game, content, attached)
         { }
 
 

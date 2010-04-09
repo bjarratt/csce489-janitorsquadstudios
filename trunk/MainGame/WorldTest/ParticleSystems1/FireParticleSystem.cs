@@ -21,8 +21,8 @@ namespace WorldTest
     /// </summary>
     class FireParticleSystem : ParticleSystem
     {
-        public FireParticleSystem(Game game, ContentManager content)
-            : base(game, content)
+        public FireParticleSystem(Game game, ContentManager content, bool attached)
+            : base(game, content, attached)
         { }
 
 
