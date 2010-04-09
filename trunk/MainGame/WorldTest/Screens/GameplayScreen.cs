@@ -138,6 +138,9 @@ namespace WorldTest
             newLight.attenuationRadius = 1000.0f;
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
+
+            //initialize enemy and player... figure out what polygons in the navigatin mesh they're in
+
         }
 
         /// <summary>
@@ -391,7 +394,7 @@ namespace WorldTest
             }
         }
 
-        public Path<NavMeshNode> FindPath(NavMeshNode start, NavMeshNode destination)
+        Path<NavMeshNode> FindPath(NavMeshNode start, NavMeshNode destination)
         {
             var closed = new HashSet<NavMeshNode>();
             var queue = new PriorityQueue<double, Path<NavMeshNode>>();
@@ -433,6 +436,15 @@ namespace WorldTest
         /// <param name="enemy"></param>
         Path<NavMeshNode> RunAStar(Player player, Enemy enemy)
         {
+            return FindPath(Nav_Mesh.NavMesh[enemy.current_poly_index], Nav_Mesh.NavMesh[player.current_poly_index]);
+        }
+
+        /// <summary>
+        /// Here we use the optimal path returned by FindPath to move the enemy.
+        /// </summary>
+        /// <param name="optimal_path"></param>
+        Vector3 UpdateEnemy(Enemy enemy, Path<NavMeshNode> old_path)
+        {
             //player... first check current current_poly
             if (Nav_Mesh.intersect_RayTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
                 Nav_Mesh.NavMesh[player.current_poly_index]))
@@ -456,7 +468,7 @@ namespace WorldTest
             if (Nav_Mesh.intersect_RayTriangle(new Ray(enemy.position + new Vector3(0, 5, 0), Vector3.Down),
                 Nav_Mesh.NavMesh[player.current_poly_index]))
             {
-                // do nothing... player is still in his current polygon.
+                // do nothing... enemy is still in his current polygon.
             }
             else
             {
@@ -471,18 +483,9 @@ namespace WorldTest
                 }
             }
 
-            return FindPath(Nav_Mesh.NavMesh[enemy.current_poly_index], Nav_Mesh.NavMesh[player.current_poly_index]);
-        }
-
-        /// <summary>
-        /// Here we use the optimal path returned by FindPath to move the enemy.
-        /// </summary>
-        /// <param name="optimal_path"></param>
-        void UpdateEnemy(Enemy enemy, Path<NavMeshNode> optimal_path)
-        {
             if (enemy.state == Enemy.EnemyAiState.Idle)
             {
-                // do idle stuff
+                return Vector3.Zero;
             }
             else if (enemy.state == Enemy.EnemyAiState.ChasingSmart)
             {
@@ -490,21 +493,53 @@ namespace WorldTest
                 if (player.current_poly_index == player.prev_poly_index)
                 {
                     // player has not moved since the last frame... continue following the 
-                    // current path.
-
+                    // old path.
+                    if (enemy.current_poly_index == enemy.prev_poly_index)
+                    {
+                        Vector3 travel_point = (Nav_Mesh.NavMesh[enemy.FirstPathPoly].Centroid + Nav_Mesh.NavMesh[enemy.SecondPathPoly].Centroid) * 0.5f;
+                        Vector3 travel_vector = travel_point - enemy.position;
+                        travel_vector.Normalize();
+                        return travel_vector;
+                    }
+                    else
+                    {
+                        old_path.GetEnumerator().MoveNext();
+                        enemy.FirstPathPoly = enemy.SecondPathPoly;
+                        old_path.PreviousSteps.LastStep.Index = enemy.SecondPathPoly;
+                        Vector3 travel_point = (Nav_Mesh.NavMesh[enemy.FirstPathPoly].Centroid + Nav_Mesh.NavMesh[enemy.SecondPathPoly].Centroid) * 0.5f;
+                        Vector3 travel_vector = travel_point - enemy.position;
+                        travel_vector.Normalize();
+                        return travel_vector;
+                    }
                 }
                 else
                 {
-
+                    Path<NavMeshNode> new_optimal_path = RunAStar(player, enemy);
+                    enemy.OldPath = old_path;
+                    enemy.NewPath = new_optimal_path;
+                    enemy.FirstPathPoly = new_optimal_path.LastStep.Index;
+                    enemy.SecondPathPoly = new_optimal_path.PreviousSteps.LastStep.Index;
+                    Vector3 travel_point = (Nav_Mesh.NavMesh[enemy.FirstPathPoly].Centroid + Nav_Mesh.NavMesh[enemy.SecondPathPoly].Centroid) * 0.5f;
+                    Vector3 travel_vector = travel_point - enemy.position;
+                    travel_vector.Normalize();
+                    return travel_vector;
                 }
+            }
+            else if (enemy.state == Enemy.EnemyAiState.ChasingDumb)
+            {
+                Vector3 direction = player.position - enemy.position;
+                direction.Normalize();
+                return direction;
             }
             else if (enemy.state == Enemy.EnemyAiState.Attack)
             {
-                // do attack stuff
+                Vector3 direction = player.position - enemy.position;
+                direction.Normalize();
+                return direction;
             }
             else if (enemy.state == Enemy.EnemyAiState.Weakened)
             {
-                // do weakened stuff
+                return Vector3.Zero;
             }
         }
 
