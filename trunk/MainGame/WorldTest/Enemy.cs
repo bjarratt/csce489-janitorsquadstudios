@@ -24,7 +24,7 @@ namespace WorldTest
     enum EnemyAiState
     {
         Chasing, //chasing the player
-        Caught,  //has caught the player and can stop chasing
+        Attack,  //has caught the player and can stop chasing
         Idle,    //enemy can't see the player and wanders
         Weakened //the enemy can be banished to the other dimension
     }
@@ -32,10 +32,9 @@ namespace WorldTest
     struct EnemyStats
     {
         public float chaseDistance;
-        public float caughtDistance;
+        public float attackDistance;
         public float hysteresis;
         public float maxSpeed;
-        public float turnSpeed;
     }
 
     #endregion
@@ -57,7 +56,7 @@ namespace WorldTest
             speed = 0.0f;
 
             this.stats = stats;
-            this.state = EnemyAiState.Chasing;
+            this.state = EnemyAiState.Idle;
 
             rotation = 0.0f;
             turn_speed = 0.05f;
@@ -120,7 +119,7 @@ namespace WorldTest
 
         public void Update(GameTime gameTime, GamePadState currentGPState,
             GamePadState lastGPState, KeyboardState currentKBState,
-            KeyboardState lastKBState, ref Level currentLevel)
+            KeyboardState lastKBState, ref Level currentLevel, ref Player player)
         {
             //reset rotation
             rotation = 0.0f;
@@ -143,15 +142,191 @@ namespace WorldTest
                 controller.Speed = 3.0f;
             }
 
+            #region Behavior
+
+            // First we have to use the current state to decide what the thresholds are
+            // for changing state
+            float enemyChaseThreshold = this.stats.chaseDistance;
+            float enemyAttackThreshold = this.stats.attackDistance;
+
+            // if the enemy is idle, he prefers to stay idle. we do this by making the
+            // chase distance smaller, so the enemy will be less likely to begin chasing
+            // the player.
+            if (this.state == EnemyAiState.Idle)
+            {
+                enemyChaseThreshold -= this.stats.hysteresis / 2;
+            }
+
+            // similarly, if the enemy is active, he prefers to stay active. we
+            // accomplish this by increasing the range of values that will cause the
+            // enemy to go into the active state.
+            else if (this.state == EnemyAiState.Chasing)
+            {
+                enemyChaseThreshold += this.stats.hysteresis / 2;
+                enemyAttackThreshold -= this.stats.hysteresis / 2;
+            }
+            // the same logic is applied to the finished state.
+            else if (this.state == EnemyAiState.Attack)
+            {
+                enemyAttackThreshold += this.stats.hysteresis / 2;
+            }
+
+            // Second, now that we know what the thresholds are, we compare the enemy's 
+            // distance from the player against the thresholds to decide what the enemy's
+            // current state is.
+            float distanceFromPlayer = Vector3.Distance(this.position, player.position);
+            if (distanceFromPlayer > enemyChaseThreshold)
+            {
+                // if the enemy is far away from the player, it should idle
+                this.state = EnemyAiState.Idle;
+            }
+            else if (distanceFromPlayer > enemyAttackThreshold)
+            {
+                this.state = EnemyAiState.Chasing;
+            }
+            else
+            {
+                this.state = EnemyAiState.Attack;
+            }
+
+            // Third, once we know what state we're in, act on that state.
+            float currentEnemySpeed;
+            if (this.state == EnemyAiState.Chasing)
+            {
+                // the enemy wants to chase the player, so it will just use the TurnToFace
+                // function to turn towards the player's position. Then, when the enemy
+                // moves forward, he will chase the player.
+                this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
+                currentEnemySpeed = this.stats.maxSpeed;
+            }
+            else if (this.state == EnemyAiState.Idle)
+            {
+                // call the wander function for the enemy
+                Wander(this.position, ref this.velocity, ref this.rotation,
+                    this.turn_speed);
+                currentEnemySpeed = .25f * this.speed;
+                currentEnemySpeed = 0.0f;
+            }
+            else
+            {
+                // if the enemy catches the player, it should stop.
+                // Otherwise it will run right by, then spin around and
+                // try to catch it all over again. The end result is that it will kind
+                // of "run laps" around the player, which looks funny, but is not what
+                // we're after.
+                currentEnemySpeed = 0.0f;
+            }
+
+            // this calculation is also important; we construct a heading
+            // vector based on the enemy's orientation, and then make the enemy move along
+            // that heading.
+            Vector3 heading = new Vector3(
+                (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
+            this.position += heading * currentEnemySpeed;
+
+            #endregion
+
             // Update the animation according to the elapsed time
             controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
 
         }
 
+        //TODO: update to include results of AI pathfinding
         private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref Level currentLevel)
         {
+
             position = currentLevel.CollideWith(position, new Vector3(0, -1, 0), 0.1, Level.MAX_COLLISIONS);
         }
+
+        #region AI
+
+        /// <summary>
+        /// Calculates the angle that an object should face, given its position, its
+        /// target's position, its current angle, and its maximum turning speed.
+        /// </summary>
+        private float TurnToFace(Vector3 position, Vector3 faceThis,
+            float currentAngle, float turnSpeed)
+        {
+            //x and z directions along the 2D floor plane
+            float x = faceThis.X - this.position.Z;
+            float z = faceThis.Z - this.position.Z;
+
+            float desiredAngle = (float)Math.Atan2(z, x);
+
+            // first, figure out how much we want to turn, using WrapAngle to get our
+            // result from -Pi to Pi ( -180 degrees to 180 degrees )
+            float difference = WrapAngle(desiredAngle - this.rotation);
+
+            // clamp that between -turn_speed and turn_speed.
+            difference = MathHelper.Clamp(difference, -this.turn_speed, this.turn_speed);
+
+            // so, the closest we can get to our target is currentAngle + difference.
+            // return that, using WrapAngle again.
+            return this.WrapAngle(currentAngle + difference);
+        }
+
+        /// <summary>
+        /// Returns the angle expressed in radians between -Pi and Pi.
+        /// <param name="radians">the angle to wrap, in radians.</param>
+        /// <returns>the input value expressed in radians from -Pi to Pi.</returns>
+        /// </summary>
+        private float WrapAngle(float radians)
+        {
+            while (radians < -MathHelper.Pi)
+            {
+                radians += MathHelper.TwoPi;
+            }
+            while (radians > MathHelper.Pi)
+            {
+                radians -= MathHelper.TwoPi;
+            }
+            return radians;
+        }
+
+        /// <summary>
+        /// Wander contains functionality for the enemy, and does just what its name implies: 
+        /// makes them wander around the screen. 
+        private void Wander(Vector3 position, ref Vector3 wanderDirection,
+            ref float orientation, float turnSpeed)
+        {
+            Random random = new Random();
+
+            wanderDirection.X +=
+                MathHelper.Lerp(-.25f, .25f, (float)random.NextDouble());
+            wanderDirection.Z +=
+                MathHelper.Lerp(-.25f, .25f, (float)random.NextDouble());
+
+            // we'll renormalize the wander direction, ...
+            if (wanderDirection != Vector3.Zero)
+            {
+                wanderDirection.Normalize();
+            }
+            orientation = TurnToFace(position, position + wanderDirection, orientation,
+                .15f * turnSpeed);
+
+            // next, we'll turn the enemy back towards the center of the screen, to
+            // prevent them from getting stuck on the edges of the screen.
+            Vector3 screenCenter = Vector3.Zero;
+            screenCenter.X = graphics.GraphicsDevice.Viewport.Width / 2;
+            screenCenter.Z = graphics.GraphicsDevice.Viewport.Height / 2;
+
+            float distanceFromScreenCenter = Vector3.Distance(screenCenter, position);
+            float MaxDistanceFromScreenCenter =
+                Math.Min(screenCenter.Z, screenCenter.X);
+
+            float normalizedDistance =
+                distanceFromScreenCenter / MaxDistanceFromScreenCenter;
+
+            float turnToCenterSpeed = .3f * normalizedDistance * normalizedDistance *
+                turnSpeed;
+
+            // once we've calculated how much we want to turn towards the center, we can
+            // use the TurnToFace function to actually do the work.
+            orientation = TurnToFace(position, screenCenter, orientation,
+                turnToCenterSpeed);
+        }
+
+        #endregion
 
         #endregion
 
