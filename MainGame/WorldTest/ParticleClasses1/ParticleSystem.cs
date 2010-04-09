@@ -23,6 +23,20 @@ namespace WorldTest
     {
         #region Fields
 
+        /// <summary>
+        /// This bool is set to true if this particle system should be drawn 
+        /// relative to some intertial frame of reference other than the 
+        /// world frame of reference.  
+        /// </summary>
+        bool is_attached = false;
+
+        /// <summary>
+        /// This is the world matrix of the alternate frame of reference to use if 
+        /// 'is_attached' is enabled.  This gets passed to the vertex shader so that 
+        /// all the particles that are drawn get transformed with respect to that frame
+        /// of reference.
+        /// </summary>
+        Matrix worldFrame;
 
         // Settings class controls the appearance and animation of this particle system.
         ParticleSettings settings = new ParticleSettings();
@@ -38,6 +52,8 @@ namespace WorldTest
 
 
         // Shortcuts for accessing frequently changed effect parameters.
+        EffectParameter effectWorldParameter;
+        EffectParameter effectViewInverseParameter;
         EffectParameter effectViewParameter;
         EffectParameter effectProjectionParameter;
         EffectParameter effectViewportHeightParameter;
@@ -155,9 +171,10 @@ namespace WorldTest
         /// <summary>
         /// Constructor.
         /// </summary>
-        protected ParticleSystem(Game game, ContentManager content)
+        protected ParticleSystem(Game game, ContentManager content, bool attached)
             : base(game)
         {
+            this.is_attached = attached;
             this.content = content;
         }
 
@@ -219,7 +236,9 @@ namespace WorldTest
             EffectParameterCollection parameters = particleEffect.Parameters;
 
             // Look up shortcuts for parameters that change every frame.
+            effectWorldParameter = parameters["World"];
             effectViewParameter = parameters["View"];
+            effectViewInverseParameter = parameters["ViewInverse"];
             effectProjectionParameter = parameters["Projection"];
             effectViewportHeightParameter = parameters["ViewportHeight"];
             effectTimeParameter = parameters["CurrentTime"];
@@ -390,6 +409,17 @@ namespace WorldTest
                 // Activate the particle effect.
                 particleEffect.Begin();
 
+                // If the particle effect is attached to an entities frame of reference,
+                // then pass in the world matrix from that entity to the shader.
+                if (is_attached)
+                {
+                    particleEffect.Parameters["World"].SetValue(worldFrame);
+                }
+                else
+                {
+                    particleEffect.Parameters["World"].SetValue(Matrix.Identity);
+                }
+
                 foreach (EffectPass pass in particleEffect.CurrentTechnique.Passes)
                 {
                     pass.Begin();
@@ -512,7 +542,22 @@ namespace WorldTest
         public void SetCamera(Matrix view, Matrix projection)
         {
             effectViewParameter.SetValue(view);
+            Matrix VI_noT = view;
+            //VI_noT.M14 = 0;
+            //VI_noT.M24 = 0;
+            //VI_noT.M34 = 0;
+            //VI_noT.M44 = 1;
+            effectViewInverseParameter.SetValue(Matrix.Invert(view));
             effectProjectionParameter.SetValue(projection);
+        }
+
+        /// <summary>
+        /// Sets the worldFrame matrix to the specified matrix.
+        /// </summary>
+        /// <param name="world"></param>
+        public void SetWorldMatrix(Matrix world)
+        {
+            effectWorldParameter.SetValue(world);
         }
 
 

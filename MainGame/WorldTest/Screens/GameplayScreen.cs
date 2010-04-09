@@ -175,11 +175,11 @@ namespace WorldTest
             firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // Construct our particle system components.
-            explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content);
-            explosionSmokeParticles = new ExplosionSmokeParticleSystem(this.ScreenManager.game, content);
-            projectileTrailParticles = new ProjectileTrailParticleSystem(this.ScreenManager.game, content);
-            smokePlumeParticles = new SmokePlumeParticleSystem(this.ScreenManager.game, content);
-            fireParticles = new FireParticleSystem(this.ScreenManager.game, content);
+            explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content, false);
+            explosionSmokeParticles = new ExplosionSmokeParticleSystem(this.ScreenManager.game, content, false);
+            projectileTrailParticles = new ProjectileTrailParticleSystem(this.ScreenManager.game, content, false);
+            smokePlumeParticles = new SmokePlumeParticleSystem(this.ScreenManager.game, content, false);
+            fireParticles = new FireParticleSystem(this.ScreenManager.game, content, true);
 
             // Set the draw order so the explosions and fire
             // will appear over the top of the smoke.
@@ -316,6 +316,10 @@ namespace WorldTest
                     pos += camera.right * 4;
                     pos += camera.lookAt * 22;
                     relicLight.position = pos;
+                    // set the world matrix for the particles
+                    Matrix world = Matrix.Identity;
+                    world.Translation = player.position;
+                    fireParticles.SetWorldMatrix(world);
                     for (int i = 0; i < 20; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);
@@ -326,6 +330,7 @@ namespace WorldTest
                     pos += camera.right * 4;
                     pos += camera.lookAt * 20;
                     relicLight.position = pos;
+                    fireParticles.SetWorldMatrix(player.worldTransform);
                     for (int i = 0; i < 3; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);

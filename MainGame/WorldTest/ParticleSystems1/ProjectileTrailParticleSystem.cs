@@ -21,8 +21,8 @@ namespace WorldTest
     /// </summary>
     class ProjectileTrailParticleSystem : ParticleSystem
     {
-        public ProjectileTrailParticleSystem(Game game, ContentManager content)
-            : base(game, content)
+        public ProjectileTrailParticleSystem(Game game, ContentManager content, bool attached)
+            : base(game, content, attached)
         { }
 
 

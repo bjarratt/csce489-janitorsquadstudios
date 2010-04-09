@@ -7,7 +7,9 @@
 
 
 // Camera parameters.
+float4x4 World;
 float4x4 View;
+float4x4 ViewInverse;
 float4x4 Projection;
 float ViewportHeight;
 
@@ -99,8 +101,11 @@ float4 ComputeParticlePosition(float3 position, float3 velocity,
     // Apply the gravitational force.
     position += Gravity * age * normalizedAge;
     
+    //float4x4 WorldViewProj = mul(mul(World, View), Projection);
+    //float4x4 ViewProj = mul(mul(World,View), Projection);
+    
     // Apply the camera view and projection transforms.
-    return mul(mul(float4(position, 1), View), Projection);
+    return mul(mul(float4(position, 1), View), Projection); 
 }
 
 
@@ -183,6 +188,10 @@ VertexShaderOutput VertexShader(VertexShaderInput input)
     // Compute the particle position, size, color, and rotation.
     output.Position = ComputeParticlePosition(input.Position, input.Velocity,
                                               age, normalizedAge);
+                                              
+    // World is usually Identity but if particle is attached to something,
+    // then this transforms the position to that frame of reference.
+    //output.Position = mul(output.Position, World);
     
     output.Size = ComputeParticleSize(output.Position, input.Random.y, normalizedAge);
     output.Color = ComputeParticleColor(output.Position, input.Random.z, normalizedAge);
