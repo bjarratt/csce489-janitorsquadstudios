@@ -270,7 +270,7 @@ namespace WorldTest
 
                 foreach (Enemy e in enemies)
                 {
-                    e.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel, ref player);
+                    e.Update(gameTime, ref this.firstLevel, ref player);
                 }
 
                 for (int i = 0; i < explosionLights.Count; i++)
@@ -431,7 +431,7 @@ namespace WorldTest
         /// </summary>
         /// <param name="player"></param>
         /// <param name="enemy"></param>
-        void RunAStar(Player player, Enemy enemy)
+        Path<NavMeshNode> RunAStar(Player player, Enemy enemy)
         {
             //player... first check current current_poly
             if (Nav_Mesh.intersect_RayTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
@@ -471,12 +471,42 @@ namespace WorldTest
                 }
             }
 
-            Path<NavMeshNode> optimal_path = FindPath(Nav_Mesh.NavMesh[enemy.current_poly_index], Nav_Mesh.NavMesh[player.current_poly_index]);
-
-            //Do stuff to smooth the path and have enemy move accordingly.
+            return FindPath(Nav_Mesh.NavMesh[enemy.current_poly_index], Nav_Mesh.NavMesh[player.current_poly_index]);
         }
 
+        /// <summary>
+        /// Here we use the optimal path returned by FindPath to move the enemy.
+        /// </summary>
+        /// <param name="optimal_path"></param>
+        void UpdateEnemy(Enemy enemy, Path<NavMeshNode> optimal_path)
+        {
+            if (enemy.state == Enemy.EnemyAiState.Idle)
+            {
+                // do idle stuff
+            }
+            else if (enemy.state == Enemy.EnemyAiState.ChasingSmart)
+            {
+                // calculate movement vector to orient the enemy and move him
+                if (player.current_poly_index == player.prev_poly_index)
+                {
+                    // player has not moved since the last frame... continue following the 
+                    // current path.
 
+                }
+                else
+                {
+
+                }
+            }
+            else if (enemy.state == Enemy.EnemyAiState.Attack)
+            {
+                // do attack stuff
+            }
+            else if (enemy.state == Enemy.EnemyAiState.Weakened)
+            {
+                // do weakened stuff
+            }
+        }
 
         #endregion
 

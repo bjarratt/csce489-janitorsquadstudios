@@ -21,13 +21,13 @@ namespace WorldTest
 {
     #region Enums and enemy state info
 
-    enum EnemyAiState
-    {
-        Chasing, //chasing the player
-        Attack,  //has caught the player and can stop chasing
-        Idle,    //enemy can't see the player and wanders
-        Weakened //the enemy can be banished to the other dimension
-    }
+    //enum EnemyAiState
+    //{
+    //    Chasing, //chasing the player
+    //    Attack,  //has caught the player and can stop chasing
+    //    Idle,    //enemy can't see the player and wanders
+    //    Weakened //the enemy can be banished to the other dimension
+    //}
 
     struct EnemyStats
     {
@@ -43,8 +43,32 @@ namespace WorldTest
     {
         #region Properties
 
+        public enum EnemyAiState
+        {
+            ChasingSmart, //chasing the player with A*
+            ChasingDumb, //chasing the player when close
+            Attack,  //has caught the player and can stop chasing
+            Idle,    //enemy can't see the player and wanders
+            Weakened //the enemy can be banished to the other dimension
+        }
+
         public EnemyStats stats;
         public EnemyAiState state;
+
+        private int first_path_poly;
+        private int second_path_poly;
+
+        public int FirstPathPoly
+        {
+            get { return first_path_poly; }
+            set { first_path_poly = value; }
+        }
+
+        public int SecondPathPoly
+        {
+            get { return second_path_poly; }
+            set { second_path_poly = value; }
+        }
 
         #endregion
 
@@ -117,9 +141,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, GamePadState currentGPState,
-            GamePadState lastGPState, KeyboardState currentKBState,
-            KeyboardState lastKBState, ref Level currentLevel, ref Player player)
+        public void Update(GameTime gameTime, ref Level currentLevel, ref Player player)
         {
             //reset rotation
             rotation = 0.0f;
@@ -131,16 +153,16 @@ namespace WorldTest
             MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref currentLevel);
             worldTransform.Translation = position;
 
-            if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
-            {
-                controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
-                controller.Speed = 1.0f;
-            }
-            else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
-            {
-                controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
-                controller.Speed = 3.0f;
-            }
+            //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
+            //{
+            //    controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
+            //    controller.Speed = 1.0f;
+            //}
+            //else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
+            //{
+            //    controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
+            //    controller.Speed = 3.0f;
+            //}
 
             #region Behavior
 
