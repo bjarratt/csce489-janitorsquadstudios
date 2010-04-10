@@ -541,6 +541,8 @@ namespace WorldTest
             {
                 return Vector3.Zero;
             }
+
+            return Vector3.Zero;
         }
 
         #endregion
