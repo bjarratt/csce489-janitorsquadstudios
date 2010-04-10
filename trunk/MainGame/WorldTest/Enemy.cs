@@ -197,7 +197,7 @@ namespace WorldTest
             // similarly, if the enemy is active, he prefers to stay active. we
             // accomplish this by increasing the range of values that will cause the
             // enemy to go into the active state.
-            else if (this.state == EnemyAiState.Chasing)
+            else if (this.state == EnemyAiState.ChasingSmart || this.state == EnemyAiState.ChasingDumb)
             {
                 enemyChaseThreshold += this.stats.hysteresis / 2;
                 enemyAttackThreshold -= this.stats.hysteresis / 2;
@@ -219,7 +219,7 @@ namespace WorldTest
             }
             else if (distanceFromPlayer > enemyAttackThreshold)
             {
-                this.state = EnemyAiState.Chasing;
+                this.state = EnemyAiState.ChasingSmart;
             }
             else
             {
@@ -228,7 +228,7 @@ namespace WorldTest
 
             // Third, once we know what state we're in, act on that state.
             float currentEnemySpeed;
-            if (this.state == EnemyAiState.Chasing)
+            if (this.state == EnemyAiState.ChasingSmart)
             {
                 // the enemy wants to chase the player, so it will just use the TurnToFace
                 // function to turn towards the player's position. Then, when the enemy
