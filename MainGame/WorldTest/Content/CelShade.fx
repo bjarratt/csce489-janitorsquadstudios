@@ -333,22 +333,21 @@ float3 PhongShadingPS(
 		{
 			// Light vector
 			float3 lightVector = lights[i].position - inPosition;
-			//float attenuation = 1.0 + 0.007 * length(lightVector) + 0.0002 * length(lightVector) * length(lightVector); 
 			float attenuation = saturate(1 - dot(lightVector/lightRadii[i], lightVector/lightRadii[i]));
 
 			lightVector = normalize(lightVector);
 			
 			// Diffuse intensity
-			float diffuseIntensity = saturate(dot(inNormal, lightVector));
+			float diffuseIntensity = saturate(dot(inNormal, lightVector)) * attenuation;
 			float3 reflect = normalize(2*diffuseIntensity*inNormal - lightVector);
 			float2 Tex = float2(diffuseIntensity, 0);
 			CelColor += tex2D(CelMapSampler, Tex);
 		
 			// Specular intensity
-			float specularIntensity = pow(saturate(dot(reflect, inEyeVector)), inSpecularPower);
+			float specularIntensity = pow(saturate(dot(reflect, inEyeVector)), inSpecularPower) * attenuation;
 		
-			diffuseLightColor += (lights[i].color * diffuseIntensity * attenuation);
-			specularLightColor += (lights[i].color * specularIntensity * attenuation);
+			diffuseLightColor += (lights[i].color * diffuseIntensity);
+			specularLightColor += (lights[i].color * specularIntensity);
 		}
 
 		return (diffuseLightColor * inDiffuseColor + specularLightColor * inSpecularColor) * CelColor;
@@ -447,7 +446,7 @@ void animatedModelGrayPS_Light(
 	outColor0.b = luma;
 }
 
-
+/*
 void animatedModelPS_LightWithNormal(
 	uniform int lightCount,
     in float3 inPosition	: TEXCOORD0,
@@ -491,6 +490,7 @@ void animatedModelPS_LightWithNormal(
     outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
 		eyeVector, diffuseColor, specularColor, material.specularPower);
 }
+*/
 
 //This is the ouline pixel shader. It just outputs unlit black.
 float4 Black() : COLOR
@@ -855,7 +855,7 @@ technique AnimatedModel_EightLight
 		CullMode = CW;
     }
 }
-
+/*
 technique AnimatedModel_OneLightWithNormal
 < string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
 {
@@ -916,6 +916,7 @@ technique AnimatedModel_EightLightWithNormal
         PixelShader = compile ps_2_b animatedModelPS_LightWithNormal(8);
     }
 }
+*/
 
 // ------------------------------------------------------------
 // Shadow Mapping
