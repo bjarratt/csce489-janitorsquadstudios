@@ -649,7 +649,7 @@ namespace WorldTest
             }
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, true, ref projLightList);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList);
 
             //Draw lights
             DrawLights();
