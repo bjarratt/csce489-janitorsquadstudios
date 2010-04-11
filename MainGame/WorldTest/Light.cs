@@ -26,6 +26,12 @@ namespace WorldTest
 
         }
 
+        /// <summary>
+        /// Initialize a dynamic light
+        /// </summary>
+        /// <param name="pos">Position of the light</param>
+        /// <param name="col">Color (intensity) of the light</param>
+        /// <param name="attenuationRadius">Radius at which light intensity is zero</param>
         public Light(Vector3 pos, Vector3 col, float attenuationRadius)
         {
             position = pos;
@@ -33,17 +39,19 @@ namespace WorldTest
             this.attenuationRadius = attenuationRadius;
         }
 
+        /// <summary>
+        /// Initialize a dynamic light for an explosion flash
+        /// </summary>
+        /// <param name="pos">Position of the light</param>
+        /// <param name="col">Color (intensity) of the light</param>
+        /// <param name="attenuationRadius">Radius at which the light intensity is zero</param>
+        /// <param name="initialTick">Initial setting for explosion flash countdown</param>
         public Light(Vector3 pos, Vector3 col, float attenuationRadius, float initialTick)
         {
             position = pos;
             color = col;
             this.attenuationRadius = attenuationRadius;
             this.currentExplosionTick = initialTick;
-        }
-
-        public void setPosition(Vector3 pos)
-        {
-            this.position = pos;
         }
     }
 }
