@@ -40,7 +40,6 @@ namespace WorldTest
 
         private List<List<GeometryConnector>> adjacencyList;
         private List<StaticGeometry> levelPieces;
-        //private List<Light> lights;
 
         private Effect cel_effect;
         private Texture2D m_celMap;
@@ -72,21 +71,26 @@ namespace WorldTest
 
             this.ReadInLevel(levelFilename);
 
+            //
             // Load the StaticGeometry elements
+            //
             
             if (levelPieces.Count == 0)
             {
                 return;
             }
 
+            // Load the first level piece
             levelPieces[0].Load(device, ref content, Matrix.Identity);
             collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[0].CollisionMeshFilename, Matrix.Identity));
 
+            // Load the remaining level pieces
             for ( int i = 1; i < adjacencyList.Count; i++ )
             {
                 int currentIndex = adjacencyList[i][0].index;
                 Matrix worldMatrix = Matrix.Identity;
 
+                // Find the anchor of the current piece to load the current piece in the right configuration
                 for ( int j = 0; j < adjacencyList[currentIndex].Count; j++ )
                 {
                     if (adjacencyList[currentIndex][j].index == i)
@@ -132,6 +136,10 @@ namespace WorldTest
 
         #region Initialization
 
+        /// <summary>
+        /// Read in a level from the given filename
+        /// </summary>
+        /// <param name="levelFilename">Name of level file</param>
         private void ReadInLevel(string levelFilename)
         {
             this.adjacencyList = new List<List<GeometryConnector>>();
@@ -159,10 +167,10 @@ namespace WorldTest
                 char[] splitChars = { ' ' };
                 splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
 
-                if (splitLine.Count<string>() < 2)
+                if (splitLine.Count<string>() < 2) // Poorly formatted line; skip
                 {
                     line = levelFileReader.ReadLine();
-                    continue; // Poorly formatted line; skip
+                    continue;
                 }
 
                 // Populate the adjacency list from the level file
@@ -189,10 +197,19 @@ namespace WorldTest
 
                 levelPieces.Add(levelPiece);
 
+                // Read the next line
                 line = levelFileReader.ReadLine();
             }
         }
 
+        /// <summary>
+        /// Create a matrix to rotate/translate the child to line up with the base
+        /// </summary>
+        /// <param name="basePoint">Point in base plane</param>
+        /// <param name="baseNormal">Normal to base plane</param>
+        /// <param name="childPoint">Point in child plane</param>
+        /// <param name="childNormal">Normal to child plane</param>
+        /// <returns></returns>
         private Matrix CreateSnapMatrix(Vector3 basePoint, Vector3 baseNormal, Vector3 childPoint, Vector3 childNormal)
         {
             float baseDotChild = Vector3.Dot(baseNormal, childNormal);
@@ -217,6 +234,12 @@ namespace WorldTest
             terrainTexture = content.Load<Texture2D>("tex");
         }
 
+        /// <summary>
+        /// Read a collision mesh in from an OBJ file
+        /// </summary>
+        /// <param name="filename">Collision mesh filename</param>
+        /// <param name="worldMatrix">Matrix to transform mesh by</param>
+        /// <returns>List of mesh vertices</returns>
         private List<VertexPositionNormalTexture> LoadFromOBJ(string filename, Matrix worldMatrix)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
@@ -228,7 +251,7 @@ namespace WorldTest
             normalList.Add(new Vector3());
             textureCoordList.Add(new Vector3());
 
-            List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of triangles (every 3 vertices is a triangle)
+            List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of vertices (every 3 vertices is a triangle)
 
             VertexPositionNormalTexture currentVertex;
 
@@ -259,6 +282,7 @@ namespace WorldTest
 
             float textureScaleFactor = 1.0f;
 
+            // Read OBJ file line-by-line
             while (line != null)
             {
                 if (line == "" || line == "\n")
@@ -277,30 +301,12 @@ namespace WorldTest
                     {
                         largestValues = position;
                     }
-                    /*
-                    if (position.Y > largestValues.Y)
-                    {
-                        largestValues.Y = position.Y;
-                    }
-                    if (position.Z > largestValues.Z)
-                    {
-                        largestValues.Z = position.Z;
-                    }
-                     */
 
                     if (position.X < smallestValues.X)
                     {
                         smallestValues = position;
                     }
-                    /*
-                    if (position.Y < smallestValues.Y)
-                    {
-                        smallestValues.Y = position.Y;
-                    }
-                    if (position.Z < smallestValues.Z)
-                    {
-                        smallestValues.Z = position.Z;
-                    }*/
+ 
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
                 else if (splitLine[0] == "vn") // Normal
@@ -314,9 +320,14 @@ namespace WorldTest
                 }
                 else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
                 {
-                    for (int i = 1; i < 4; i++)
+                    for (int i = 1; i < 4; i++) // Read each of the three vertices
                     {
                         splitVertex = splitLine[i].Split('/');
+
+                        //
+                        // Set the vertices for the mesh (to be returned by this function)
+                        //
+
                         if (splitVertex[0] != "")
                         {
                             currentVertex.Position = (Vector3)positionList[Convert.ToInt32(splitVertex[0])];
@@ -345,17 +356,21 @@ namespace WorldTest
                             currentVertex.TextureCoordinate = new Vector2(0.0f);
                         }
 
+                        //
+                        // Set the CollisionPolygons for the collision mesh
+                        //
+
                         if (i == 1)
                         {
-                            currentPolygon.v1 = currentVertex.Position;// +this.collisionMeshOffset;
+                            currentPolygon.v1 = currentVertex.Position;
                         }
                         else if (i == 2)
                         {
-                            currentPolygon.v2 = currentVertex.Position;// +this.collisionMeshOffset;
+                            currentPolygon.v2 = currentVertex.Position;
                         }
                         else if (i == 3)
                         {
-                            currentPolygon.v3 = currentVertex.Position;// +this.collisionMeshOffset;
+                            currentPolygon.v3 = currentVertex.Position;
 
                             polygonVector1 = currentPolygon.v1 - currentPolygon.v2;
                             polygonVector2 = currentPolygon.v3 - currentPolygon.v2;
@@ -475,13 +490,17 @@ namespace WorldTest
 
             int i;
 
+            //
+            // Check collision with each polygon in collision mesh
+            //
             for (i = 0; i < this.collisionMesh.Count; i++)
             {
                 this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
 
+                // Parametric value for when the current polygon will be hit (0 to 1 means it will be hit this frame)
                 float tValue = ((float)radius + Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.collisionMesh[i].normal);
 
-                if (tValue < 0 || tValue > 1)
+                if (tValue < 0 || tValue > 1) // If polygon is not hit this frame
                 {
                     if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.collisionMesh[i]))
                     {
@@ -512,8 +531,10 @@ namespace WorldTest
 
                 if (firstTimeThrough || tValue < this.closestT)
                 {
-                    if (pointInsidePolygon(this.collisionPoint /*+ ((float)radius * this.collisionMesh[i].normal)*/, this.collisionMesh[i]))
+                    if (pointInsidePolygon(this.collisionPoint, this.collisionMesh[i]))
                     {
+                        // If the collision point is inside the current polygon and it has the smallest tValue so far,
+                        // record the collision info.
                         this.closestT = tValue;
                         this.closestVelocityVector = this.newVelocityVector;
                         this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
@@ -529,7 +550,7 @@ namespace WorldTest
             }
             else
             {
-                return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1);
+                return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1); // Recursively collide
             }
         }
 
@@ -624,19 +645,6 @@ namespace WorldTest
 
         public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh, ref List<Light> lights)
         {
-            //int currentLocationIndex = 0;
-            //levelPieces[currentLocationIndex].Draw(device, ref camera);
-
-            //for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
-            //{
-            //    levelPieces[adjacencyList[currentLocationIndex][i].index].Draw(device, ref camera);
-            //}
-            //levelPieces[1].Draw(device, true, ref camera);
-
-            //
-            // COPIED FROM STATICGEOMETRY
-            //
-
             int currentLocationIndex = 0;
 
             CullMode previousCullMode = device.RenderState.CullMode;
