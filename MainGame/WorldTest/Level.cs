@@ -72,6 +72,12 @@ namespace WorldTest
             this.ReadInLevel(levelFilename);
 
             //
+            // Load the navigation mesh
+            //
+
+            //this.LoadFromOBJ("collision_mesh.obj", Matrix.Identity, ref this.navigationMesh);
+
+            //
             // Load the StaticGeometry elements
             //
             
@@ -82,7 +88,7 @@ namespace WorldTest
 
             // Load the first level piece
             levelPieces[0].Load(device, ref content, Matrix.Identity);
-            collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[0].CollisionMeshFilename, Matrix.Identity));
+            collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[0].CollisionMeshFilename, Matrix.Identity, ref this.collisionMesh));
 
             // Load the remaining level pieces
             for ( int i = 1; i < adjacencyList.Count; i++ )
@@ -112,7 +118,7 @@ namespace WorldTest
                         levelPieces[i].Load(device, ref content, worldMatrix);
 
                         // Add the piece's collision mesh to the level's collision mesh
-                        collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[i].CollisionMeshFilename, worldMatrix));
+                        collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[i].CollisionMeshFilename, worldMatrix, ref this.collisionMesh));
 
                         break;
                     }
@@ -239,8 +245,9 @@ namespace WorldTest
         /// </summary>
         /// <param name="filename">Collision mesh filename</param>
         /// <param name="worldMatrix">Matrix to transform mesh by</param>
+        /// <param name="collisionPolygons">Ref to collision or navigation mesh</param>
         /// <returns>List of mesh vertices</returns>
-        private List<VertexPositionNormalTexture> LoadFromOBJ(string filename, Matrix worldMatrix)
+        private List<VertexPositionNormalTexture> LoadFromOBJ(string filename, Matrix worldMatrix, ref List<CollisionPolygon> collisionPolygons)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
@@ -378,12 +385,12 @@ namespace WorldTest
                             Vector3.Cross(ref polygonVector1, ref polygonVector2, out currentPolygon.normal);
                             currentPolygon.normal.Normalize();
 
-                            collisionMesh.Add(currentPolygon);
+                            collisionPolygons.Add(currentPolygon);
 
-                            if (currentPolygon.normal.Equals(Vector3.Up))
-                            {
-                                navigationMesh.Add(currentPolygon);
-                            }
+                            //if (currentPolygon.normal.Equals(Vector3.Up))
+                            //{
+                            //    navigationMesh.Add(currentPolygon);
+                            //}
                         }
 
                         triangleList.Add(currentVertex);
@@ -699,19 +706,13 @@ namespace WorldTest
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
             {
                 pass.Begin();
+
                 levelPieces[currentLocationIndex].Draw(device, ref camera);
 
-                if (drawCollisionMesh)
-                {
-                    FillMode oldFillMode = device.RenderState.FillMode;
-                    device.RenderState.FillMode = FillMode.WireFrame;
-                    device.VertexDeclaration = this.collisionVertexDeclaration;
-                    device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
-                    device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
-                    device.RenderState.FillMode = oldFillMode;
-                }
                 pass.End();
             }
+
+
 
             for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
             {
@@ -725,6 +726,29 @@ namespace WorldTest
                 }
             }
             this.cel_effect.End();
+
+            if (drawCollisionMesh)
+            {
+                device.RenderState.CullMode = CullMode.None;
+                cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_Wireframe"];
+                this.cel_effect.Begin();
+                FillMode oldFillMode = device.RenderState.FillMode;
+                device.RenderState.FillMode = FillMode.WireFrame;
+                device.VertexDeclaration = this.collisionVertexDeclaration;
+                device.Vertices[0].SetSource(this.collisionVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
+
+                foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+                {
+                    pass.Begin();
+
+                    device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.collisionVertexCount / 3);
+
+                    pass.End();
+                }
+                this.cel_effect.End();
+                device.RenderState.FillMode = oldFillMode;
+            }
+
             device.RenderState.CullMode = previousCullMode;
         }
 
