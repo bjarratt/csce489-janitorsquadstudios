@@ -129,6 +129,16 @@ void StaticModelVS_Light(
     outUV0 = inUV0;
 }
 
+void StaticModelVS_Wireframe(
+	in float4 inPosition		: POSITION,
+	
+	out float4 outSVPosition	: POSITION)
+{
+	// Transform vertex position and normal
+    float3 transInPosition = mul(inPosition, matW);
+    outSVPosition = mul(float4(transInPosition, 1.0f), matVP);
+}
+
 void AnimatedModelVS_Light(
     in float4 inPosition		: POSITION,
     in float3 inNormal			: NORMAL,
@@ -383,6 +393,14 @@ void StaticModelPS_Light(
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 }
 
+void StaticModelPS_Wireframe(
+	out float4 outColor0	: COLOR0)
+{     	
+    // Set color to bright green
+    outColor0.a = 1.0f;
+	outColor0.rgb = float3(0.0f, 1.0f, 0.0f);
+}
+
 void animatedModelPS_Light(
 	uniform int lightCount,
     in float3 inPosition	: TEXCOORD0,
@@ -501,6 +519,18 @@ float4 Black() : COLOR
 
 // Techniques
 // -------------------------------------------------
+
+technique StaticModel_Wireframe
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+	pass p0
+	{
+		AlphaBlendEnable = FALSE;
+		
+		VertexShader = compile vs_3_0 StaticModelVS_Wireframe();
+        PixelShader = compile ps_3_0 StaticModelPS_Wireframe();
+	}
+}
 
 technique StaticModel_OneLight
 < string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
