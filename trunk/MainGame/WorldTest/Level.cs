@@ -251,7 +251,7 @@ namespace WorldTest
         {
             cel_effect = content.Load<Effect>("CelShade");
             m_celMap = content.Load<Texture2D>("Toon2");
-            terrainTexture = content.Load<Texture2D>("tex");
+            terrainTexture = content.Load<Texture2D>("tex_small");
         }
 
         /// <summary>
