@@ -58,8 +58,7 @@ namespace WorldTest
         private int first_path_poly;
         private int second_path_poly;
 
-        private Path<NavMeshNode> oldpath;
-        private Path<NavMeshNode> newpath;
+        private Path<NavMeshNode> currentPath;
 
         public int FirstPathPoly
         {
@@ -73,16 +72,10 @@ namespace WorldTest
             set { second_path_poly = value; }
         }
 
-        public Path<NavMeshNode> OldPath
+        public Path<NavMeshNode> CurrentPath
         {
-            get { return oldpath; }
-            set { oldpath = value; }
-        }
-
-        public Path<NavMeshNode> NewPath
-        {
-            get { return newpath; }
-            set { newpath = value; }
+            get { return currentPath; }
+            set { currentPath = value; }
         }
 
         #endregion

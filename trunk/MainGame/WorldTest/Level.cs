@@ -53,7 +53,7 @@ namespace WorldTest
         private int collisionVertexCount;
 
         // Navigation mesh variables
-        public List<CollisionPolygon> navigationMesh;
+        private List<NavMeshNode> navigationMesh;
         private Vector3 navigationMeshOffset;
         private VertexBuffer navigationVertexBuffer;
         private VertexDeclaration navigationVertexDeclaration;
@@ -72,7 +72,7 @@ namespace WorldTest
 
             List<VertexPositionNormalTexture> collisionVertices = new List<VertexPositionNormalTexture>(); // Stores collision vertices for VertexBuffer creation
 
-            this.navigationMesh = new List<CollisionPolygon>();
+            this.navigationMesh = new List<NavMeshNode>();
 
             this.ReadInLevel(levelFilename);
 
@@ -81,15 +81,15 @@ namespace WorldTest
             //
 
             this.navigationMeshOffset = Vector3.Zero;
-            List<VertexPositionNormalTexture> navigationVertices = this.LoadFromOBJ("navigation_mesh.obj", Matrix.Identity, this.navigationMeshOffset, ref this.navigationMesh);
+            List<VertexPositionNormalTexture> navigationVertices = new List<VertexPositionNormalTexture>();
 
-            VertexPositionNormalTexture[] navigationVerticesArray = navigationVertices.ToArray();
-            this.navigationVertexBuffer = new VertexBuffer(device, navigationVerticesArray.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
-            this.navigationVertexBuffer.SetData(navigationVerticesArray);
+            //VertexPositionNormalTexture[] navigationVerticesArray = navigationVertices.ToArray();
+            //this.navigationVertexBuffer = new VertexBuffer(device, navigationVerticesArray.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
+            //this.navigationVertexBuffer.SetData(navigationVerticesArray);
 
-            this.navigationVertexCount = navigationVerticesArray.Length;
+            //this.navigationVertexCount = navigationVerticesArray.Length;
 
-            this.navigationVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
+            //this.navigationVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
 
             //
             // Load the StaticGeometry elements
@@ -102,7 +102,8 @@ namespace WorldTest
 
             // Load the first level piece
             levelPieces[0].Load(device, ref content, Matrix.Identity);
-            collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[0].CollisionMeshFilename, Matrix.Identity, Vector3.Zero, ref this.collisionMesh));
+            collisionVertices.AddRange(this.LoadCollisionMesh(levelPieces[0].CollisionMeshFilename, Matrix.Identity, Vector3.Zero, ref this.collisionMesh));
+            this.LoadNavigationMesh(levelPieces[0].NavigationMeshFilename, Matrix.Identity, Vector3.Zero);
 
             // Load the remaining level pieces
             for ( int i = 1; i < adjacencyList.Count; i++ )
@@ -132,8 +133,10 @@ namespace WorldTest
                         levelPieces[i].Load(device, ref content, worldMatrix);
 
                         // Add the piece's collision mesh to the level's collision mesh
-                        collisionVertices.AddRange(this.LoadFromOBJ(levelPieces[i].CollisionMeshFilename, worldMatrix, Vector3.Zero, ref this.collisionMesh));
+                        collisionVertices.AddRange(this.LoadCollisionMesh(levelPieces[i].CollisionMeshFilename, worldMatrix, Vector3.Zero, ref this.collisionMesh));
 
+                        // Add the piece's navigation mesh to the level's navigation mesh
+                        navigationVertices.AddRange(this.LoadNavigationMesh(levelPieces[i].NavigationMeshFilename, worldMatrix, Vector3.Zero));
                         break;
                     }
                 }
@@ -150,6 +153,18 @@ namespace WorldTest
             this.collisionVertexCount = collisionVerticesArray.Length;
 
             this.collisionVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
+
+            //
+            // Initialize navigation vertex buffer and navigation mesh
+            //
+
+            VertexPositionNormalTexture[] navigationVerticesArray = navigationVertices.ToArray();
+            this.navigationVertexBuffer = new VertexBuffer(device, navigationVerticesArray.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
+            this.navigationVertexBuffer.SetData(navigationVerticesArray);
+
+            this.navigationVertexCount = navigationVerticesArray.Length;
+
+            this.navigationVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
         }
         
         #endregion
@@ -194,7 +209,7 @@ namespace WorldTest
                 }
 
                 // Populate the adjacency list from the level file
-                for (int i = 2; i < splitLine.Count<string>(); i += 10)
+                for (int i = 3; i < splitLine.Count<string>(); i += 10)
                 {
                     GeometryConnector connect = new GeometryConnector();
                     connect.index = Convert.ToInt32(splitLine[i]);
@@ -213,7 +228,7 @@ namespace WorldTest
                 adjacencyList.Add(currentList);
 
                 // Load the StaticGeometry from file name
-                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1]); // splitLine[1] is collisionMeshFilename
+                StaticGeometry levelPiece = new StaticGeometry(splitLine[0], splitLine[1], splitLine[2]); // splitLine[1] is collisionMeshFilename
 
                 levelPieces.Add(levelPiece);
 
@@ -261,7 +276,7 @@ namespace WorldTest
         /// <param name="worldMatrix">Matrix to transform mesh by</param>
         /// <param name="collisionPolygons">Ref to collision or navigation mesh</param>
         /// <returns>List of mesh vertices</returns>
-        private List<VertexPositionNormalTexture> LoadFromOBJ(string filename, Matrix worldMatrix, Vector3 meshOffset, ref List<CollisionPolygon> collisionPolygons)
+        private List<VertexPositionNormalTexture> LoadCollisionMesh(string filename, Matrix worldMatrix, Vector3 meshOffset, ref List<CollisionPolygon> collisionPolygons)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
@@ -416,6 +431,167 @@ namespace WorldTest
             return triangleList;
         }
 
+        private List<VertexPositionNormalTexture> LoadNavigationMesh(string filename, Matrix worldMatrix, Vector3 meshOffset)
+        {
+            List<NavMeshVertex> positionList = new List<NavMeshVertex>(); // List of vertices in order of OBJ file
+            ArrayList normalList = new ArrayList();
+            //ArrayList textureCoordList = new ArrayList();
+
+            // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
+            positionList.Add(new NavMeshVertex());
+            normalList.Add(new Vector3());
+            //textureCoordList.Add(new Vector3());
+
+            List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of vertices (every 3 vertices is a triangle)
+
+            VertexPositionNormalTexture currentVertex;
+
+            NavMeshVertex currentNavVertex = new NavMeshVertex();
+
+            // Variables used for collision meshes
+            //NavMeshNode currentFace = new NavMeshNode();
+            //currentFace.V0 = Vector3.Zero;
+            //currentFace.V1 = Vector3.Zero;
+            //currentFace.V2 = Vector3.Zero;
+
+            if (filename == null || filename == "")
+            {
+                return triangleList;
+            }
+
+            FileStream objFile = new FileStream(filename, FileMode.Open, FileAccess.Read);
+            StreamReader objFileReader = new StreamReader(objFile);
+
+            string line = objFileReader.ReadLine();
+            string[] splitLine;
+
+            string[] splitVertex;
+
+            // Read OBJ file line-by-line
+            while (line != null)
+            {
+                if (line == "" || line == "\n")
+                {
+                    line = objFileReader.ReadLine();
+                    continue;
+                }
+
+                char[] splitChars = { ' ' };
+                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+
+                if (splitLine[0] == "v") // Position
+                {
+                    Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    currentNavVertex.position = Vector3.Transform(position, worldMatrix);
+                    currentNavVertex.adjacentFaces = new List<int>();
+                    positionList.Add(currentNavVertex);
+                }
+                else if (splitLine[0] == "vn") // Normal
+                {
+                    Vector3 normal = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
+                    normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
+                }
+                else if (splitLine[0] == "vt") // Texture Coordinate
+                {
+                    //textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
+                }
+                else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
+                {
+                    NavMeshNode currentFace = new NavMeshNode();
+                    currentFace.adjacent_polygons = new List<int>();
+
+                    for (int i = 1; i < 4; i++) // Read each of the three vertices
+                    {
+                        int currentVertexIndex = -1;
+
+                        splitVertex = splitLine[i].Split('/');
+
+                        //
+                        // Set the vertices for the mesh (to be returned by this function)
+                        //
+
+                        if (splitVertex[0] != "")
+                        {
+                            currentVertexIndex = Convert.ToInt32(splitVertex[0]);
+                            currentVertex.Position = positionList[currentVertexIndex].position;
+                            currentVertex.Position += meshOffset;
+                        }
+                        else
+                        {
+                            currentVertex.Position = new Vector3(0.0f);
+                        }
+
+                        if (splitVertex[2] != "")
+                        {
+                            currentVertex.Normal = (Vector3)normalList[Convert.ToInt32(splitVertex[2])];
+                        }
+                        else
+                        {
+                            currentVertex.Normal = new Vector3(0.0f);
+                        }
+
+                        //if (splitVertex[1] != "")
+                        //{
+                        //    currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
+                        //}
+                        //else
+                        //{
+                        currentVertex.TextureCoordinate = new Vector2(0.0f);
+                        //}
+
+                        //
+                        // Set the NavMeshNode for the mesh
+                        //
+
+                        if (currentVertexIndex > 0)
+                        {
+                            // Add face to vertex's list
+                            positionList[currentVertexIndex].adjacentFaces.Add(navigationMesh.Count);
+                        }
+
+                        if (i == 1)
+                        {
+                            currentFace.V0 = currentVertex.Position;
+                        }
+                        else if (i == 2)
+                        {
+                            currentFace.V1 = currentVertex.Position;
+                        }
+                        else if (i == 3)
+                        {
+                            currentFace.V2 = currentVertex.Position;
+
+                            navigationMesh.Add(currentFace);
+                        }
+
+                        triangleList.Add(currentVertex);
+                    }
+                }
+                else // Unused line format, skipping
+                {
+
+                }
+
+                line = objFileReader.ReadLine();
+            }
+
+            // Set face adjacency info from vertices
+            for (int i = 1; i < positionList.Count; i++)
+            {
+                for (int j = 0; j < positionList[i].adjacentFaces.Count; j++)
+                {
+                    this.navigationMesh[positionList[i].adjacentFaces[j]].adjacent_polygons.AddRange(positionList[i].adjacentFaces);
+                }
+            }
+
+            // Remove duplicate face adjacency entries
+            for (int i = 0; i < this.navigationMesh.Count; i++)
+            {
+                this.navigationMesh[i].adjacent_polygons = new List<int>(this.navigationMesh[i].adjacent_polygons.Distinct<int>());
+            }
+
+            return triangleList;
+        }
         #endregion
 
         #region CollisionDetection
@@ -653,6 +829,132 @@ namespace WorldTest
                 outCollisionPoint = this.closestCollisionPoint;
                 return true;
             }
+        }
+
+        #endregion
+
+        #region Pathfinding
+
+        public Path<NavMeshNode> FindPath(int startIndex, int destinationIndex)
+        {
+            NavMeshNode start = navigationMesh[startIndex];
+            NavMeshNode destination = navigationMesh[destinationIndex];
+
+            var closed = new HashSet<NavMeshNode>();
+            var queue = new PriorityQueue<double, Path<NavMeshNode>>();
+            queue.Enqueue(0, new Path<NavMeshNode>(start));
+            while (!queue.IsEmpty)
+            {
+                var path = queue.Dequeue();
+                if (closed.Contains(path.LastStep))
+                    continue;
+                if (path.LastStep.Equals(destination))
+                    return path;
+                closed.Add(path.LastStep);
+                foreach (int n in path.LastStep.adjacent_polygons)
+                {
+                    // There is an obstacle in Nav_Mesh.NavMesh[n]... avoid it.
+                    if (navigationMesh[n].Obstacle == true) continue;
+
+                    double d = (double)Vector3.Distance(path.LastStep.Centroid, navigationMesh[n].Centroid);
+                    double e = (double)Vector3.Distance(navigationMesh[n].Centroid, destination.Centroid);
+                    var newPath = path.AddStep(navigationMesh[n], d);
+                    queue.Enqueue(newPath.TotalCost + e, newPath);
+                }
+            }
+            return null;
+        }
+
+        public int NavigationIndex(Vector3 position)
+        {
+            return this.NavigationIndex(position, -1);
+        }
+
+        public int NavigationIndex(Vector3 position, int currentLocation)
+        {
+            if (currentLocation < 0)
+            {
+                for (int i = 0; i < navigationMesh.Count; i++)
+                {
+                    if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
+                    {
+                        return i;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
+                {
+                    if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
+                    {
+                        return i;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        public bool RayTriangleIntersect(Ray R, int nodeIndex)
+        {
+            //Vector3 u, v, n;             // triangle vectors
+            //Vector3 dir, w0, w;          // ray vectors
+
+            NavMeshNode node = this.navigationMesh[nodeIndex];
+
+            Vector3 intersection = Vector3.Zero;
+            float r, a, b;             // params to calc ray-plane intersect
+
+            // get triangle edge vectors and plane normal
+            Vector3 u = node.V1 - node.V0;
+            Vector3 v = node.V2 - node.V0;
+            Vector3 n = Vector3.Cross(u, v);             // cross product
+            if (n == Vector3.Zero)            // triangle is degenerate
+                return false;                 // do not deal with this case
+
+            Vector3 w0 = R.Position - node.V0;
+            a = -Vector3.Dot(n, w0);
+            b = Vector3.Dot(n, R.Direction);
+            if (Math.Abs(b) < 0.00001f)
+            {     // ray is parallel to triangle plane
+                if (a == 0) { }//return true;                // ray lies in triangle plane
+                else return false;             // ray disjoint from plane
+            }
+
+            // get intersect point of ray with triangle plane
+            r = a / b;
+            if (r < 0.0f)                   // ray goes away from triangle
+                return false;                  // => no intersect
+            // for a segment, also test if (r > 1.0) => no intersect
+
+            intersection = R.Position + r * R.Direction;           // intersect point of ray and plane
+
+            // is I inside T?
+            float uu, uv, vv, wu, wv, D;
+            uu = Vector3.Dot(u, u);
+            uv = Vector3.Dot(u, v);
+            vv = Vector3.Dot(v, v);
+            Vector3 w = intersection - node.V0;
+            wu = Vector3.Dot(w, u);
+            wv = Vector3.Dot(w, v);
+            D = uv * uv - uu * vv;
+
+            // get and test parametric coords
+            float s, t;
+            s = (uv * wv - vv * wu) / D;
+            if (s < 0.0 || s > 1.0)        // I is outside T
+                return false;
+            t = (uv * wu - uu * wv) / D;
+            if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+                return false;
+
+            return true;                      // I is in T
+        }
+
+        public Vector3 TravelPoint(int firstPolyIndex, int secondPolyIndex)
+        {
+            return (navigationMesh[firstPolyIndex].Centroid + navigationMesh[secondPolyIndex].Centroid) * 0.5f;
         }
 
         #endregion

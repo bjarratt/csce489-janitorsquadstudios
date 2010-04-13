@@ -29,6 +29,7 @@ namespace WorldTest
         private int vertexCount;
 
         public string CollisionMeshFilename { get; private set; }
+        public string NavigationMeshFilename { get; private set; }
 
         #endregion
 
@@ -41,10 +42,11 @@ namespace WorldTest
         /// <param name="visibleMeshFilename">OBJ file to read visible mesh from</param>
         /// <param name="collisionMeshFilename">OBJ file to read collision mesh from</param>
         /// <param name="collisionMeshOffset">Offset applied to all collision mesh vertices (for alignment)</param>
-        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename)
+        public StaticGeometry(string visibleMeshFilename, string collisionMeshFilename, string navigationMeshFilename)
         {
             this.visibleMeshFilename = visibleMeshFilename;
             this.CollisionMeshFilename = collisionMeshFilename;
+            this.NavigationMeshFilename = navigationMeshFilename;
             //this.collisionMeshOffset = collisionMeshOffset;
         }
 
