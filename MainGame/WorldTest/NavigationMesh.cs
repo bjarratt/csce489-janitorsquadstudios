@@ -19,6 +19,12 @@ using XNAnimation.Effects;
 
 namespace WorldTest
 {
+    struct NavMeshVertex
+    {
+        public Vector3 position;
+        public List<int> adjacentFaces;
+    }
+
     public class NavMeshNode
     {
         private int index;
@@ -28,7 +34,7 @@ namespace WorldTest
         private Vector3 v1;
         private Vector3 v2;
         private Vector3 centroid;
-        private List<int> adjacent_polygons;
+        public List<int> adjacent_polygons;
 
         public int Index
         {
@@ -66,11 +72,11 @@ namespace WorldTest
             set { centroid = value; }
         }
 
-        public List<int> Adjacent
-        {
-            get { return adjacent_polygons; }
-            set { adjacent_polygons = value; }
-        }
+        //public List<int> adjacent_polygons;
+        //{
+        //    get { return adjacent_polygons; }
+        //    set { adjacent_polygons = value; }
+        //}
     }
 
     public class Path<NavMeshNode> : IEnumerable<NavMeshNode>
@@ -162,59 +168,7 @@ namespace WorldTest
         #region Load
         #endregion
 
-        public bool intersect_RayTriangle(Ray R, NavMeshNode node)
-        {
-            //Vector3 u, v, n;             // triangle vectors
-            //Vector3 dir, w0, w;          // ray vectors
 
-            Vector3 intersection = Vector3.Zero;
-            float r, a, b;             // params to calc ray-plane intersect
-         
-            // get triangle edge vectors and plane normal
-            Vector3 u = node.V1 - node.V0;
-            Vector3 v = node.V2 - node.V0;
-            Vector3 n = Vector3.Cross(u,v);             // cross product
-            if (n == Vector3.Zero)            // triangle is degenerate
-                return false;                 // do not deal with this case
-
-            Vector3 w0 = R.Position - node.V0;
-            a = -Vector3.Dot(n, w0);
-            b = Vector3.Dot(n, R.Direction);
-            if (Math.Abs(b) < 0.00001f)
-            {     // ray is parallel to triangle plane
-                if (a == 0) {}//return true;                // ray lies in triangle plane
-                else return false;             // ray disjoint from plane
-            }
-
-            // get intersect point of ray with triangle plane
-            r = a / b;
-            if (r < 0.0f)                   // ray goes away from triangle
-                return false;                  // => no intersect
-            // for a segment, also test if (r > 1.0) => no intersect
-
-            intersection = R.Position + r * R.Direction;           // intersect point of ray and plane
-            
-            // is I inside T?
-            float uu, uv, vv, wu, wv, D;
-            uu = Vector3.Dot(u, u);
-            uv = Vector3.Dot(u, v);
-            vv = Vector3.Dot(v, v);
-            Vector3 w = intersection - node.V0;
-            wu = Vector3.Dot(w, u);
-            wv = Vector3.Dot(w, v);
-            D = uv * uv - uu * vv;
-
-            // get and test parametric coords
-            float s, t;
-            s = (uv * wv - vv * wu) / D;
-            if (s < 0.0 || s > 1.0)        // I is outside T
-                return false;
-            t = (uv * wu - uu * wv) / D;
-            if (t < 0.0 || (s + t) > 1.0)  // I is outside T
-                return false;
-
-            return true;                      // I is in T
-        }
 
 
 
