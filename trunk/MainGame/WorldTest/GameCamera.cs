@@ -117,11 +117,12 @@ namespace WorldTest
 
         #region Methods
 
-        public void UpdateCamera(GameTime gameTime, GamePadState currentGamePadState, GamePadState lastState, KeyboardState currentKeyboardState, bool invertYAxis)
+        public void UpdateCamera(GameTime gameTime, ControlState inputState, bool invertYAxis)
         {
             float time = (float)gameTime.ElapsedGameTime.TotalMilliseconds;
 
-            if (currentGamePadState.Buttons.RightStick == ButtonState.Pressed && lastState.Buttons.RightStick == ButtonState.Released)
+            if (inputState.currentGamePadState.Buttons.RightStick == ButtonState.Pressed &&
+                inputState.lastGamePadState.Buttons.RightStick == ButtonState.Released)
             {
                 first = !first;
                 cameraRot = 0.0f;
@@ -157,7 +158,7 @@ namespace WorldTest
             }
 
             // Check for input to rotate the camera up and down around the model.
-            if (currentKeyboardState.IsKeyDown(Keys.Up) /*||
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Up) /*||
                 currentKeyboardState.IsKeyDown(Keys.W)*/)
             {
                 if (first)
@@ -175,7 +176,7 @@ namespace WorldTest
                     cameraArc += time * 0.025f;
             }
 
-            if (currentKeyboardState.IsKeyDown(Keys.Down) /*||
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Down) /*||
                 currentKeyboardState.IsKeyDown(Keys.S)*/)
             {
                 if (first)
@@ -195,11 +196,11 @@ namespace WorldTest
 
             if (invertYAxis)
             {
-                cameraArc -= currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+                cameraArc -= inputState.currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
             }
             else
             {
-                cameraArc += currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+                cameraArc += inputState.currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
             }
 
             // Limit the arc movement.
@@ -209,7 +210,7 @@ namespace WorldTest
                 cameraArc = -55.0f;
 
             // Check for input to rotate the camera around the model.
-            if (currentKeyboardState.IsKeyDown(Keys.Right))
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Right))
             {
                 if (first)
                 {
@@ -221,7 +222,7 @@ namespace WorldTest
                 }
             }
 
-            if (currentKeyboardState.IsKeyDown(Keys.Left))
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Left))
             {
                 if (first)
                 {
@@ -235,22 +236,22 @@ namespace WorldTest
 
             if (first)
             {
-                cameraRot -= currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+                cameraRot -= inputState.currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
             }
             else
             {
-                cameraRot += currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+                cameraRot += inputState.currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
             }
 
             // Check for input to zoom camera in and out.
-            if (currentKeyboardState.IsKeyDown(Keys.Z))
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Z))
                 cameraDistance += time * 0.25f;
 
-            if (currentKeyboardState.IsKeyDown(Keys.X))
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.X))
                 cameraDistance -= time * 0.25f;
 
-            cameraDistance += currentGamePadState.Triggers.Left * time * 0.5f;
-            cameraDistance -= currentGamePadState.Triggers.Right * time * 0.5f;
+            cameraDistance += inputState.currentGamePadState.Triggers.Left * time * 0.5f;
+            cameraDistance -= inputState.currentGamePadState.Triggers.Right * time * 0.5f;
 
             // Limit the camera distance.
             if (cameraDistance > 500)
@@ -258,8 +259,8 @@ namespace WorldTest
             else if (cameraDistance < 10)
                 cameraDistance = 10;
 
-            if (currentGamePadState.Buttons.RightStick == ButtonState.Pressed ||
-                currentKeyboardState.IsKeyDown(Keys.R))
+            if (inputState.currentGamePadState.Buttons.RightStick == ButtonState.Pressed ||
+                inputState.currentKeyboardState.IsKeyDown(Keys.R))
             {
                 if (first)
                 {
@@ -303,9 +304,7 @@ namespace WorldTest
                 view = Matrix.CreateLookAt(position, player, Vector3.Up);
             }
 
-            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4,
-                                                                  (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height,
-                                                                  1, 10000);
+            projection = Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, (float)graphics.GraphicsDevice.Viewport.Width / (float)graphics.GraphicsDevice.Viewport.Height, 1, 10000);
         }
 
         private void PlayerCameraMovement(bool cam_up, bool cam_side, Player.State state)
