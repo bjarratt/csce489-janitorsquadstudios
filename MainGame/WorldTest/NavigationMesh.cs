@@ -73,6 +73,23 @@ namespace WorldTest
         }
     }
 
+    //public class Path
+    //{
+    //    public LinkedList<NavMeshNode> path;
+    //    private LinkedList<double> costs;
+    //    public NavMeshNode LastStep {
+    //        get
+    //        {
+    //            return path.First;
+    //        }
+    //    }
+
+    //    public Path()
+    //    {
+
+    //    }
+    //}
+
     public class Path<NavMeshNode> : IEnumerable<NavMeshNode>
     {
         public NavMeshNode LastStep { get; private set; }
@@ -86,7 +103,9 @@ namespace WorldTest
             TotalCost = totalCost;
         }
 
-        public Path(NavMeshNode start) : this(start, null, 0) { }
+        public Path(NavMeshNode start) : this(start, null, 0)
+        {
+        }
 
         public Path<NavMeshNode> AddStep(NavMeshNode step, double stepCost)
         {

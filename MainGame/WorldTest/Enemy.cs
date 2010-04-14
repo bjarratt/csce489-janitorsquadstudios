@@ -23,7 +23,8 @@ namespace WorldTest
 
     struct EnemyStats
     {
-        public float chaseDistance;
+        public float smartChaseDistance;
+        public float dumbChaseDistance;
         public float attackDistance;
         public float hysteresis;
         public float maxSpeed;
@@ -52,7 +53,7 @@ namespace WorldTest
 
         public Vector3 lookAt = new Vector3(0, 0, 1);
 
-        private Path<NavMeshNode> currentPath;
+        private LinkedList<NavMeshNode> currentPath;
 
         public int FirstPathPoly
         {
@@ -66,7 +67,7 @@ namespace WorldTest
             set { second_path_poly = value; }
         }
 
-        public Path<NavMeshNode> CurrentPath
+        public LinkedList<NavMeshNode> CurrentPath
         {
             get { return currentPath; }
             set { currentPath = value; }
@@ -79,7 +80,7 @@ namespace WorldTest
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, -100);
-            speed = 2.0f;
+            speed = 10.0f;
 
             this.stats = stats;
             this.state = EnemyAiState.Idle;
@@ -136,15 +137,16 @@ namespace WorldTest
                 pp.BackBufferWidth, pp.BackBufferHeight, 1,
                 pp.BackBufferFormat, pp.MultiSampleType, pp.MultiSampleQuality);
 
-            currentPath = RunAStar(ref player, ref level);
-            if (currentPath.Count<NavMeshNode>() < 2)
+
+            currentPath = ConvertToList(RunAStar(ref player, ref level));
+            if (currentPath.Count < 2)
             {
                 this.state = EnemyAiState.ChasingDumb;
             }
             else
             {
-                this.FirstPathPoly = currentPath.LastStep.Index;
-                this.SecondPathPoly = currentPath.PreviousSteps.LastStep.Index;
+                this.FirstPathPoly = currentPath.First.Value.Index;
+                this.SecondPathPoly = currentPath.First.Next.Value.Index;
             }
 
             LoadSkinnedModel();
@@ -158,6 +160,8 @@ namespace WorldTest
         {
             //reset rotation
             //rotation = 0.0f;
+
+            UpdateLocation(ref currentLevel, ref player);
 
             //turn speed is same even if machine running slow
             turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
@@ -180,7 +184,8 @@ namespace WorldTest
 
             // First we have to use the current state to decide what the thresholds are
             // for changing state
-            float enemyChaseThreshold = this.stats.chaseDistance;
+            float enemySmartChaseThreshold = this.stats.smartChaseDistance;
+            float enemyDumbChaseThreshold = this.stats.dumbChaseDistance;
             float enemyAttackThreshold = this.stats.attackDistance;
 
             // if the enemy is idle, he prefers to stay idle. we do this by making the
@@ -188,44 +193,48 @@ namespace WorldTest
             // the player.
             if (this.state == EnemyAiState.Idle)
             {
-                enemyChaseThreshold -= this.stats.hysteresis / 2;
+                enemySmartChaseThreshold -= this.stats.hysteresis * 0.5f;
             }
 
             // similarly, if the enemy is active, he prefers to stay active. we
             // accomplish this by increasing the range of values that will cause the
             // enemy to go into the active state.
-            else if (this.state == EnemyAiState.ChasingSmart || this.state == EnemyAiState.ChasingDumb)
+            else if (this.state == EnemyAiState.ChasingSmart)
             {
-                enemyChaseThreshold += this.stats.hysteresis / 2;
-                enemyAttackThreshold -= this.stats.hysteresis / 2;
+                enemySmartChaseThreshold += this.stats.hysteresis * 0.5f;
+                enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
+            }
+            else if (this.state == EnemyAiState.ChasingDumb)
+            {
+                enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
+                enemyAttackThreshold -= this.stats.hysteresis * 0.5f;
             }
             // the same logic is applied to the finished state.
             else if (this.state == EnemyAiState.Attack)
             {
-                enemyAttackThreshold += this.stats.hysteresis / 2;
+                enemyAttackThreshold += this.stats.hysteresis * 0.5f;
             }
 
             // Second, now that we know what the thresholds are, we compare the enemy's 
             // distance from the player against the thresholds to decide what the enemy's
             // current state is.
             float distanceFromPlayer = Vector3.Distance(this.position, player.position);
-            if (distanceFromPlayer > enemyChaseThreshold)
+            if (distanceFromPlayer > enemySmartChaseThreshold)
             {
                 // if the enemy is far away from the player, it should idle
                 this.state = EnemyAiState.Idle;
             }
-            else if (distanceFromPlayer > enemyAttackThreshold)
+            else if (distanceFromPlayer > enemyDumbChaseThreshold)
             {
-                if (this.current_poly_index == player.current_poly_index || currentPath.Count<NavMeshNode>() < 2)
-                {
-                    this.state = EnemyAiState.ChasingDumb;
-                }
-                else
-                {
-                    this.state = EnemyAiState.ChasingSmart;
-                }
+                //if (this.CurrentPath.Count < 2)
+                //{
+                    this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+                    this.FirstPathPoly = currentPath.First.Value.Index;
+                    this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                //}
+                this.state = EnemyAiState.ChasingSmart;
             }
-            else if (distanceFromPlayer <= enemyAttackThreshold || this.current_poly_index == player.current_poly_index || currentPath.Count<NavMeshNode>() < 2)
+            else if (distanceFromPlayer > enemyAttackThreshold)
             {
                 this.state = EnemyAiState.ChasingDumb;
             }
@@ -238,18 +247,18 @@ namespace WorldTest
             float currentEnemySpeed;
             if (this.state == EnemyAiState.ChasingSmart)
             {
-                Vector3 turnToward = Navigate(ref currentLevel, ref player);
-                turnToward.Normalize();
+                Vector3 moveTo = Navigate(ref currentLevel, ref player);
+                //moveTo.Normalize();
                 // the enemy wants to chase the player, so it will just use the TurnToFace
                 // function to turn towards the player's position. Then, when the enemy
                 // moves forward, he will chase the player.
-                this.rotation = TurnToFace(this.position, turnToward, this.rotation, this.turn_speed);
+                this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
                 currentEnemySpeed = this.stats.maxSpeed;
             }
             else if (this.state == EnemyAiState.ChasingDumb)
             {
-                Vector3 turnToward = player.position - this.position;
-                turnToward.Normalize();
+                //Vector3 turnToward = player.position - this.position;
+                //turnToward.Normalize();
                 this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
                 currentEnemySpeed = this.stats.maxSpeed;
             }
@@ -279,10 +288,10 @@ namespace WorldTest
             //Vector3 heading = new Vector3(
             //    (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
             //this.position += heading * currentEnemySpeed;
-            
-            lookAt = Vector3.Transform(new Vector3(0,0,1), orientation);
 
             #endregion
+            orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, rotation);
+            lookAt = Vector3.Transform(new Vector3(0, 0, 1), orientation);
 
             MoveForward(lookAt, ref currentLevel);
 
@@ -294,7 +303,6 @@ namespace WorldTest
         //TODO: update to include results of AI pathfinding
         private void MoveForward(Vector3 heading, ref Level currentLevel)
         {
-            orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, this.rotation);
             worldTransform = Matrix.CreateFromQuaternion(orientation);
             worldTransform.Translation = position;
             velocity = heading * speed;
@@ -302,11 +310,7 @@ namespace WorldTest
             position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
         }
 
-        /// <summary>
-        /// Here we use the optimal path returned by FindPath to move the enemy.
-        /// </summary>
-        /// <param name="optimal_path"></param>
-        Vector3 Navigate(ref Level currentLevel, ref Player player)
+        private void UpdateLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
             //if (currentLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
@@ -316,8 +320,8 @@ namespace WorldTest
             //}
             //else
             //{
-                player.prev_poly_index = player.current_poly_index;
-                player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
+            player.prev_poly_index = player.current_poly_index;
+            player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
             //}
 
             //enemy... same process as player.
@@ -328,13 +332,22 @@ namespace WorldTest
             //}
             //else
             //{
-                this.prev_poly_index = this.current_poly_index;
-                this.current_poly_index = currentLevel.NavigationIndex(this.position, this.current_poly_index);
+            this.prev_poly_index = this.current_poly_index;
+            this.current_poly_index = currentLevel.NavigationIndex(this.position, this.current_poly_index);
             //}
+        }
+
+        /// <summary>
+        /// Here we use the optimal path returned by FindPath to move the enemy.
+        /// </summary>
+        /// <param name="optimal_path"></param>
+        Vector3 Navigate(ref Level currentLevel, ref Player player)
+        {
+            //UpdateLocation(ref player);
 
             if (this.state == Enemy.EnemyAiState.Idle)
             {
-                return Vector3.Zero;
+                return this.position;
             }
             else if (this.state == Enemy.EnemyAiState.ChasingSmart)
             {
@@ -346,31 +359,39 @@ namespace WorldTest
                     if (this.current_poly_index == this.prev_poly_index)
                     {
                         Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
-                        Vector3 travel_vector = travel_point - this.position;
-                        travel_vector.Normalize();
-                        return travel_vector;
+                        //Vector3 travel_vector = travel_point - this.position;
+                        //travel_vector.Normalize();
+                        return travel_point;
                     }
                     else
                     {
-                        this.CurrentPath.GetEnumerator().MoveNext();
+                        //this.CurrentPath.GetEnumerator().MoveNext();
+                        this.CurrentPath.RemoveFirst();
+
                         this.FirstPathPoly = this.SecondPathPoly;
-                        this.CurrentPath.PreviousSteps.LastStep.Index = this.SecondPathPoly;
+                        if (currentPath.Count < 2)
+                        {
+                            this.SecondPathPoly = this.CurrentPath.First.Value.Index;
+                        }
+                        else
+                        {
+                            this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
+                        }
                         Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
-                        Vector3 travel_vector = travel_point - this.position;
-                        travel_vector.Normalize();
-                        return travel_vector;
+                        //Vector3 travel_vector = travel_point - this.position;
+                        //travel_vector.Normalize();
+                        return travel_point;
                     }
                 }
                 else
                 {
-                    Path<NavMeshNode> new_optimal_path = RunAStar(ref player, ref currentLevel);
-                    this.CurrentPath = new_optimal_path;
-                    this.FirstPathPoly = new_optimal_path.LastStep.Index;
-                    this.SecondPathPoly = new_optimal_path.PreviousSteps.LastStep.Index;
+                    this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+                    this.FirstPathPoly = this.CurrentPath.First.Value.Index;
+                    this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
                     Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
-                    Vector3 travel_vector = travel_point - this.position;
-                    travel_vector.Normalize();
-                    return travel_vector;
+                    //Vector3 travel_vector = travel_point - this.position;
+                    //travel_vector.Normalize();
+                    return travel_point;
                 }
             }
             else if (this.state == Enemy.EnemyAiState.ChasingDumb)
@@ -387,10 +408,23 @@ namespace WorldTest
             }
             else if (this.state == Enemy.EnemyAiState.Weakened)
             {
-                return Vector3.Zero;
+                return this.position;
             }
 
-            return Vector3.Zero;
+            return this.position;
+        }
+
+        private LinkedList<NavMeshNode> ConvertToList(Path<NavMeshNode> path)
+        {
+            LinkedList<NavMeshNode> list = new LinkedList<NavMeshNode>();
+            Path<NavMeshNode> pathNode = path;
+            while (pathNode != null)
+            {
+                list.AddFirst(pathNode.LastStep);
+                pathNode = pathNode.PreviousSteps;
+            }
+
+            return list;
         }
         
         #region AI
@@ -425,6 +459,7 @@ namespace WorldTest
             float z = faceThis.Z - this.position.Z;
 
             float desiredAngle = (float)Math.Atan2(x, z);
+            //return desiredAngle;
 
             // first, figure out how much we want to turn, using WrapAngle to get our
             // result from -Pi to Pi ( -180 degrees to 180 degrees )
@@ -480,8 +515,8 @@ namespace WorldTest
             // next, we'll turn the enemy back towards the center of the screen, to
             // prevent them from getting stuck on the edges of the screen.
             Vector3 screenCenter = Vector3.Zero;
-            screenCenter.X = graphics.GraphicsDevice.Viewport.Width / 2;
-            screenCenter.Z = graphics.GraphicsDevice.Viewport.Height / 2;
+            screenCenter.X = graphics.GraphicsDevice.Viewport.Width * 0.5f;
+            screenCenter.Z = graphics.GraphicsDevice.Viewport.Height * 0.5f;
 
             float distanceFromScreenCenter = Vector3.Distance(screenCenter, position);
             float MaxDistanceFromScreenCenter =

@@ -94,7 +94,7 @@ float4 ComputeParticlePosition(float3 position, float3 velocity,
 
     float velocityIntegral = startVelocity * normalizedAge +
                              (endVelocity - startVelocity) * normalizedAge *
-                                                             normalizedAge / 2;
+                                                             normalizedAge * 0.5f;
      
     position += normalize(velocity) * velocityIntegral * Duration;
     
@@ -121,7 +121,7 @@ float ComputeParticleSize(float4 projectedPosition,
     float size = lerp(startSize, endSize, normalizedAge);
     
     // Project the size into screen coordinates.
-    return size * Projection._m11 / projectedPosition.w * ViewportHeight / 2;
+    return size * Projection._m11 / projectedPosition.w * ViewportHeight * 0.5f;
 }
 
 

@@ -137,7 +137,7 @@ namespace WorldTest
             Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
             Vector2 viewportSize = new Vector2(viewport.Width, viewport.Height);
             Vector2 textSize = font.MeasureString(message);
-            Vector2 textPosition = (viewportSize - textSize) / 2;
+            Vector2 textPosition = (viewportSize - textSize) * 0.5f;
 
             // The background includes a border somewhat larger than the text itself.
             const int hPad = 30;
