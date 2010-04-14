@@ -37,15 +37,11 @@ namespace WorldTest
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
-        //Texture2D terrainTexture;
-
         GameCamera camera;
         static public bool invertYAxis;
 
         Player player;
         List<Enemy> enemies;
-
-        NavigationMesh Nav_Mesh;
 
         private EnemyStats ENEMY_STATS;
 
@@ -167,9 +163,6 @@ namespace WorldTest
             enemies = new List<Enemy>();
             enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS));
 
-            // Load the navigation mesh.
-            Nav_Mesh = new NavigationMesh("nav_mesh");
-
             foreach (Enemy e in enemies)
             {
                 e.LoadContent();
@@ -207,9 +200,6 @@ namespace WorldTest
             //player and HUD content
 
             // Start the sound!
-
-            // Simulate loading time (if necessary)
-            //Thread.Sleep(1000);
 
             // Register the particle system components.
             this.ScreenManager.game.Components.Add(explosionParticles);
