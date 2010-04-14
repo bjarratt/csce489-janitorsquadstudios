@@ -80,7 +80,7 @@ namespace WorldTest
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, -100);
-            speed = 10.0f;
+            speed = 20.0f;
 
             this.stats = stats;
             this.state = EnemyAiState.Idle;
@@ -226,13 +226,25 @@ namespace WorldTest
             }
             else if (distanceFromPlayer > enemyDumbChaseThreshold)
             {
-                //if (this.CurrentPath.Count < 2)
-                //{
-                    this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-                    this.FirstPathPoly = currentPath.First.Value.Index;
-                    this.SecondPathPoly = currentPath.First.Next.Value.Index;
-                //}
-                this.state = EnemyAiState.ChasingSmart;
+                if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                {
+                    this.state = EnemyAiState.ChasingDumb;
+                }
+                else
+                {
+                    LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                    if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
+                    {
+                        this.currentPath = newPath;
+                        this.FirstPathPoly = currentPath.First.Value.Index;
+                        this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                    }
+
+                    this.state = EnemyAiState.ChasingSmart;
+                }
+
+                
             }
             else if (distanceFromPlayer > enemyAttackThreshold)
             {
@@ -307,34 +319,53 @@ namespace WorldTest
             worldTransform.Translation = position;
             velocity = heading * speed;
             velocity.Y = -1.0f;
-            position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
+            if (this.state == EnemyAiState.Attack)
+            {
+                if (this.activeAnimationClip != 0)
+                {
+                    this.activeAnimationClip = 0;
+                    controller.CrossFade(model.AnimationClips["Idle"],TimeSpan.FromMilliseconds(300));
+                    controller.Speed = 1.0f;
+                }
+                position = currentLevel.CollideWith(position, Vector3.Down, 0.1, Level.MAX_COLLISIONS);
+            }
+            else
+            {
+                if (this.activeAnimationClip != 1)
+                {
+                    this.activeAnimationClip = 1;
+                    controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
+                    controller.Speed = 4.0f;
+                }
+                position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
+            }
         }
 
         private void UpdateLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
-            //if (currentLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
-            //    player.current_poly_index))
-            //{
-            //    // do nothing... player is still in his current polygon.
-            //}
-            //else
-            //{
-            player.prev_poly_index = player.current_poly_index;
-            player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
-            //}
+            if (currentLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+                player.current_poly_index))
+            {
+                // do nothing... player is still in his current polygon.
+            }
+            else
+            {
+                player.prev_poly_index = player.current_poly_index;
+                player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
+            }
 
             //enemy... same process as player.
-            //if (currentLevel.RayTriangleIntersect(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
-            //    this.current_poly_index))
-            //{
-            //    // do nothing... player is still in his current polygon.
-            //}
-            //else
-            //{
-            this.prev_poly_index = this.current_poly_index;
-            this.current_poly_index = currentLevel.NavigationIndex(this.position, this.current_poly_index);
-            //}
+            if (currentLevel.RayTriangleIntersect(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
+                this.current_poly_index))
+            {
+                // do nothing... player is still in his current polygon.
+            }
+            else
+            {
+                this.prev_poly_index = this.current_poly_index;
+                this.current_poly_index = currentLevel.NavigationIndex(this.position, this.current_poly_index);
+            }
         }
 
         /// <summary>
@@ -385,9 +416,37 @@ namespace WorldTest
                 }
                 else
                 {
-                    this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-                    this.FirstPathPoly = this.CurrentPath.First.Value.Index;
-                    this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
+                    //if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                    //{
+                    //    // If player or enemy is off the navigation mesh, keep the old path
+                    //}
+                    //else
+                    //{
+                    //    // Otherwise, the new path is valid
+                    //    this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+                    //    this.FirstPathPoly = currentPath.First.Value.Index;
+                    //    this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                    //}
+
+                    if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                    {
+
+                    }
+                    else
+                    {
+                        LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                        if (newPath.Count > 0) // If newPath is valid, use it
+                        {
+                            this.currentPath = newPath;
+                            this.FirstPathPoly = currentPath.First.Value.Index;
+                            this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                        }
+                    }
+
+                    //this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+                    //this.FirstPathPoly = this.CurrentPath.First.Value.Index;
+                    //this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
                     Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
                     //Vector3 travel_vector = travel_point - this.position;
                     //travel_vector.Normalize();

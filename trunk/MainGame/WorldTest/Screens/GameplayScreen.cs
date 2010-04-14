@@ -67,14 +67,8 @@ namespace WorldTest
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
         /// <summary>
-        /// Stores the last keyboard state and gamepad state.
+        /// Stores the last keyboard, mouse and gamepad state.
         /// </summary>
-        //KeyboardState currentKeyboardState;
-        //GamePadState currentGamePadState;
-        //MouseState currentMouseState;
-        //KeyboardState lastKeyboardState;
-        //GamePadState lastgamepadState;
-        //MouseState lastMouseState;
         ControlState inputControlState;
 
         /// <summary>
@@ -93,13 +87,6 @@ namespace WorldTest
 
         // Random number generator for the fire effect.
         Random random = new Random();
-
-        ///<summary>
-        /// This is the cel shader effect... basically the same as
-        /// SkinnedModelBasicEffect.
-        ///</summary>
-        //Effect cel_effect;
-        //Texture2D m_celMap;
 
         /// <summary>
         /// Render targets for the different shaders... 
@@ -124,7 +111,7 @@ namespace WorldTest
             this.graphics = sm.graphics;
 
             this.ENEMY_STATS.maxSpeed = 2.0f;
-            this.ENEMY_STATS.attackDistance = 50f;
+            this.ENEMY_STATS.attackDistance = 100f;
             this.ENEMY_STATS.smartChaseDistance = 2000f;
             this.ENEMY_STATS.dumbChaseDistance = 500f;
             this.ENEMY_STATS.hysteresis = 15f;
