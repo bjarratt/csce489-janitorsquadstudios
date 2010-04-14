@@ -316,7 +316,8 @@ namespace WorldTest
         /// </summary>
         void UpdateAttacks(GameTime gameTime, ControlState inputState)
         {
-            if (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released)
+            if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
+                 (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released) )
             {
                 relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
@@ -327,7 +328,8 @@ namespace WorldTest
                 relicLight.position = pos;
                 this.relicLightOn = true;
             }
-            else if (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed)
+            else if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                      (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 if (player.velocity.X != 0 || player.velocity.Z != 0)
@@ -356,7 +358,8 @@ namespace WorldTest
                     }
                 }
             }
-            if (inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed)
+            if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                 (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
                 this.relicLightOn = false;
 
@@ -367,13 +370,6 @@ namespace WorldTest
                                                explosionSmokeParticles,
                                                projectileTrailParticles));
                 projectiles[projectiles.Count - 1].is_released = true;
-            }
-            if (inputState.currentKeyboardState.IsKeyDown(Keys.Space) && inputState.lastKeyboardState.IsKeyUp(Keys.Space))
-            {
-                // and creating particles is handled inside the Projectile class.
-                projectiles.Add(new Attack(player.position + new Vector3(0, 20, 0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,
-                                               explosionSmokeParticles,
-                                               projectileTrailParticles));
             }
         }
 
