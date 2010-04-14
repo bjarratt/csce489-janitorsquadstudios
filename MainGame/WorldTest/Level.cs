@@ -833,6 +833,7 @@ namespace WorldTest
 
                     double d = (double)Vector3.Distance(path.LastStep.Centroid, navigationMesh[path.LastStep.adjacent_polygons[i]].Centroid);
                     double e = (double)Vector3.Distance(navigationMesh[path.LastStep.adjacent_polygons[i]].Centroid, destination.Centroid);
+
                     var newPath = path.AddStep(navigationMesh[path.LastStep.adjacent_polygons[i]], d);
                     queue.Enqueue(newPath.TotalCost + e, newPath);
                 }
@@ -875,6 +876,11 @@ namespace WorldTest
         {
             //Vector3 u, v, n;             // triangle vectors
             //Vector3 dir, w0, w;          // ray vectors
+
+            if (nodeIndex < 0)
+            {
+                return false;
+            }
 
             NavMeshNode node = this.navigationMesh[nodeIndex];
 
