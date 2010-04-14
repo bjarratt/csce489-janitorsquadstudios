@@ -77,19 +77,11 @@ namespace WorldTest
             this.ReadInLevel(levelFilename);
 
             //
-            // Load the navigation mesh
+            // Prepare navigation mesh
             //
 
             this.navigationMeshOffset = Vector3.Zero;
             List<VertexPositionNormalTexture> navigationVertices = new List<VertexPositionNormalTexture>();
-
-            //VertexPositionNormalTexture[] navigationVerticesArray = navigationVertices.ToArray();
-            //this.navigationVertexBuffer = new VertexBuffer(device, navigationVerticesArray.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
-            //this.navigationVertexBuffer.SetData(navigationVerticesArray);
-
-            //this.navigationVertexCount = navigationVerticesArray.Length;
-
-            //this.navigationVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
 
             //
             // Load the StaticGeometry elements
@@ -103,7 +95,7 @@ namespace WorldTest
             // Load the first level piece
             levelPieces[0].Load(device, ref content, Matrix.Identity);
             collisionVertices.AddRange(this.LoadCollisionMesh(levelPieces[0].CollisionMeshFilename, Matrix.Identity, Vector3.Zero, ref this.collisionMesh));
-            this.LoadNavigationMesh(levelPieces[0].NavigationMeshFilename, Matrix.Identity, Vector3.Zero);
+            navigationVertices.AddRange(this.LoadNavigationMesh(levelPieces[0].NavigationMeshFilename, Matrix.Identity, Vector3.Zero));
 
             // Load the remaining level pieces
             for ( int i = 1; i < adjacencyList.Count; i++ )
@@ -435,24 +427,16 @@ namespace WorldTest
         {
             List<NavMeshVertex> positionList = new List<NavMeshVertex>(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
-            //ArrayList textureCoordList = new ArrayList();
 
             // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
             positionList.Add(new NavMeshVertex());
             normalList.Add(new Vector3());
-            //textureCoordList.Add(new Vector3());
 
             List<VertexPositionNormalTexture> triangleList = new List<VertexPositionNormalTexture>(); // List of vertices (every 3 vertices is a triangle)
 
             VertexPositionNormalTexture currentVertex;
 
             NavMeshVertex currentNavVertex = new NavMeshVertex();
-
-            // Variables used for collision meshes
-            //NavMeshNode currentFace = new NavMeshNode();
-            //currentFace.V0 = Vector3.Zero;
-            //currentFace.V1 = Vector3.Zero;
-            //currentFace.V2 = Vector3.Zero;
 
             if (filename == null || filename == "")
             {
@@ -491,10 +475,6 @@ namespace WorldTest
                     Vector3 normal = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
                     normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
                 }
-                else if (splitLine[0] == "vt") // Texture Coordinate
-                {
-                    //textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
-                }
                 else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
                 {
                     NavMeshNode currentFace = new NavMeshNode();
@@ -530,14 +510,7 @@ namespace WorldTest
                             currentVertex.Normal = new Vector3(0.0f);
                         }
 
-                        //if (splitVertex[1] != "")
-                        //{
-                        //    currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
-                        //}
-                        //else
-                        //{
                         currentVertex.TextureCoordinate = new Vector2(0.0f);
-                        //}
 
                         //
                         // Set the NavMeshNode for the mesh
@@ -851,14 +824,14 @@ namespace WorldTest
                 if (path.LastStep.Equals(destination))
                     return path;
                 closed.Add(path.LastStep);
-                foreach (int n in path.LastStep.adjacent_polygons)
+                for ( int i = 0; i < path.LastStep.adjacent_polygons.Count; i++ )
                 {
                     // There is an obstacle in Nav_Mesh.NavMesh[n]... avoid it.
-                    if (navigationMesh[n].Obstacle == true) continue;
+                    if (navigationMesh[path.LastStep.adjacent_polygons[i]].Obstacle == true) continue;
 
-                    double d = (double)Vector3.Distance(path.LastStep.Centroid, navigationMesh[n].Centroid);
-                    double e = (double)Vector3.Distance(navigationMesh[n].Centroid, destination.Centroid);
-                    var newPath = path.AddStep(navigationMesh[n], d);
+                    double d = (double)Vector3.Distance(path.LastStep.Centroid, navigationMesh[path.LastStep.adjacent_polygons[i]].Centroid);
+                    double e = (double)Vector3.Distance(navigationMesh[path.LastStep.adjacent_polygons[i]].Centroid, destination.Centroid);
+                    var newPath = path.AddStep(navigationMesh[path.LastStep.adjacent_polygons[i]], d);
                     queue.Enqueue(newPath.TotalCost + e, newPath);
                 }
             }
@@ -993,6 +966,8 @@ namespace WorldTest
             }
             switch (lights.Count)
             {
+                case 0:
+                    break;
                 case 1: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_OneLight"];
                     break;
                 case 2: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_TwoLight"];
@@ -1022,8 +997,6 @@ namespace WorldTest
 
                 pass.End();
             }
-
-
 
             for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
             {
