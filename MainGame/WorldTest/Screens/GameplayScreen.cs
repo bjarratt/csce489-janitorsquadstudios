@@ -19,6 +19,16 @@ using System.Runtime;
 
 namespace WorldTest
 {
+    struct ControlState
+    {
+        public KeyboardState currentKeyboardState;
+        public GamePadState currentGamePadState;
+        public MouseState currentMouseState;
+        public KeyboardState lastKeyboardState;
+        public GamePadState lastGamePadState;
+        public MouseState lastMouseState;
+    }
+
     /// <summary>
     /// This screen implements the actual game logic. 
     /// </summary>
@@ -59,10 +69,13 @@ namespace WorldTest
         /// <summary>
         /// Stores the last keyboard state and gamepad state.
         /// </summary>
-        KeyboardState currentKeyboardState;
-        GamePadState currentGamePadState;
-        KeyboardState lastKeyboardState;
-        GamePadState lastgamepadState;
+        //KeyboardState currentKeyboardState;
+        //GamePadState currentGamePadState;
+        //MouseState currentMouseState;
+        //KeyboardState lastKeyboardState;
+        //GamePadState lastgamepadState;
+        //MouseState lastMouseState;
+        ControlState inputControlState;
 
         /// <summary>
         /// Particle Effects
@@ -134,6 +147,7 @@ namespace WorldTest
             newLight.attenuationRadius = 1000.0f;
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
+            inputControlState = new ControlState();
         }
 
         /// <summary>
@@ -250,23 +264,23 @@ namespace WorldTest
             if (IsActive)
             {
                 // Get states for keys and pad
-                currentKeyboardState = Keyboard.GetState();
-                currentGamePadState = GamePad.GetState(PlayerIndex.One);
+                inputControlState.currentKeyboardState = Keyboard.GetState();
+                inputControlState.currentGamePadState = GamePad.GetState(PlayerIndex.One);
+                inputControlState.currentMouseState = Mouse.GetState();
 
                 // Allows the game to exit
                 //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
                 // this.Exit();
 
-                if (currentGamePadState.Buttons.Y == ButtonState.Pressed && lastgamepadState.Buttons.Y == ButtonState.Released)
+                if (inputControlState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputControlState.lastGamePadState.Buttons.Y == ButtonState.Released)
                 {
                     invertYAxis = !invertYAxis;
                 }
 
-                player.Update(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState, ref this.firstLevel);
+                player.Update(gameTime, inputControlState, ref this.firstLevel);
                 //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
-                camera.UpdateCamera(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, invertYAxis);
+                camera.UpdateCamera(gameTime, inputControlState, invertYAxis);
                 //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
-                
 
                 foreach (Enemy e in enemies)
                 {
@@ -280,12 +294,13 @@ namespace WorldTest
 
                 explosionLights.RemoveAll(explosionLightHasExpired);
 
-                UpdateAttacks(gameTime, currentGamePadState, lastgamepadState, currentKeyboardState, lastKeyboardState);
+                UpdateAttacks(gameTime, inputControlState);
                 UpdateProjectiles(gameTime);
 
                 // Save previous states
-                lastKeyboardState = currentKeyboardState;
-                lastgamepadState = currentGamePadState;
+                inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
+                inputControlState.lastGamePadState = inputControlState.currentGamePadState;
+                inputControlState.lastMouseState = inputControlState.currentMouseState;
             }
 
             base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
@@ -299,10 +314,9 @@ namespace WorldTest
         /// <summary>
         /// Helper for updating the explosions effect.
         /// </summary>
-        void UpdateAttacks(GameTime gameTime, GamePadState current_g_state, GamePadState prev_g_state, 
-                             KeyboardState current_k_state, KeyboardState prev_k_state)
+        void UpdateAttacks(GameTime gameTime, ControlState inputState)
         {
-            if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Released)
+            if (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released)
             {
                 relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
@@ -313,7 +327,7 @@ namespace WorldTest
                 relicLight.position = pos;
                 this.relicLightOn = true;
             }
-            else if (current_g_state.Buttons.B == ButtonState.Pressed && prev_g_state.Buttons.B == ButtonState.Pressed)
+            else if (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed)
             {
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 if (player.velocity.X != 0 || player.velocity.Z != 0)
@@ -342,7 +356,7 @@ namespace WorldTest
                     }
                 }
             }
-            if (current_g_state.Buttons.B == ButtonState.Released && prev_g_state.Buttons.B == ButtonState.Pressed)
+            if (inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed)
             {
                 this.relicLightOn = false;
 
@@ -354,7 +368,7 @@ namespace WorldTest
                                                projectileTrailParticles));
                 projectiles[projectiles.Count - 1].is_released = true;
             }
-            if (current_k_state.IsKeyDown(Keys.Space) && prev_k_state.IsKeyUp(Keys.Space))
+            if (inputState.currentKeyboardState.IsKeyDown(Keys.Space) && inputState.lastKeyboardState.IsKeyUp(Keys.Space))
             {
                 // and creating particles is handled inside the Projectile class.
                 projectiles.Add(new Attack(player.position + new Vector3(0, 20, 0), camera.lookAt * 400f, 150, 30, 20, 5f, 0, explosionParticles,

@@ -534,6 +534,8 @@ namespace WorldTest
                         {
                             currentFace.V2 = currentVertex.Position;
 
+                            currentFace.Centroid = (currentFace.V0 + currentFace.V1 + currentFace.V2) / 3.0f;
+
                             navigationMesh.Add(currentFace);
                         }
 

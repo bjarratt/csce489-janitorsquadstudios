@@ -120,9 +120,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, GamePadState currentGPState,
-            GamePadState lastGPState, KeyboardState currentKBState,
-            KeyboardState lastKBState, ref Level currentLevel)
+        public void Update(GameTime gameTime, ControlState inputState, ref Level currentLevel)
         {
             //reset rotation
             rotation = 0.0f;
@@ -131,21 +129,19 @@ namespace WorldTest
             turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
             turn_speed *= turn_speed_reg;
 
-            Vector4 stickL = new Vector4(currentGPState.ThumbSticks.Left, 0.0f, 0.0f);
-            Vector4 stickR = new Vector4(currentGPState.ThumbSticks.Right, 0.0f, 0.0f);
+            Vector4 stickL = new Vector4(inputState.currentGamePadState.ThumbSticks.Left, 0.0f, 0.0f);
+            Vector4 stickR = new Vector4(inputState.currentGamePadState.ThumbSticks.Right, 0.0f, 0.0f);
 
             if (stickL != Vector4.Zero && stickL.Y < 0) controller.PlaybackMode = PlaybackMode.Backward;
             else controller.PlaybackMode = PlaybackMode.Forward;
 
             // Animate Player
-            if (stickL == Vector4.Zero &&
-                    lastGPState.ThumbSticks.Left != Vector2.Zero)
+            if (stickL == Vector4.Zero && inputState.lastGamePadState.ThumbSticks.Left != Vector2.Zero)
             {
                 controller.CrossFade(model.AnimationClips.Values[0],
                     TimeSpan.FromMilliseconds(300));
             }
-            if (lastGPState.ThumbSticks.Left == Vector2.Zero &&
-                stickL != Vector4.Zero)
+            if (inputState.lastGamePadState.ThumbSticks.Left == Vector2.Zero && stickL != Vector4.Zero)
             {
                 controller.CrossFade(model.AnimationClips.Values[1],
                     TimeSpan.FromMilliseconds(300));
@@ -165,7 +161,7 @@ namespace WorldTest
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
                 InputState input = new InputState();
-                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, currentKBState, currentGPState, lastGPState, ref currentLevel);
+                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, inputState, ref currentLevel);
                 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
                 camera.camera_rotation = camera.camera_rotation * Quaternion.CreateFromAxisAngle(new Vector3(1, 0, 0), MathHelper.ToRadians(camera.cameraArc));
@@ -180,7 +176,7 @@ namespace WorldTest
                 worldTransform.Translation = position;
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, currentKBState, currentGPState, lastGPState, ref currentLevel);
+                MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, inputState, ref currentLevel);
             }
 
             // Update the animation according to the elapsed time
@@ -189,7 +185,7 @@ namespace WorldTest
         }
 
         private void MoveForward(GameTime gameTime, ref Vector3 position, Quaternion rotationQuat, float speed, 
-            Vector4 stick, KeyboardState currentKeyState, GamePadState current_gamepad, GamePadState prev_gamepad, ref Level currentLevel)
+            Vector4 stick, ControlState inputState, ref Level currentLevel)
         {
             if (camera.first)
             {
@@ -198,24 +194,24 @@ namespace WorldTest
                     velocity.X = 0.0f;
                     velocity.Z = 0.0f;
                 }
-                if ((stick.X > 0 || currentKeyState.IsKeyDown(Keys.D)) && !(Status == State.jumping))
+                if ((stick.X > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.D)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                     velocity += camera.right * speed;
                 }
-                else if ((stick.X < 0 || currentKeyState.IsKeyDown(Keys.A)) && !(Status == State.jumping))
+                else if ((stick.X < 0 || inputState.currentKeyboardState.IsKeyDown(Keys.A)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                     velocity -= camera.right * speed;
                 }
 
-                if ((stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
+                if ((stick.Y > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
                     velocity.X += camera.lookAt.X * speed;
                     velocity.Z += camera.lookAt.Z * speed;
                 }
-                else if ((stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
+                else if ((stick.Y < 0 || inputState.currentKeyboardState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
                     velocity.X -= camera.lookAt.X * speed;
@@ -236,7 +232,8 @@ namespace WorldTest
                     velocity.Y = -0.5f;
                 }
 
-                if (current_gamepad.Buttons.A == ButtonState.Pressed && prev_gamepad.Buttons.A == ButtonState.Released && !(Status == State.jumping))
+                if (inputState.currentGamePadState.Buttons.A == ButtonState.Pressed &&
+                    inputState.lastGamePadState.Buttons.A == ButtonState.Released && !(Status == State.jumping))
                 {
                     this.Status = State.jumping;
                     velocity.Y += 8;
@@ -251,11 +248,11 @@ namespace WorldTest
                 {
                     Status = State.jumping;
                 }
-                else if ((stick.Y > 0 || currentKeyState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
+                else if ((stick.Y > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                 }
-                else if ((stick.Y < 0 || currentKeyState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
+                else if ((stick.Y < 0 || inputState.currentKeyboardState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                 }
