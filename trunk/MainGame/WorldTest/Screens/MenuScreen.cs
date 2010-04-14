@@ -192,7 +192,7 @@ namespace WorldTest
 
             // Draw the menu title.
             Vector2 titlePosition = new Vector2(240, 200);
-            Vector2 titleOrigin = font.MeasureString(menuTitle) / 2;
+            Vector2 titleOrigin = font.MeasureString(menuTitle) * 0.5f;
             Color titleColor = new Color(192, 192, 192, TransitionAlpha);
             float titleScale = 1.25f;
 

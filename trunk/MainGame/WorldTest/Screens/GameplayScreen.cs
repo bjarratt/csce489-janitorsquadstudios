@@ -125,7 +125,8 @@ namespace WorldTest
 
             this.ENEMY_STATS.maxSpeed = 2.0f;
             this.ENEMY_STATS.attackDistance = 50f;
-            this.ENEMY_STATS.chaseDistance = 300f;
+            this.ENEMY_STATS.smartChaseDistance = 2000f;
+            this.ENEMY_STATS.dumbChaseDistance = 500f;
             this.ENEMY_STATS.hysteresis = 15f;
 
             TransitionOnTime = TimeSpan.FromSeconds(1.5);
