@@ -19,15 +19,7 @@ using XNAnimation.Effects;
 
 namespace WorldTest
 {
-    #region Enums and enemy state info
-
-    //enum EnemyAiState
-    //{
-    //    Chasing, //chasing the player
-    //    Attack,  //has caught the player and can stop chasing
-    //    Idle,    //enemy can't see the player and wanders
-    //    Weakened //the enemy can be banished to the other dimension
-    //}
+    #region enemy stats
 
     struct EnemyStats
     {
@@ -58,6 +50,8 @@ namespace WorldTest
         private int first_path_poly;
         private int second_path_poly;
 
+        public Vector3 lookAt = new Vector3(0, 0, 1);
+
         private Path<NavMeshNode> currentPath;
 
         public int FirstPathPoly
@@ -85,13 +79,13 @@ namespace WorldTest
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, -100);
-            speed = 0.0f;
+            speed = 2.0f;
 
             this.stats = stats;
             this.state = EnemyAiState.Idle;
 
             rotation = 0.0f;
-            turn_speed = 0.05f;
+            turn_speed = 1.5f;
             turn_speed_reg = 1.6f;
             movement_speed_reg = 2.0f; // 14
 
@@ -125,7 +119,7 @@ namespace WorldTest
             controller.PlayClip(model.AnimationClips.Values[0]);
         }
 
-        public override void LoadContent()
+        public void LoadContent(ref Player player, ref Level level)
         {
             max_textures = 3;
             max_targets = 3;
@@ -142,6 +136,17 @@ namespace WorldTest
                 pp.BackBufferWidth, pp.BackBufferHeight, 1,
                 pp.BackBufferFormat, pp.MultiSampleType, pp.MultiSampleQuality);
 
+            currentPath = RunAStar(ref player, ref level);
+            if (currentPath.Count<NavMeshNode>() < 2)
+            {
+                this.state = EnemyAiState.ChasingDumb;
+            }
+            else
+            {
+                this.FirstPathPoly = currentPath.LastStep.Index;
+                this.SecondPathPoly = currentPath.PreviousSteps.LastStep.Index;
+            }
+
             LoadSkinnedModel();
         }
 
@@ -152,14 +157,13 @@ namespace WorldTest
         public void Update(GameTime gameTime, ref Level currentLevel, ref Player player)
         {
             //reset rotation
-            rotation = 0.0f;
+            //rotation = 0.0f;
 
             //turn speed is same even if machine running slow
             turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
             turn_speed *= turn_speed_reg;
 
-            MoveForward(ref position, Quaternion.Identity, 0.0f, Vector4.Zero, ref currentLevel);
-            worldTransform.Translation = position;
+            
 
             //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
             //{
@@ -212,20 +216,40 @@ namespace WorldTest
             }
             else if (distanceFromPlayer > enemyAttackThreshold)
             {
-                this.state = EnemyAiState.ChasingSmart;
+                if (this.current_poly_index == player.current_poly_index || currentPath.Count<NavMeshNode>() < 2)
+                {
+                    this.state = EnemyAiState.ChasingDumb;
+                }
+                else
+                {
+                    this.state = EnemyAiState.ChasingSmart;
+                }
+            }
+            else if (distanceFromPlayer <= enemyAttackThreshold || this.current_poly_index == player.current_poly_index || currentPath.Count<NavMeshNode>() < 2)
+            {
+                this.state = EnemyAiState.ChasingDumb;
             }
             else
             {
                 this.state = EnemyAiState.Attack;
             }
-
+            //this.state = EnemyAiState.ChasingDumb;
             // Third, once we know what state we're in, act on that state.
             float currentEnemySpeed;
             if (this.state == EnemyAiState.ChasingSmart)
             {
+                Vector3 turnToward = Navigate(ref currentLevel, ref player);
+                turnToward.Normalize();
                 // the enemy wants to chase the player, so it will just use the TurnToFace
                 // function to turn towards the player's position. Then, when the enemy
                 // moves forward, he will chase the player.
+                this.rotation = TurnToFace(this.position, turnToward, this.rotation, this.turn_speed);
+                currentEnemySpeed = this.stats.maxSpeed;
+            }
+            else if (this.state == EnemyAiState.ChasingDumb)
+            {
+                Vector3 turnToward = player.position - this.position;
+                turnToward.Normalize();
                 this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
                 currentEnemySpeed = this.stats.maxSpeed;
             }
@@ -247,14 +271,20 @@ namespace WorldTest
                 currentEnemySpeed = 0.0f;
             }
 
+
+
             // this calculation is also important; we construct a heading
             // vector based on the enemy's orientation, and then make the enemy move along
             // that heading.
-            Vector3 heading = new Vector3(
-                (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
-            this.position += heading * currentEnemySpeed;
+            //Vector3 heading = new Vector3(
+            //    (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
+            //this.position += heading * currentEnemySpeed;
+            
+            lookAt = Vector3.Transform(new Vector3(0,0,1), orientation);
 
             #endregion
+
+            MoveForward(lookAt, ref currentLevel);
 
             // Update the animation according to the elapsed time
             controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
@@ -262,13 +292,126 @@ namespace WorldTest
         }
 
         //TODO: update to include results of AI pathfinding
-        private void MoveForward(ref Vector3 position, Quaternion rotationQuat, float speed, Vector4 stick, ref Level currentLevel)
+        private void MoveForward(Vector3 heading, ref Level currentLevel)
         {
-
-            position = currentLevel.CollideWith(position, new Vector3(0, -1, 0), 0.1, Level.MAX_COLLISIONS);
+            orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, this.rotation);
+            worldTransform = Matrix.CreateFromQuaternion(orientation);
+            worldTransform.Translation = position;
+            velocity = heading * speed;
+            velocity.Y = -1.0f;
+            position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
         }
 
+        /// <summary>
+        /// Here we use the optimal path returned by FindPath to move the enemy.
+        /// </summary>
+        /// <param name="optimal_path"></param>
+        Vector3 Navigate(ref Level currentLevel, ref Player player)
+        {
+            //player... first check current current_poly
+            //if (currentLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+            //    player.current_poly_index))
+            //{
+            //    // do nothing... player is still in his current polygon.
+            //}
+            //else
+            //{
+                player.prev_poly_index = player.current_poly_index;
+                player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
+            //}
+
+            //enemy... same process as player.
+            //if (currentLevel.RayTriangleIntersect(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
+            //    this.current_poly_index))
+            //{
+            //    // do nothing... player is still in his current polygon.
+            //}
+            //else
+            //{
+                this.prev_poly_index = this.current_poly_index;
+                this.current_poly_index = currentLevel.NavigationIndex(this.position, this.current_poly_index);
+            //}
+
+            if (this.state == Enemy.EnemyAiState.Idle)
+            {
+                return Vector3.Zero;
+            }
+            else if (this.state == Enemy.EnemyAiState.ChasingSmart)
+            {
+                // calculate movement vector to orient the enemy and move him
+                if (player.current_poly_index == player.prev_poly_index)
+                {
+                    // player has not moved since the last frame... continue following the 
+                    // old path.
+                    if (this.current_poly_index == this.prev_poly_index)
+                    {
+                        Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
+                        Vector3 travel_vector = travel_point - this.position;
+                        travel_vector.Normalize();
+                        return travel_vector;
+                    }
+                    else
+                    {
+                        this.CurrentPath.GetEnumerator().MoveNext();
+                        this.FirstPathPoly = this.SecondPathPoly;
+                        this.CurrentPath.PreviousSteps.LastStep.Index = this.SecondPathPoly;
+                        Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
+                        Vector3 travel_vector = travel_point - this.position;
+                        travel_vector.Normalize();
+                        return travel_vector;
+                    }
+                }
+                else
+                {
+                    Path<NavMeshNode> new_optimal_path = RunAStar(ref player, ref currentLevel);
+                    this.CurrentPath = new_optimal_path;
+                    this.FirstPathPoly = new_optimal_path.LastStep.Index;
+                    this.SecondPathPoly = new_optimal_path.PreviousSteps.LastStep.Index;
+                    Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
+                    Vector3 travel_vector = travel_point - this.position;
+                    travel_vector.Normalize();
+                    return travel_vector;
+                }
+            }
+            else if (this.state == Enemy.EnemyAiState.ChasingDumb)
+            {
+                Vector3 direction = player.position - this.position;
+                direction.Normalize();
+                return direction;
+            }
+            else if (this.state == Enemy.EnemyAiState.Attack)
+            {
+                Vector3 direction = player.position - this.position;
+                direction.Normalize();
+                return direction;
+            }
+            else if (this.state == Enemy.EnemyAiState.Weakened)
+            {
+                return Vector3.Zero;
+            }
+
+            return Vector3.Zero;
+        }
+        
         #region AI
+
+        /// <summary>
+        /// This is the wrapper for the enemy pathfinding AI using A*.  It takes the player and
+        /// the enemy as arguments.  First it casts a ray straight down to determine which polygons
+        /// the player and enemy are in (with respect to the NavigationMesh data structure).  Both the
+        /// player and enemy keep information about which polygons they are currently in and which ones
+        /// they were in last.  The rigourous initial calculations of this data occurs at game initialization.
+        /// This allows us to only have to check polygons that are adjacent to the player and enemy current 
+        /// polygons for the ray casting, rather than the entire collision mesh.  From there we call
+        /// FindPath which returns the optimal path from the start node to the destination node.  Then 
+        /// we do processing to orient the enemy and smooth his traversal of the path.
+        /// </summary>
+        /// <param name="player"></param>
+        /// <param name="enemy"></param>
+        Path<NavMeshNode> RunAStar(ref Player player, ref Level currentLevel)
+        {
+            return currentLevel.FindPath(this.current_poly_index, player.current_poly_index);
+        }
 
         /// <summary>
         /// Calculates the angle that an object should face, given its position, its
@@ -278,10 +421,10 @@ namespace WorldTest
             float currentAngle, float turnSpeed)
         {
             //x and z directions along the 2D floor plane
-            float x = faceThis.X - this.position.Z;
+            float x = faceThis.X - this.position.X;
             float z = faceThis.Z - this.position.Z;
 
-            float desiredAngle = (float)Math.Atan2(z, x);
+            float desiredAngle = (float)Math.Atan2(x, z);
 
             // first, figure out how much we want to turn, using WrapAngle to get our
             // result from -Pi to Pi ( -180 degrees to 180 degrees )

@@ -535,7 +535,7 @@ namespace WorldTest
                             currentFace.V2 = currentVertex.Position;
 
                             currentFace.Centroid = (currentFace.V0 + currentFace.V1 + currentFace.V2) / 3.0f;
-
+                            currentFace.Index = navigationMesh.Count;
                             navigationMesh.Add(currentFace);
                         }
 
@@ -847,8 +847,8 @@ namespace WorldTest
 
         public int NavigationIndex(Vector3 position, int currentLocation)
         {
-            if (currentLocation < 0)
-            {
+            //if (currentLocation < 0)
+            //{
                 for (int i = 0; i < navigationMesh.Count; i++)
                 {
                     if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
@@ -856,17 +856,17 @@ namespace WorldTest
                         return i;
                     }
                 }
-            }
-            else
-            {
-                for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
-                {
-                    if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
-                    {
-                        return i;
-                    }
-                }
-            }
+            //}
+            //else
+            //{
+            //    for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
+            //    {
+            //        if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
+            //        {
+            //            return i;
+            //        }
+            //    }
+            //}
 
             return -1;
         }

@@ -88,7 +88,9 @@ namespace WorldTest
 
         #region Load Content
 
-        public abstract void LoadContent();
+        public virtual void LoadContent()
+        {
+        }
 
         #endregion
 

@@ -123,6 +123,11 @@ namespace WorldTest
             //ScreenManager.Game.Content.RootDirectory = "Content";
             this.graphics = sm.graphics;
 
+            this.ENEMY_STATS.maxSpeed = 2.0f;
+            this.ENEMY_STATS.attackDistance = 50f;
+            this.ENEMY_STATS.chaseDistance = 300f;
+            this.ENEMY_STATS.hysteresis = 15f;
+
             TransitionOnTime = TimeSpan.FromSeconds(1.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);
 
@@ -174,17 +179,18 @@ namespace WorldTest
 
             player.LoadContent();
 
+            //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
+            firstLevel.Load(graphics.GraphicsDevice, ref content);
+
+            // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
             enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS));
 
             foreach (Enemy e in enemies)
             {
-                e.LoadContent();
+                e.LoadContent(ref player, ref firstLevel);
             }
-
-            //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
-            firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // Construct our particle system components.
             explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content, false);
@@ -399,117 +405,6 @@ namespace WorldTest
                     i++;
                 }
             }
-        }
-
-
-
-        /// <summary>
-        /// This is the wrapper for the enemy pathfinding AI using A*.  It takes the player and
-        /// the enemy as arguments.  First it casts a ray straight down to determine which polygons
-        /// the player and enemy are in (with respect to the NavigationMesh data structure).  Both the
-        /// player and enemy keep information about which polygons they are currently in and which ones
-        /// they were in last.  The rigourous initial calculations of this data occurs at game initialization.
-        /// This allows us to only have to check polygons that are adjacent to the player and enemy current 
-        /// polygons for the ray casting, rather than the entire collision mesh.  From there we call
-        /// FindPath which returns the optimal path from the start node to the destination node.  Then 
-        /// we do processing to orient the enemy and smooth his traversal of the path.
-        /// </summary>
-        /// <param name="player"></param>
-        /// <param name="enemy"></param>
-        Path<NavMeshNode> RunAStar(Player player, Enemy enemy)
-        {
-            return this.firstLevel.FindPath(enemy.current_poly_index, player.current_poly_index);
-        }
-
-        /// <summary>
-        /// Here we use the optimal path returned by FindPath to move the enemy.
-        /// </summary>
-        /// <param name="optimal_path"></param>
-        Vector3 UpdateEnemy(Enemy enemy)
-        {
-            //player... first check current current_poly
-            if (this.firstLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
-                player.current_poly_index))
-            {
-                // do nothing... player is still in his current polygon.
-            }
-            else
-            {
-                player.prev_poly_index = player.current_poly_index;
-                player.current_poly_index = this.firstLevel.NavigationIndex(player.position, player.current_poly_index);
-            }
-
-            //enemy... same process as player.
-            if (this.firstLevel.RayTriangleIntersect(new Ray(enemy.position + new Vector3(0, 5, 0), Vector3.Down),
-                enemy.current_poly_index))
-            {
-                // do nothing... player is still in his current polygon.
-            }
-            else
-            {
-                enemy.prev_poly_index = enemy.current_poly_index;
-                enemy.current_poly_index = this.firstLevel.NavigationIndex(enemy.position, enemy.current_poly_index);
-            }
-
-            if (enemy.state == Enemy.EnemyAiState.Idle)
-            {
-                return Vector3.Zero;
-            }
-            else if (enemy.state == Enemy.EnemyAiState.ChasingSmart)
-            {
-                // calculate movement vector to orient the enemy and move him
-                if (player.current_poly_index == player.prev_poly_index)
-                {
-                    // player has not moved since the last frame... continue following the 
-                    // old path.
-                    if (enemy.current_poly_index == enemy.prev_poly_index)
-                    {
-                        Vector3 travel_point = this.firstLevel.TravelPoint(enemy.FirstPathPoly, enemy.SecondPathPoly);
-                        Vector3 travel_vector = travel_point - enemy.position;
-                        travel_vector.Normalize();
-                        return travel_vector;
-                    }
-                    else
-                    {
-                        enemy.CurrentPath.GetEnumerator().MoveNext();
-                        enemy.FirstPathPoly = enemy.SecondPathPoly;
-                        enemy.CurrentPath.PreviousSteps.LastStep.Index = enemy.SecondPathPoly;
-                        Vector3 travel_point = this.firstLevel.TravelPoint(enemy.FirstPathPoly, enemy.SecondPathPoly);
-                        Vector3 travel_vector = travel_point - enemy.position;
-                        travel_vector.Normalize();
-                        return travel_vector;
-                    }
-                }
-                else
-                {
-                    Path<NavMeshNode> new_optimal_path = RunAStar(player, enemy);
-                    enemy.CurrentPath = new_optimal_path;
-                    enemy.FirstPathPoly = new_optimal_path.LastStep.Index;
-                    enemy.SecondPathPoly = new_optimal_path.PreviousSteps.LastStep.Index;
-                    Vector3 travel_point = this.firstLevel.TravelPoint(enemy.FirstPathPoly, enemy.SecondPathPoly);
-                    Vector3 travel_vector = travel_point - enemy.position;
-                    travel_vector.Normalize();
-                    return travel_vector;
-                }
-            }
-            else if (enemy.state == Enemy.EnemyAiState.ChasingDumb)
-            {
-                Vector3 direction = player.position - enemy.position;
-                direction.Normalize();
-                return direction;
-            }
-            else if (enemy.state == Enemy.EnemyAiState.Attack)
-            {
-                Vector3 direction = player.position - enemy.position;
-                direction.Normalize();
-                return direction;
-            }
-            else if (enemy.state == Enemy.EnemyAiState.Weakened)
-            {
-                return Vector3.Zero;
-            }
-
-            return Vector3.Zero;
         }
 
         #endregion
