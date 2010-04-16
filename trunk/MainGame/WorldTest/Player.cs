@@ -60,6 +60,8 @@ namespace WorldTest
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
             worldTransform.Translation = position;
+
+            this.currentDimension = Dimension.FIRST;
         }
 
         #endregion
@@ -145,6 +147,13 @@ namespace WorldTest
             {
                 controller.CrossFade(model.AnimationClips.Values[1],
                     TimeSpan.FromMilliseconds(300));
+            }
+
+            if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released)
+            {
+                this.ChangeDimension();
+                GameplayScreen.transitionRadius = 0;
+                GameplayScreen.transitioning = true;
             }
 
             if (stickL.X != 0.0f)
@@ -323,6 +332,9 @@ namespace WorldTest
                     effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                     effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
+                    effect.Parameters["playerPosition"].SetValue(this.position);
+                    effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+
                     for (int i = 0; i < Lights.Count; i++)
                     {
                         if ((i + 1) > GameplayScreen.MAX_LIGHTS)
@@ -333,25 +345,39 @@ namespace WorldTest
                         effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights.ElementAt(i).position);
                         effect.Parameters["lightRadii"].Elements[i].SetValue(Lights.ElementAt(i).attenuationRadius);
                     }
+
+                    string techniqueModifier = "";
+
+                    if (this.CurrentDimension == Dimension.FIRST)
+                    {
+                        techniqueModifier = "";
+                    }
+                    else
+                    {
+                        techniqueModifier = "_Gray";
+                    }
+
+                    effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
+
                     switch (Lights.Count)
                     {
-                        case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight"];
+                        case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight" + techniqueModifier];
                             break;
-                        case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight"];
+                        case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight" + techniqueModifier];
                             break;
-                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight"];
+                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight" + techniqueModifier];
                             break;
-                        case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight"];
+                        case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight" + techniqueModifier];
                             break;
-                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight"];
+                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight" + techniqueModifier];
                             break;
-                        case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight"];
+                        case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight" + techniqueModifier];
                             break;
-                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight"];
+                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight" + techniqueModifier];
                             break;
-                        case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
+                        case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
                             break;
-                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
+                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
                             break;
                     }
                 }

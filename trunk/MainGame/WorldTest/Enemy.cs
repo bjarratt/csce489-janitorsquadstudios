@@ -77,7 +77,8 @@ namespace WorldTest
 
         #region Constructor
 
-        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name, EnemyStats stats) : base(Graphics, Content, enemy_name)
+        public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name,
+                     EnemyStats stats, Dimension currentDimension) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, -100);
             speed = 20.0f;
@@ -92,6 +93,8 @@ namespace WorldTest
 
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
+
+            this.currentDimension = currentDimension;
         }
 
         #endregion
@@ -161,155 +164,157 @@ namespace WorldTest
             //reset rotation
             //rotation = 0.0f;
 
-            UpdateLocation(ref currentLevel, ref player);
-
-            //turn speed is same even if machine running slow
-            turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
-            turn_speed *= turn_speed_reg;
-
-            
-
-            //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
-            //{
-            //    controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
-            //    controller.Speed = 1.0f;
-            //}
-            //else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
-            //{
-            //    controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
-            //    controller.Speed = 3.0f;
-            //}
-
-            #region Behavior
-
-            // First we have to use the current state to decide what the thresholds are
-            // for changing state
-            float enemySmartChaseThreshold = this.stats.smartChaseDistance;
-            float enemyDumbChaseThreshold = this.stats.dumbChaseDistance;
-            float enemyAttackThreshold = this.stats.attackDistance;
-
-            // if the enemy is idle, he prefers to stay idle. we do this by making the
-            // chase distance smaller, so the enemy will be less likely to begin chasing
-            // the player.
-            if (this.state == EnemyAiState.Idle)
+            if (this.CurrentDimension == player.CurrentDimension)
             {
-                enemySmartChaseThreshold -= this.stats.hysteresis * 0.5f;
-            }
+                UpdateLocation(ref currentLevel, ref player);
 
-            // similarly, if the enemy is active, he prefers to stay active. we
-            // accomplish this by increasing the range of values that will cause the
-            // enemy to go into the active state.
-            else if (this.state == EnemyAiState.ChasingSmart)
-            {
-                enemySmartChaseThreshold += this.stats.hysteresis * 0.5f;
-                enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
-            }
-            else if (this.state == EnemyAiState.ChasingDumb)
-            {
-                enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
-                enemyAttackThreshold -= this.stats.hysteresis * 0.5f;
-            }
-            // the same logic is applied to the finished state.
-            else if (this.state == EnemyAiState.Attack)
-            {
-                enemyAttackThreshold += this.stats.hysteresis * 0.5f;
-            }
+                //turn speed is same even if machine running slow
+                turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
+                turn_speed *= turn_speed_reg;
 
-            // Second, now that we know what the thresholds are, we compare the enemy's 
-            // distance from the player against the thresholds to decide what the enemy's
-            // current state is.
-            float distanceFromPlayer = Vector3.Distance(this.position, player.position);
-            if (distanceFromPlayer > enemySmartChaseThreshold)
-            {
-                // if the enemy is far away from the player, it should idle
-                this.state = EnemyAiState.Idle;
-            }
-            else if (distanceFromPlayer > enemyDumbChaseThreshold)
-            {
-                if (player.current_poly_index < 0 || this.current_poly_index < 0)
+
+
+                //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
+                //{
+                //    controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
+                //    controller.Speed = 1.0f;
+                //}
+                //else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
+                //{
+                //    controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
+                //    controller.Speed = 3.0f;
+                //}
+
+                #region Behavior
+
+                // First we have to use the current state to decide what the thresholds are
+                // for changing state
+                float enemySmartChaseThreshold = this.stats.smartChaseDistance;
+                float enemyDumbChaseThreshold = this.stats.dumbChaseDistance;
+                float enemyAttackThreshold = this.stats.attackDistance;
+
+                // if the enemy is idle, he prefers to stay idle. we do this by making the
+                // chase distance smaller, so the enemy will be less likely to begin chasing
+                // the player.
+                if (this.state == EnemyAiState.Idle)
+                {
+                    enemySmartChaseThreshold -= this.stats.hysteresis * 0.5f;
+                }
+
+                // similarly, if the enemy is active, he prefers to stay active. we
+                // accomplish this by increasing the range of values that will cause the
+                // enemy to go into the active state.
+                else if (this.state == EnemyAiState.ChasingSmart)
+                {
+                    enemySmartChaseThreshold += this.stats.hysteresis * 0.5f;
+                    enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
+                }
+                else if (this.state == EnemyAiState.ChasingDumb)
+                {
+                    enemyDumbChaseThreshold -= this.stats.hysteresis * 0.5f;
+                    enemyAttackThreshold -= this.stats.hysteresis * 0.5f;
+                }
+                // the same logic is applied to the finished state.
+                else if (this.state == EnemyAiState.Attack)
+                {
+                    enemyAttackThreshold += this.stats.hysteresis * 0.5f;
+                }
+
+                // Second, now that we know what the thresholds are, we compare the enemy's 
+                // distance from the player against the thresholds to decide what the enemy's
+                // current state is.
+                float distanceFromPlayer = Vector3.Distance(this.position, player.position);
+                if (distanceFromPlayer > enemySmartChaseThreshold)
+                {
+                    // if the enemy is far away from the player, it should idle
+                    this.state = EnemyAiState.Idle;
+                }
+                else if (distanceFromPlayer > enemyDumbChaseThreshold)
+                {
+                    if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                    {
+                        this.state = EnemyAiState.ChasingDumb;
+                    }
+                    else
+                    {
+                        LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                        if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
+                        {
+                            this.currentPath = newPath;
+                            this.FirstPathPoly = currentPath.First.Value.Index;
+                            this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                        }
+
+                        this.state = EnemyAiState.ChasingSmart;
+                    }
+
+
+                }
+                else if (distanceFromPlayer > enemyAttackThreshold)
                 {
                     this.state = EnemyAiState.ChasingDumb;
                 }
                 else
                 {
-                    LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-
-                    if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
-                    {
-                        this.currentPath = newPath;
-                        this.FirstPathPoly = currentPath.First.Value.Index;
-                        this.SecondPathPoly = currentPath.First.Next.Value.Index;
-                    }
-
-                    this.state = EnemyAiState.ChasingSmart;
+                    this.state = EnemyAiState.Attack;
+                }
+                //this.state = EnemyAiState.ChasingDumb;
+                // Third, once we know what state we're in, act on that state.
+                float currentEnemySpeed;
+                if (this.state == EnemyAiState.ChasingSmart)
+                {
+                    Vector3 moveTo = Navigate(ref currentLevel, ref player);
+                    //moveTo.Normalize();
+                    // the enemy wants to chase the player, so it will just use the TurnToFace
+                    // function to turn towards the player's position. Then, when the enemy
+                    // moves forward, he will chase the player.
+                    this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
+                    currentEnemySpeed = this.stats.maxSpeed;
+                }
+                else if (this.state == EnemyAiState.ChasingDumb)
+                {
+                    //Vector3 turnToward = player.position - this.position;
+                    //turnToward.Normalize();
+                    this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
+                    currentEnemySpeed = this.stats.maxSpeed;
+                }
+                else if (this.state == EnemyAiState.Idle)
+                {
+                    // call the wander function for the enemy
+                    Wander(this.position, ref this.velocity, ref this.rotation,
+                        this.turn_speed);
+                    currentEnemySpeed = .25f * this.speed;
+                    currentEnemySpeed = 0.0f;
+                }
+                else
+                {
+                    // if the enemy catches the player, it should stop.
+                    // Otherwise it will run right by, then spin around and
+                    // try to catch it all over again. The end result is that it will kind
+                    // of "run laps" around the player, which looks funny, but is not what
+                    // we're after.
+                    currentEnemySpeed = 0.0f;
                 }
 
-                
-            }
-            else if (distanceFromPlayer > enemyAttackThreshold)
-            {
-                this.state = EnemyAiState.ChasingDumb;
-            }
-            else
-            {
-                this.state = EnemyAiState.Attack;
-            }
-            //this.state = EnemyAiState.ChasingDumb;
-            // Third, once we know what state we're in, act on that state.
-            float currentEnemySpeed;
-            if (this.state == EnemyAiState.ChasingSmart)
-            {
-                Vector3 moveTo = Navigate(ref currentLevel, ref player);
-                //moveTo.Normalize();
-                // the enemy wants to chase the player, so it will just use the TurnToFace
-                // function to turn towards the player's position. Then, when the enemy
-                // moves forward, he will chase the player.
-                this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
-                currentEnemySpeed = this.stats.maxSpeed;
-            }
-            else if (this.state == EnemyAiState.ChasingDumb)
-            {
-                //Vector3 turnToward = player.position - this.position;
-                //turnToward.Normalize();
-                this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
-                currentEnemySpeed = this.stats.maxSpeed;
-            }
-            else if (this.state == EnemyAiState.Idle)
-            {
-                // call the wander function for the enemy
-                Wander(this.position, ref this.velocity, ref this.rotation,
-                    this.turn_speed);
-                currentEnemySpeed = .25f * this.speed;
-                currentEnemySpeed = 0.0f;
-            }
-            else
-            {
-                // if the enemy catches the player, it should stop.
-                // Otherwise it will run right by, then spin around and
-                // try to catch it all over again. The end result is that it will kind
-                // of "run laps" around the player, which looks funny, but is not what
-                // we're after.
-                currentEnemySpeed = 0.0f;
-            }
 
 
+                // this calculation is also important; we construct a heading
+                // vector based on the enemy's orientation, and then make the enemy move along
+                // that heading.
+                //Vector3 heading = new Vector3(
+                //    (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
+                //this.position += heading * currentEnemySpeed;
 
-            // this calculation is also important; we construct a heading
-            // vector based on the enemy's orientation, and then make the enemy move along
-            // that heading.
-            //Vector3 heading = new Vector3(
-            //    (float)Math.Cos(this.rotation), 0, (float)Math.Sin(this.rotation));
-            //this.position += heading * currentEnemySpeed;
+                #endregion
+                orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, rotation);
+                lookAt = Vector3.Transform(new Vector3(0, 0, 1), orientation);
 
-            #endregion
-            orientation = Quaternion.CreateFromAxisAngle(Vector3.Up, rotation);
-            lookAt = Vector3.Transform(new Vector3(0, 0, 1), orientation);
+                MoveForward(lookAt, ref currentLevel);
 
-            MoveForward(lookAt, ref currentLevel);
-
-            // Update the animation according to the elapsed time
-            controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
-
+                // Update the animation according to the elapsed time
+                controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
+            }
         }
 
         //TODO: update to include results of AI pathfinding
@@ -600,7 +605,8 @@ namespace WorldTest
         #region Draw
 
         public void DrawCel(GameTime gameTime, Matrix view, Matrix projection,
-            ref RenderTarget2D scene, ref RenderTarget2D shadow, ref List<Light> Lights)
+            ref RenderTarget2D scene, ref RenderTarget2D shadow, ref List<Light> Lights,
+            Vector3 playerPosition, Dimension playerDimension)
         {
 
             #region Cel Shading
@@ -636,6 +642,9 @@ namespace WorldTest
                     effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                     effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
+                    effect.Parameters["playerPosition"].SetValue(playerPosition);
+                    effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+
                     for (int i = 0; i < Lights.Count; i++)
                     {
                         if ((i + 1) > GameplayScreen.MAX_LIGHTS)
@@ -646,25 +655,39 @@ namespace WorldTest
                         effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights[i].position);
                         effect.Parameters["lightRadii"].Elements[i].SetValue(Lights[i].attenuationRadius);
                     }
+
+                    string techniqueModifier = "";
+
+                    if (playerDimension == Dimension.FIRST)
+                    {
+                        techniqueModifier = "";
+                    }
+                    else
+                    {
+                        techniqueModifier = "_Gray";
+                    }
+
+                    effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
+
                     switch (Lights.Count)
                     {
-                        case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight"];
+                        case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight" + techniqueModifier];
                             break;
-                        case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight"];
+                        case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight" + techniqueModifier];
                             break;
-                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight"];
+                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight" + techniqueModifier];
                             break;
-                        case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight"];
+                        case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight" + techniqueModifier];
                             break;
-                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight"];
+                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight" + techniqueModifier];
                             break;
-                        case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight"];
+                        case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight" + techniqueModifier];
                             break;
-                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight"];
+                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight" + techniqueModifier];
                             break;
-                        case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
+                        case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
                             break;
-                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight"];
+                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
                             break;
                     }
                 }
