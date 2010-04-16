@@ -99,6 +99,9 @@
     <Compile Include="ParticleClasses1\ParticleSystem.cs" />
     <Compile Include="ParticleClasses1\ParticleVertex.cs" />
     <Compile Include="ParticleClasses1\Projectile.cs" />
+    <Compile Include="ParticleSystems1\BanisherExplosion.cs" />
+    <Compile Include="ParticleSystems1\BanishingHandSystem.cs" />
+    <Compile Include="ParticleSystems1\BanishingParticleProjectile.cs" />
     <Compile Include="ParticleSystems1\ExplosionParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ExplosionSmokeParticleSystem.cs" />
     <Compile Include="ParticleSystems1\FireParticleSystem.cs" />
