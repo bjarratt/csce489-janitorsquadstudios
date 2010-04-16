@@ -545,7 +545,7 @@ namespace WorldTest
             //draw all on-screen hud or damage indicators
             spriteBatch.Begin();
 
-            if (player.health < 100)
+            if (player.isHit)
             {
                 blood.Draw(spriteBatch);
             }
