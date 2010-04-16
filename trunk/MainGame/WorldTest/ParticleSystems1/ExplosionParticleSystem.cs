@@ -41,7 +41,7 @@ namespace WorldTest
             settings.MinVerticalVelocity = -50;
             settings.MaxVerticalVelocity = 50;
 
-            settings.EndVelocity = 0;
+            settings.EndVelocity = -1f;
 
             settings.MinColor = Color.White;
             settings.MaxColor = Color.White;

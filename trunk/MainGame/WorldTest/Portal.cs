@@ -87,8 +87,11 @@ namespace WorldTest
         public void Update(GameTime gameTime)
         {
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            PortalMagic.AddParticle(RandomPointOnCircle(this.origin, this.radius), Vector3.Zero);
-            PortalMagic.AddParticle(RandomPointOnCircle(this.origin, this.radius), Vector3.Zero);
+            for (int i = 0; i < 4; i++)
+            {
+                PortalMagic.AddParticle(RandomPointOnCircle(this.origin, this.radius), Vector3.Zero);
+            }
+            //PortalMagic.AddParticle(RandomPointOnCircle(this.origin, this.radius), Vector3.Zero);
             //PortalMyst.AddParticle(RandomPointOnCircle(this.origin, this.radius), Vector3.Zero);
             time = 0;
         }
