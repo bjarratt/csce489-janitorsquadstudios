@@ -53,6 +53,9 @@ namespace WorldTest
         Player player;
         List<Enemy> enemies;
 
+        //damage object and TODO associated fade values
+        Damage blood;
+
         private EnemyStats ENEMY_STATS;
 
         private List<Light> lights;
@@ -118,6 +121,7 @@ namespace WorldTest
             //ScreenManager.Game.Content.RootDirectory = "Content";
             this.graphics = sm.graphics;
 
+            //set enemy stats
             this.ENEMY_STATS.maxSpeed = 2.0f;
             this.ENEMY_STATS.attackDistance = 100f;
             this.ENEMY_STATS.smartChaseDistance = 2000f;
@@ -149,6 +153,8 @@ namespace WorldTest
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
             inputControlState = new ControlState();
+            //init damage object
+            blood = new Damage(this.ScreenManager.game);
         }
 
         /// <summary>
@@ -174,6 +180,7 @@ namespace WorldTest
             player.InitCamera(ref camera);
 
             player.LoadContent();
+            blood.LoadContent(content);
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
             firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
@@ -295,6 +302,7 @@ namespace WorldTest
                 //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
                 camera.UpdateCamera(gameTime, inputControlState, invertYAxis);
                 //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
+                blood.Update(gameTime, ref player);
 
                 foreach (Enemy e in enemies)
                 {
@@ -461,6 +469,9 @@ namespace WorldTest
             // This game has a blue background. Why? Because!
             ScreenManager.GraphicsDevice.Clear(ClearOptions.Target,
                                                Color.CornflowerBlue, 0, 0);
+
+            SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
+
             List<Light> projLightList = new List<Light>();
             projLightList.AddRange(lights);
             if (this.relicLightOn)
@@ -530,6 +541,16 @@ namespace WorldTest
 
             //Draw lights
             DrawLights();
+
+            //draw all on-screen hud or damage indicators
+            spriteBatch.Begin();
+
+            if (player.health < 100)
+            {
+                blood.Draw(spriteBatch);
+            }
+
+            spriteBatch.End();
 
             base.Draw(gameTime);
 
