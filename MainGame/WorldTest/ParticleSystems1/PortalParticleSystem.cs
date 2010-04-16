@@ -36,10 +36,10 @@ namespace WorldTest
             settings.MaxColor = new Color(0, 255, 255, 255); //40
 
             settings.MinStartSize = 10;
-            settings.MaxStartSize = 20;
+            settings.MaxStartSize = 15;
 
-            settings.MinEndSize = 5;
-            settings.MaxEndSize = 6;
+            settings.MinEndSize = 1f;
+            settings.MaxEndSize = 3;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;

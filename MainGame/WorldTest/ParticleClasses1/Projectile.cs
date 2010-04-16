@@ -90,7 +90,7 @@ namespace WorldTest
         /// <summary>
         /// Updates the projectile.
         /// </summary>
-        public virtual bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies)
+        public virtual bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies, Dimension playerDimension)
         {
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -121,9 +121,18 @@ namespace WorldTest
 
             for(int i = 0; i < enemies.Count; i++)
             {
-                if (collisionSphere.Intersects(enemies[i].collisionSphere))
+                if (enemies[i].CurrentDimension != playerDimension)
+                {
+                    //pass over enemy in other dimension
+                }
+                else if (collisionSphere.Intersects(enemies[i].collisionSphere))
                 {
                     age = projectileLifespan + 1;
+                    enemies[i].health -= 50f;
+                    if (enemies[i].health <= 0)
+                    {
+                        enemies[i].state = Enemy.EnemyAiState.Weakened;
+                    }
                 }
             }
 

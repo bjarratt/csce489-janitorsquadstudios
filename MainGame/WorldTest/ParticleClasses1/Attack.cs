@@ -35,9 +35,9 @@ namespace WorldTest
             is_released = false;
         }
 
-        public override bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies)
+        public override bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies, Dimension playerDimension)
         {
-            return base.Update(gameTime, ref level, ref enemies);
+            return base.Update(gameTime, ref level, ref enemies, playerDimension);
         }
     }
 }

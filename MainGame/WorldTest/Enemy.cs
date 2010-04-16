@@ -95,6 +95,8 @@ namespace WorldTest
             turn_speed_reg = 1.6f;
             movement_speed_reg = 2.0f; // 14
 
+            health = 100f;
+
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
 
@@ -138,8 +140,7 @@ namespace WorldTest
             textures.SetValue(content.Load<Texture2D>("ColorMap"), (int)Tex_Select.model);
             textures.SetValue(content.Load<Texture2D>("Toon2"), (int)Tex_Select.cel_tex);
 
-            collisionSphere = new BoundingSphere(position + new Vector3(0,60,0), 100.0f);
-            collisionSphere.Radius = 100.0f;
+            collisionSphere = new BoundingSphere(position + lookAt * 100 + new Vector3(0,60,0), 100f);
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
             render_targets[(int)Target_Select.normalDepth] = new RenderTarget2D(graphics.GraphicsDevice,
@@ -229,42 +230,50 @@ namespace WorldTest
                 // Second, now that we know what the thresholds are, we compare the enemy's 
                 // distance from the player against the thresholds to decide what the enemy's
                 // current state is.
-                float distanceFromPlayer = Vector3.Distance(this.position, player.position);
-                if (distanceFromPlayer > enemySmartChaseThreshold)
+                if (this.state == EnemyAiState.Weakened)
                 {
-                    // if the enemy is far away from the player, it should idle
-                    this.state = EnemyAiState.Idle;
+                    // do nothing
                 }
-                else if (distanceFromPlayer > enemyDumbChaseThreshold)
+                else
                 {
-                    if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                    float distanceFromPlayer = Vector3.Distance(this.position, player.position);
+                    if (distanceFromPlayer > enemySmartChaseThreshold)
+                    {
+                        // if the enemy is far away from the player, it should idle
+                        this.state = EnemyAiState.Idle;
+                    }
+                    else if (distanceFromPlayer > enemyDumbChaseThreshold)
+                    {
+                        if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                        {
+                            this.state = EnemyAiState.ChasingDumb;
+                        }
+                        else
+                        {
+                            LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                            if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
+                            {
+                                this.currentPath = newPath;
+                                this.FirstPathPoly = currentPath.First.Value.Index;
+                                this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                            }
+
+                            this.state = EnemyAiState.ChasingSmart;
+                        }
+
+
+                    }
+                    else if (distanceFromPlayer > enemyAttackThreshold)
                     {
                         this.state = EnemyAiState.ChasingDumb;
                     }
                     else
                     {
-                        LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-
-                        if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
-                        {
-                            this.currentPath = newPath;
-                            this.FirstPathPoly = currentPath.First.Value.Index;
-                            this.SecondPathPoly = currentPath.First.Next.Value.Index;
-                        }
-
-                        this.state = EnemyAiState.ChasingSmart;
+                        this.state = EnemyAiState.Attack;
                     }
-
-
                 }
-                else if (distanceFromPlayer > enemyAttackThreshold)
-                {
-                    this.state = EnemyAiState.ChasingDumb;
-                }
-                else
-                {
-                    this.state = EnemyAiState.Attack;
-                }
+                
                 //this.state = EnemyAiState.ChasingDumb;
                 // Third, once we know what state we're in, act on that state.
                 float currentEnemySpeed;
@@ -293,7 +302,7 @@ namespace WorldTest
                     currentEnemySpeed = .25f * this.speed;
                     currentEnemySpeed = 0.0f;
                 }
-                else
+                else if (this.state == EnemyAiState.Attack)
                 {
                     // if the enemy catches the player, it should stop.
                     // Otherwise it will run right by, then spin around and
@@ -348,8 +357,13 @@ namespace WorldTest
                 }
                 position = currentLevel.CollideWith(position, Vector3.Down, 0.1, Level.MAX_COLLISIONS);
             }
-            else
+            else if (this.state == EnemyAiState.Weakened)
             {
+                this.activeAnimationClip = 0;
+                controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
+                controller.Speed = 1.0f;
+            }
+            else {
                 if (this.activeAnimationClip != 1)
                 {
                     this.activeAnimationClip = 1;
@@ -358,7 +372,7 @@ namespace WorldTest
                 }
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }
-            collisionSphere.Center = position + new Vector3(0,60,0);
+            collisionSphere.Center = position + lookAt * 100 + new Vector3(0,60,0);
         }
 
         private void UpdateLocation(ref Level currentLevel, ref Player player)

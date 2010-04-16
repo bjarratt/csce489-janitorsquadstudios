@@ -411,7 +411,7 @@ namespace WorldTest
 
             while (i < projectiles.Count)
             {
-                if (!projectiles[i].Update(gameTime, ref firstLevel, ref enemies))
+                if (!projectiles[i].Update(gameTime, ref firstLevel, ref enemies, player.CurrentDimension))
                 {
                     // Remove projectiles at the end of their life.
                     explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
