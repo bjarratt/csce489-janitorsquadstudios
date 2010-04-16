@@ -37,7 +37,9 @@ namespace WorldTest
         public float cameraMovementSide = 0;
 
         //Camera movement and rotation speeds
-        public float rotationSpeed = 0.05f; 
+        public float rotationSpeed = 0.05f;
+        private const float VERTICAL_ROT_SPEED = 0.05f;  // 0.025f
+        private const float HORIZONTAL_ROT_SPEED = 0.1f; // 0.05f
 
         //Position and reference vectors
         public Vector3 position;
@@ -165,15 +167,15 @@ namespace WorldTest
                 {
                     if (invertYAxis)
                     {
-                        cameraArc += time * 0.025f;
+                        cameraArc += time * VERTICAL_ROT_SPEED;
                     }
                     else
                     {
-                        cameraArc -= time * 0.025f;
+                        cameraArc -= time * VERTICAL_ROT_SPEED;
                     }
                 }
                 else
-                    cameraArc += time * 0.025f;
+                    cameraArc += time * VERTICAL_ROT_SPEED;
             }
 
             if (inputState.currentKeyboardState.IsKeyDown(Keys.Down) /*||
@@ -183,24 +185,24 @@ namespace WorldTest
                 {
                     if (invertYAxis)
                     {
-                        cameraArc -= time * 0.025f;
+                        cameraArc -= time * VERTICAL_ROT_SPEED;
                     }
                     else
                     {
-                        cameraArc += time * 0.025f;
+                        cameraArc += time * VERTICAL_ROT_SPEED;
                     }
                 }
                 else
-                    cameraArc -= time * 0.025f;
+                    cameraArc -= time * VERTICAL_ROT_SPEED;
             }
 
             if (invertYAxis)
             {
-                cameraArc -= inputState.currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+                cameraArc -= inputState.currentGamePadState.ThumbSticks.Right.Y * time * HORIZONTAL_ROT_SPEED;
             }
             else
             {
-                cameraArc += inputState.currentGamePadState.ThumbSticks.Right.Y * time * 0.05f;
+                cameraArc += inputState.currentGamePadState.ThumbSticks.Right.Y * time * HORIZONTAL_ROT_SPEED;
             }
 
             // Limit the arc movement.
@@ -214,11 +216,11 @@ namespace WorldTest
             {
                 if (first)
                 {
-                    cameraRot -= time * 0.05f;
+                    cameraRot -= time * HORIZONTAL_ROT_SPEED;
                 }
                 else
                 {
-                    cameraRot += time * 0.05f;
+                    cameraRot += time * HORIZONTAL_ROT_SPEED;
                 }
             }
 
@@ -226,21 +228,21 @@ namespace WorldTest
             {
                 if (first)
                 {
-                    cameraRot += time * 0.05f;
+                    cameraRot += time * HORIZONTAL_ROT_SPEED;
                 }
                 else
                 {
-                    cameraRot -= time * 0.05f;
+                    cameraRot -= time * HORIZONTAL_ROT_SPEED;
                 }
             }
             
             if (first)
             {
-                cameraRot -= inputState.currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+                cameraRot -= inputState.currentGamePadState.ThumbSticks.Right.X * time * HORIZONTAL_ROT_SPEED;
             }
             else
             {
-                cameraRot += inputState.currentGamePadState.ThumbSticks.Right.X * time * 0.05f;
+                cameraRot += inputState.currentGamePadState.ThumbSticks.Right.X * time * HORIZONTAL_ROT_SPEED;
             }
 
             // Check for input to zoom camera in and out.

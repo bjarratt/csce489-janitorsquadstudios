@@ -151,7 +151,8 @@ namespace WorldTest
                     TimeSpan.FromMilliseconds(300));
             }
 
-            if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released)
+            if ((inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released) ||
+                (inputState.currentKeyboardState.IsKeyDown(Keys.E) && inputState.lastKeyboardState.IsKeyUp(Keys.E)))
             {
                 // BIG HACK FOR TESTING... WE KNOW PORTAL IS AT VECTOR3.ZERO SO WE PASS IT IN DIRECTLY RATHER THAN
                 // GETTING IT FROM LEVELS LIST OF PORTALS
@@ -262,8 +263,9 @@ namespace WorldTest
                     velocity.Y = -0.5f;
                 }
 
-                if (inputState.currentGamePadState.Buttons.A == ButtonState.Pressed &&
-                    inputState.lastGamePadState.Buttons.A == ButtonState.Released && !(Status == State.jumping))
+                if (!(Status == State.jumping) && 
+                    ((inputState.currentGamePadState.Buttons.A == ButtonState.Pressed && inputState.lastGamePadState.Buttons.A == ButtonState.Released) || 
+                     inputState.currentKeyboardState.IsKeyDown(Keys.Space) && inputState.lastKeyboardState.IsKeyUp(Keys.Space)))
                 {
                     this.Status = State.jumping;
                     velocity.Y += 8;
