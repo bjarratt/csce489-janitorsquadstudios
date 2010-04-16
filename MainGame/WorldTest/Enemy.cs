@@ -51,6 +51,8 @@ namespace WorldTest
         private int first_path_poly;
         private int second_path_poly;
 
+        public float timeBetweenDamage = 0;
+
         public Vector3 lookAt = new Vector3(0, 0, 1);
 
         private LinkedList<NavMeshNode> currentPath;
@@ -172,7 +174,7 @@ namespace WorldTest
                 turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
                 turn_speed *= turn_speed_reg;
 
-
+                timeBetweenDamage += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
                 //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
                 //{
@@ -294,8 +296,15 @@ namespace WorldTest
                     // try to catch it all over again. The end result is that it will kind
                     // of "run laps" around the player, which looks funny, but is not what
                     // we're after.
+                    
                     currentEnemySpeed = 0.0f;
-                    player.health -= 20f;
+
+                    if (!player.isHit) // If player is not currently taking damage
+                    {
+                        player.isHit = true; // Player takes damage
+                        player.health -= 20f;
+                        timeBetweenDamage = 0;
+                    }
                 }
 
 

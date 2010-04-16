@@ -68,6 +68,7 @@ namespace WorldTest
         public int activeAnimationClip = 0;
 
         public float health;
+        public bool isHit;
 
         protected Dimension currentDimension;
 
