@@ -250,7 +250,7 @@ namespace WorldTest
             parameters["EndVelocity"].SetValue(settings.EndVelocity);
             parameters["MinColor"].SetValue(settings.MinColor.ToVector4());
             parameters["MaxColor"].SetValue(settings.MaxColor.ToVector4());
-
+            
             parameters["RotateSpeed"].SetValue(
                 new Vector2(settings.MinRotateSpeed, settings.MaxRotateSpeed));
             
