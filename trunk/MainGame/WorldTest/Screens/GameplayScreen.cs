@@ -72,7 +72,7 @@ namespace WorldTest
 
         public const float MAX_TRANSITION_RADIUS = 6000.0f;
         public const float WAVE_FRONT_SIZE = 50.0f;
-        public const float TRANSITION_SPEED = 720.0f;
+        public const float TRANSITION_SPEED = 1000f;
         public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
         public static bool transitioning = false;
 
