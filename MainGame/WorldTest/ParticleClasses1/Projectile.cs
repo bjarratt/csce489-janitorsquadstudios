@@ -72,6 +72,7 @@ namespace WorldTest
 
         public Light light;
         public BoundingSphere collisionSphere;
+        public bool is_banisher;
 
         static Random random = new Random();
 
@@ -128,10 +129,22 @@ namespace WorldTest
                 else if (collisionSphere.Intersects(enemies[i].collisionSphere))
                 {
                     age = projectileLifespan + 1;
-                    enemies[i].health -= 50f;
-                    if (enemies[i].health <= 0)
+                    if (this.is_banisher)
                     {
-                        enemies[i].state = Enemy.EnemyAiState.Weakened;
+                        if (enemies[i].state == Enemy.EnemyAiState.Weakened)
+                        {
+                            enemies[i].ChangeDimension();
+                            enemies[i].state = Enemy.EnemyAiState.Idle;
+                            enemies[i].health = 100f;
+                        }
+                    }
+                    else
+                    {
+                        enemies[i].health -= 50f;
+                        if (enemies[i].health <= 0)
+                        {
+                            enemies[i].state = Enemy.EnemyAiState.Weakened;
+                        }
                     }
                 }
             }

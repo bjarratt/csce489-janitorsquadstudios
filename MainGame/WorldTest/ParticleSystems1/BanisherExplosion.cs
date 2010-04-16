@@ -1,13 +1,4 @@
-#region File Description
-//-----------------------------------------------------------------------------
-// ExplosionParticleSystem.cs
-//
-// Microsoft XNA Community Game Platform
-// Copyright (C) Microsoft Corporation. All rights reserved.
-//-----------------------------------------------------------------------------
-#endregion
-
-#region Using Statements
+﻿#region Using Statements
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -19,16 +10,16 @@ namespace WorldTest
     /// <summary>
     /// Custom particle system for creating the fiery part of the explosions.
     /// </summary>
-    class ExplosionParticleSystem : ParticleSystem
+    class BanisherExplosion : ParticleSystem
     {
-        public ExplosionParticleSystem(Game game, ContentManager content, bool attached)
+        public BanisherExplosion(Game game, ContentManager content, bool attached)
             : base(game, content, attached)
         { }
 
 
         protected override void InitializeSettings(ParticleSettings settings)
         {
-            settings.TextureName = "fire";
+            settings.TextureName = "GenericParticle";
 
             settings.MaxParticles = 10000;
 
@@ -41,13 +32,13 @@ namespace WorldTest
             settings.MinVerticalVelocity = -50;
             settings.MaxVerticalVelocity = 50;
 
-            settings.EndVelocity = -1f;
+            settings.EndVelocity = 0f;
 
-            settings.MinColor = Color.White;
-            settings.MaxColor = Color.White;
+            settings.MinColor = new Color(0, 255, 255, 200); //10
+            settings.MaxColor = new Color(0, 255, 255, 255); //40
 
-            settings.MinRotateSpeed = -1;
-            settings.MaxRotateSpeed = 1;
+            settings.MinRotateSpeed = 0;
+            settings.MaxRotateSpeed = 0;
 
             settings.MinStartSize = 10;
             settings.MaxStartSize = 10;

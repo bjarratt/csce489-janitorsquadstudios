@@ -17,7 +17,7 @@ namespace WorldTest
                             ParticleSystem contactParticles,
                             ParticleSystem extraContactParticles,
                             ParticleSystem projectileTrailParticles,
-                            ref List<Enemy> enemies) : base()
+                            ref List<Enemy> enemies, bool is_banisher) : base()
         {
             this.position = position;
             this.velocity = velocity;
@@ -26,11 +26,19 @@ namespace WorldTest
             this.numExtraContactParticles = num_ext_contact_parts;
             this.projectileLifespan = lifespan;
             this.gravity = gravity;
+            this.is_banisher = is_banisher;
             this.contactParticles = contactParticles;
             this.extraContactParticles = extraContactParticles;
             trailEmitter = new ParticleEmitter(projectileTrailParticles,
                                                trailParticlesPerSecond, position);
-            light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
+            if (is_banisher)
+            {
+                light = new Light(position, GameplayScreen.ICE_COLOR * 2.0f, 3000.0f);
+            }
+            else
+            {
+                light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
+            }
             collisionSphere = new BoundingSphere(position, 10);
             is_released = false;
         }
