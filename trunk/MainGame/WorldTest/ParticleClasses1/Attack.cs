@@ -29,7 +29,7 @@ namespace WorldTest
             this.extraContactParticles = extraContactParticles;
             trailEmitter = new ParticleEmitter(projectileTrailParticles,
                                                trailParticlesPerSecond, position);
-            light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
+            light = new Light(position, GameplayScreen.ACID_FIRE * 2.0f, 3000.0f);
             is_released = false;
         }
 

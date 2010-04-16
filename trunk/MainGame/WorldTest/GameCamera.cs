@@ -233,7 +233,7 @@ namespace WorldTest
                     cameraRot -= time * 0.05f;
                 }
             }
-
+            
             if (first)
             {
                 cameraRot -= inputState.currentGamePadState.ThumbSticks.Right.X * time * 0.05f;

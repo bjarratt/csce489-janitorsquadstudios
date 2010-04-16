@@ -101,8 +101,11 @@
     <Compile Include="ParticleSystems1\ExplosionParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ExplosionSmokeParticleSystem.cs" />
     <Compile Include="ParticleSystems1\FireParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\PortalMystParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\PortalParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ProjectileTrailParticleSystem.cs" />
     <Compile Include="ParticleSystems1\SmokePlumeParticleSystem.cs" />
+    <Compile Include="Portal.cs" />
     <Compile Include="ScreenManager\GameScreen.cs" />
     <Compile Include="ScreenManager\InputState.cs" />
     <Compile Include="ScreenManager\ScreenManager.cs" />

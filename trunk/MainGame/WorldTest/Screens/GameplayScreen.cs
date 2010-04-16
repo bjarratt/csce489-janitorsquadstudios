@@ -62,6 +62,7 @@ namespace WorldTest
         public static int MAX_LIGHTS = 8;
 
         public static Vector3 FIRE_COLOR = new Vector3(0.87f, 0.2f, 0.0f);
+        public static Vector3 ACID_FIRE = new Vector3(0, 0.7f, 0);
         public static Vector3 ICE_COLOR = new Vector3(0.2f, 0.8f, 1.0f);
 
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
@@ -100,6 +101,8 @@ namespace WorldTest
         /// </summary>
         RenderTarget2D sceneRenderTarget;
         RenderTarget2D shadowRenderTarget;
+
+        Portal portal;
 
         #endregion
 
@@ -199,6 +202,9 @@ namespace WorldTest
             projectileTrailParticles.DrawOrder = 300;
             explosionParticles.DrawOrder = 400;
             fireParticles.DrawOrder = 500;
+
+            portal = new Portal(new Vector3(0,15,0), 50f);
+            portal.Load(this.ScreenManager.game, content);
 
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
@@ -305,6 +311,8 @@ namespace WorldTest
                 UpdateAttacks(gameTime, inputControlState);
                 UpdateProjectiles(gameTime);
 
+                portal.Update(gameTime);
+
                 // Save previous states
                 inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
                 inputControlState.lastGamePadState = inputControlState.currentGamePadState;
@@ -328,7 +336,7 @@ namespace WorldTest
                  (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released) )
             {
                 relicLight.attenuationRadius = 3000.0f;
-                relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
+                relicLight.color = GameplayScreen.ACID_FIRE * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 pos += camera.right * 5;
@@ -346,9 +354,8 @@ namespace WorldTest
                     pos += camera.lookAt * 22;
                     relicLight.position = pos;
                     // set the world matrix for the particles
-                    Matrix world = Matrix.Identity;
-                    world.Translation = player.position;
-                    fireParticles.SetWorldMatrix(world);
+                    //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
+                    //fireParticles.SetWorldMatrix(world);
                     for (int i = 0; i < 3; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);
@@ -398,7 +405,7 @@ namespace WorldTest
                 if (!projectiles[i].Update(gameTime, ref firstLevel))
                 {
                     // Remove projectiles at the end of their life.
-                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
+                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.ACID_FIRE * 5.5f, 3000.0f, 0.0f));
                     projectiles.RemoveAt(i);
                 }
                 else
@@ -508,7 +515,7 @@ namespace WorldTest
             projectileTrailParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             smokePlumeParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             fireParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
-
+            portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
 

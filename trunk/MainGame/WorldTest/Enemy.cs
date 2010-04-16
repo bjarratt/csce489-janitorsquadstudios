@@ -81,7 +81,7 @@ namespace WorldTest
                      EnemyStats stats, Dimension currentDimension) : base(Graphics, Content, enemy_name)
         {
             position = new Vector3(0, 100, -100);
-            speed = 20.0f;
+            speed = 10.0f;
 
             this.stats = stats;
             this.state = EnemyAiState.Idle;

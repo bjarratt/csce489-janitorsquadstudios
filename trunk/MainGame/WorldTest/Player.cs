@@ -169,7 +169,6 @@ namespace WorldTest
 
                 //float moveSpeed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / movement_speed_reg;
                 float moveSpeed_ms = (float)gameTime.ElapsedGameTime.TotalSeconds * this.speed * this.speedScale;
-                InputState input = new InputState();
                 MoveForward(gameTime, ref position, orientation, moveSpeed_ms, stickL, inputState, ref currentLevel);
                 
                 camera.camera_rotation = orientation * Quaternion.CreateFromAxisAngle(new Vector3(0, 1, 0), MathHelper.ToRadians(camera.cameraRot));
