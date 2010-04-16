@@ -71,7 +71,8 @@ namespace WorldTest
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
         public const float MAX_TRANSITION_RADIUS = 6000.0f;
-        public const float TRANSITION_SPEED = 240.0f;
+        public const float WAVE_FRONT_SIZE = 50.0f;
+        public const float TRANSITION_SPEED = 720.0f;
         public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
         public static bool transitioning = false;
 
@@ -344,7 +345,7 @@ namespace WorldTest
                  (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released) )
             {
                 relicLight.attenuationRadius = 3000.0f;
-                relicLight.color = GameplayScreen.ACID_FIRE * 2.0f;
+                relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
                 Vector3 pos = player.position + new Vector3(0, 20, 0);
                 pos += camera.right * 5;
@@ -375,7 +376,7 @@ namespace WorldTest
                     pos += camera.lookAt * 20;
                     relicLight.position = pos;
                     fireParticles.SetWorldMatrix(player.worldTransform);
-                    for (int i = 0; i < 3; i++)
+                    for (int i = 0; i < 1; i++)
                     {
                         fireParticles.AddParticle(pos, Vector3.Zero);
                     }
@@ -391,7 +392,7 @@ namespace WorldTest
                 pos += camera.lookAt * 20;
                 projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
                                                explosionSmokeParticles,
-                                               projectileTrailParticles));
+                                               projectileTrailParticles, ref enemies));
                 projectiles[projectiles.Count - 1].is_released = true;
             }
         }
@@ -410,10 +411,10 @@ namespace WorldTest
 
             while (i < projectiles.Count)
             {
-                if (!projectiles[i].Update(gameTime, ref firstLevel))
+                if (!projectiles[i].Update(gameTime, ref firstLevel, ref enemies))
                 {
                     // Remove projectiles at the end of their life.
-                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.ACID_FIRE * 5.5f, 3000.0f, 0.0f));
+                    explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
                     projectiles.RemoveAt(i);
                 }
                 else

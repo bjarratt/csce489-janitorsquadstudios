@@ -16,7 +16,8 @@ namespace WorldTest
                             float lifespan, float gravity,
                             ParticleSystem contactParticles,
                             ParticleSystem extraContactParticles,
-                            ParticleSystem projectileTrailParticles) : base()
+                            ParticleSystem projectileTrailParticles,
+                            ref List<Enemy> enemies) : base()
         {
             this.position = position;
             this.velocity = velocity;
@@ -29,13 +30,14 @@ namespace WorldTest
             this.extraContactParticles = extraContactParticles;
             trailEmitter = new ParticleEmitter(projectileTrailParticles,
                                                trailParticlesPerSecond, position);
-            light = new Light(position, GameplayScreen.ACID_FIRE * 2.0f, 3000.0f);
+            light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
+            collisionSphere = new BoundingSphere(position, 10);
             is_released = false;
         }
 
-        public override bool Update(GameTime gameTime, ref Level level)
+        public override bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies)
         {
-            return base.Update(gameTime, ref level);
+            return base.Update(gameTime, ref level, ref enemies);
         }
     }
 }
