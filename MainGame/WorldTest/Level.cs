@@ -942,7 +942,9 @@ namespace WorldTest
 
         #region Draw
 
-        public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh, bool drawNavigationMesh, ref List<Light> lights)
+        public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh,
+                         bool drawNavigationMesh, ref List<Light> lights, Dimension currentDimension,
+                         Vector3 playerPosition)
         {
             int currentLocationIndex = 0;
 
@@ -961,6 +963,8 @@ namespace WorldTest
             cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
             cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
             cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
+            cel_effect.Parameters["playerPosition"].SetValue(playerPosition);
+            cel_effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
 
             for (int i = 0; i < lights.Count; i++)
             {
@@ -972,27 +976,41 @@ namespace WorldTest
                 cel_effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(lights[i].position);
                 cel_effect.Parameters["lightRadii"].Elements[i].SetValue(lights.ElementAt(i).attenuationRadius);
             }
+
+            string techniqueModifier = "";
+
+            if (currentDimension == Dimension.FIRST)
+            {
+                techniqueModifier = "";
+            }
+            else
+            {
+                techniqueModifier = "_Gray";
+            }
+
+            cel_effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
+
             switch (lights.Count)
             {
                 case 0:
                     break;
-                case 1: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_OneLight"];
+                case 1: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_OneLight" + techniqueModifier];
                     break;
-                case 2: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_TwoLight"];
+                case 2: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_TwoLight" + techniqueModifier];
                     break;
-                case 3: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_ThreeLight"];
+                case 3: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_ThreeLight" + techniqueModifier];
                     break;
-                case 4: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FourLight"];
+                case 4: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FourLight" + techniqueModifier];
                     break;
-                case 5: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FiveLight"];
+                case 5: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_FiveLight" + techniqueModifier];
                     break;
-                case 6: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SixLight"];
+                case 6: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SixLight" + techniqueModifier];
                     break;
-                case 7: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SevenLight"];
+                case 7: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_SevenLight" + techniqueModifier];
                     break;
-                case 8: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight"];
+                case 8: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight" + techniqueModifier];
                     break;
-                default: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight"];
+                default: cel_effect.CurrentTechnique = cel_effect.Techniques["StaticModel_EightLight" + techniqueModifier];
                     break;
             }
 

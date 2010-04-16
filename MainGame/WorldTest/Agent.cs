@@ -19,6 +19,12 @@ using XNAnimation.Effects;
 
 namespace WorldTest
 {
+    enum Dimension
+    {
+        FIRST,
+        SECOND
+    }
+
     abstract class Agent
     {
 
@@ -61,6 +67,20 @@ namespace WorldTest
         public AnimationController controller;
         public int activeAnimationClip = 0;
 
+        protected Dimension currentDimension;
+
+        public Dimension CurrentDimension
+        {
+            get
+            {
+                return currentDimension;
+            }
+            internal set
+            {
+                currentDimension = value;
+            }
+        }
+
         protected enum Tex_Select
         {
             model = 0,
@@ -90,6 +110,27 @@ namespace WorldTest
 
         public virtual void LoadContent()
         {
+        }
+
+        #endregion
+
+        #region Dimension Hopping
+
+        public void ChangeDimension(Dimension dim)
+        {
+            currentDimension = dim;
+        }
+
+        public void ChangeDimension()
+        {
+            if (currentDimension == Dimension.FIRST)
+            {
+                currentDimension = Dimension.SECOND;
+            }
+            else
+            {
+                currentDimension = Dimension.FIRST;
+            }
         }
 
         #endregion

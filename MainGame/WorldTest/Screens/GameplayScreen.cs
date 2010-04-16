@@ -66,6 +66,11 @@ namespace WorldTest
 
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
+        public const float MAX_TRANSITION_RADIUS = 6000.0f;
+        public const float TRANSITION_SPEED = 240.0f;
+        public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
+        public static bool transitioning = false;
+
         /// <summary>
         /// Stores the last keyboard, mouse and gamepad state.
         /// </summary>
@@ -173,7 +178,7 @@ namespace WorldTest
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, Dimension.FIRST));
 
             foreach (Enemy e in enemies)
             {
@@ -261,6 +266,15 @@ namespace WorldTest
                 inputControlState.currentKeyboardState = Keyboard.GetState();
                 inputControlState.currentGamePadState = GamePad.GetState(PlayerIndex.One);
                 inputControlState.currentMouseState = Mouse.GetState();
+
+                if (GameplayScreen.transitionRadius <= GameplayScreen.MAX_TRANSITION_RADIUS)
+                {
+                    GameplayScreen.transitionRadius += ((float)gameTime.ElapsedGameTime.TotalSeconds * GameplayScreen.TRANSITION_SPEED);
+                }
+                else
+                {
+                    GameplayScreen.transitioning = false;
+                }
 
                 // Allows the game to exit
                 //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
@@ -452,6 +466,11 @@ namespace WorldTest
                 projLightList.Add(projectile.light);
             }
 
+            if (projLightList.Count % 2 != 0)
+            {
+                projLightList.Add(new Light(Vector3.Zero, Vector3.Zero, 1.0f));
+            }
+
             GraphicsDevice device = graphics.GraphicsDevice;
 
             #region ShadowMap
@@ -492,14 +511,15 @@ namespace WorldTest
 
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
+
             player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
-                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
+                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension);
             }
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position);
 
             //Draw lights
             DrawLights();

@@ -44,6 +44,12 @@ PointLight lights[MAX_LIGHTS];
 float4x4 lightview[MAX_LIGHTS];
 float lightRadii[MAX_LIGHTS];
 
+// Dimension transition variables
+// -------------------------------------------------
+float3 playerPosition;
+float transitionRadius;
+bool transitioning;
+
 // Textures and Samplers
 // -------------------------------------------------
 texture diffuseMap0;
@@ -320,6 +326,17 @@ VS_OUTPUT2 Outline_Static(VS_INPUT_STATIC Input)
 // Pixel Shaders
 // -------------------------------------------------
 
+float3 GrayscalePS(in float3 inColor)
+{
+	float3 outColor = inColor;
+	float luma = (inColor.r * 0.3 + inColor.g * 0.59 + inColor.b * 0.11);
+	outColor.r = luma;
+	outColor.g = luma;
+	outColor.b = luma;
+	
+	return outColor;
+}
+
 float3 PhongShadingPS(
 	uniform int lightCount,
 	in float3 inPosition,
@@ -339,8 +356,12 @@ float3 PhongShadingPS(
 	//if (shadow_test > map_val.z)
 	//	return diffuseLightColor;
 	//else {
-		for (int i = 0; i < lightCount; i++)
+		for (int i = 0; i < lightCount; i+=2)
 		{
+			// 
+			// First light
+			//
+			
 			// Light vector
 			float3 lightVector = lights[i].position - inPosition;
 			float attenuation = saturate(1 - dot(lightVector/lightRadii[i], lightVector/lightRadii[i]));
@@ -358,6 +379,28 @@ float3 PhongShadingPS(
 		
 			diffuseLightColor += (lights[i].color * diffuseIntensity);
 			specularLightColor += (lights[i].color * specularIntensity);
+			
+			//
+			// Second light
+			//
+			
+			// Light vector
+			lightVector = lights[i+1].position - inPosition;
+			attenuation = saturate(1 - dot(lightVector/lightRadii[i+1], lightVector/lightRadii[i+1]));
+
+			lightVector = normalize(lightVector);
+			
+			// Diffuse intensity
+			diffuseIntensity = saturate(dot(inNormal, lightVector)) * attenuation;
+			reflect = normalize(2*diffuseIntensity*inNormal - lightVector);
+			Tex = float2(diffuseIntensity, 0);
+			CelColor += tex2D(CelMapSampler, Tex);
+		
+			// Specular intensity
+			specularIntensity = pow(saturate(dot(reflect, inEyeVector)), inSpecularPower) * attenuation;
+		
+			diffuseLightColor += (lights[i+1].color * diffuseIntensity);
+			specularLightColor += (lights[i+1].color * specularIntensity);
 		}
 
 		return (diffuseLightColor * inDiffuseColor + specularLightColor * inSpecularColor) * CelColor;
@@ -391,6 +434,53 @@ void StaticModelPS_Light(
     outColor0.a = 1.0f;
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
+	
+	if (transitioning)
+	{
+		float distToPlayer = distance(inPosition,playerPosition);
+		if (distToPlayer > transitionRadius) 
+		{
+			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+	}
+}
+
+void StaticModelGrayPS_Light(
+	uniform int lightCount,
+    in float3 inPosition	: TEXCOORD0,
+    in float3 inNormal		: TEXCOORD1,
+    in float2 inUV0			: TEXCOORD2,
+    in float3 inEyeVector	: TEXCOORD3,
+
+	out float4 outColor0	: COLOR0)
+{
+    // Normalize all input vectors
+	float3 normal = normalize(inNormal);
+    float3 eyeVector = normalize(inEyeVector);
+    
+    // Reads texture diffuse color
+    float3 diffuseColor = material.diffuseColor;
+    if (diffuseMapEnabled)
+        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    
+    // Reads texture specular color
+    float3 specularColor = material.specularColor;
+    if (specularMapEnabled)
+        specularColor *= tex2D(specularMapSampler, inUV0);
+       	
+    // Calculate final color
+    outColor0.a = 1.0f;
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
+		eyeVector, diffuseColor, material.specularColor, material.specularPower);
+	
+	if (transitioning)
+	{
+		float distToPlayer = distance(inPosition,playerPosition);
+		if (distToPlayer < transitionRadius) 
+		{
+			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+	}
 }
 
 void StaticModelPS_Wireframe(
@@ -428,6 +518,15 @@ void animatedModelPS_Light(
     outColor0.a = 1.0f;
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
+	
+	if (transitioning)
+	{
+		float distToPlayer = distance(inPosition,playerPosition);
+		if (distToPlayer > transitionRadius) 
+		{
+			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+	}
 }
 
 void animatedModelGrayPS_Light(
@@ -456,59 +555,17 @@ void animatedModelGrayPS_Light(
     // Calculate final color
     outColor0.a = 1.0f;
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
-		eyeVector, diffuseColor, specularColor, material.specularPower);
-		
-	float luma = (outColor0.r * 0.3 + outColor0.g * 0.59 + outColor0.b * 0.11);
-	outColor0.r = luma;
-	outColor0.g = luma;
-	outColor0.b = luma;
-}
-
-/*
-void animatedModelPS_LightWithNormal(
-	uniform int lightCount,
-    in float3 inPosition	: TEXCOORD0,
-    in float2 inUV0			: TEXCOORD1,
-    in float3 inEyeVector	: TEXCOORD2,
-    in float3 inTangent		: TEXCOORD3,
-    in float3 inBinormal	: TEXCOORD4,
-    in float3 inNormal		: TEXCOORD5,
+		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 	
-	out float4 outColor0	: COLOR0)
-{
-    // Normalize all input vectors
-	float3 position = normalize(inPosition);
-    float3 eyeVector = normalize(inEyeVector);
-    
-	//float3x3 toTangentSpace = float3x3(
-		//normalize(inTangent), normalize(inBinormal), normalize(inNormal));
-	float3x3 toTangentSpace = float3x3(inTangent, inBinormal, inNormal);
-    
-    // Read texture diffuse color
-    float3 diffuseColor = material.diffuseColor;
-    if (diffuseMapEnabled)
-        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
-    
-    // Reads texture specular color
-    float3 specularColor = material.specularColor;
-    if (specularMapEnabled)
-        specularColor *= tex2D(specularMapSampler, inUV0);
-    
-    // Read the surface's normal (only use the R and G channels)
-    float3 normal = tex2D(normalMapSampler, inUV0);
-	normal.xy = normal.xy * 2.0 - 1.0;
-	normal.y = -normal.y;
-	normal.z = sqrt(1.0 - dot(normal.xy, normal.xy));
-    
-	// Put normal in world space
-	normal = mul(normal, toTangentSpace);
-
-    // Calculate final color
-    outColor0.a = 1.0f;
-    outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, position, normal,
-		eyeVector, diffuseColor, specularColor, material.specularPower);
+	if (transitioning)
+	{
+		float distToPlayer = distance(inPosition,playerPosition);
+		if (distToPlayer < transitionRadius) 
+		{
+			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+	}
 }
-*/
 
 //This is the ouline pixel shader. It just outputs unlit black.
 float4 Black() : COLOR
@@ -885,6 +942,349 @@ technique AnimatedModel_EightLight
 		CullMode = CW;
     }
 }
+
+//
+// Second dimension lighting techniques
+//
+
+
+technique StaticModel_OneLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+	pass p0
+	{
+		AlphaBlendEnable = FALSE;
+		
+		VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(1);
+        CullMode = CW;
+	}
+	
+	pass p1
+	{
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
+	}
+}
+
+technique StaticModel_TwoLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(2);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_ThreeLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(3);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FourLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(4);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FiveLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(5);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SixLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(6);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SevenLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(7);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_EightLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelGrayPS_Light(8);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique AnimatedModel_NoLight_Gray 
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(0);
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_OneLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(1);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_TwoLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(2);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_ThreeLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(3);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_FourLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(4);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_FiveLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(5);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_SixLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(6);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_SevenLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(7);
+        CullMode = CCW;
+    }
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+technique AnimatedModel_EightLight_Gray
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 AnimatedModelVS_Light();
+        PixelShader = compile ps_3_0 animatedModelGrayPS_Light(8);
+        CullMode = CCW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Animated();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CW;
+    }
+}
+
+
+
 /*
 technique AnimatedModel_OneLightWithNormal
 < string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
