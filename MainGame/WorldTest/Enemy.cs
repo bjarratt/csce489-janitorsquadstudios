@@ -295,6 +295,7 @@ namespace WorldTest
                     // of "run laps" around the player, which looks funny, but is not what
                     // we're after.
                     currentEnemySpeed = 0.0f;
+                    player.health -= 20f;
                 }
 
 

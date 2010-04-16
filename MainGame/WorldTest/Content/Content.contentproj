@@ -210,6 +210,13 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="splatter.png">
+      <Name>splatter</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="GenericParticle.png">
       <Name>GenericParticle</Name>
       <Importer>TextureImporter</Importer>
