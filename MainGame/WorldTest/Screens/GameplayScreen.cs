@@ -551,6 +551,13 @@ namespace WorldTest
                 blood.Draw(spriteBatch);
             }
 
+            if (player.health <= 0)
+            {
+                //ScreenManager.RemoveScreen(this);
+                this.ScreenState = ScreenState.Hidden;
+                GameOver.Load(ScreenManager, null, new BackgroundScreen(), new MainMenuScreen(this.ScreenManager));
+            }
+
             spriteBatch.End();
 
             base.Draw(gameTime);

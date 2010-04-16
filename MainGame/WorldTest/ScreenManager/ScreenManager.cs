@@ -226,12 +226,12 @@ namespace WorldTest
         /// </summary>
         public override void Draw(GameTime gameTime)
         {
-            foreach (GameScreen screen in screens)
+            for (int i = 0; i < screens.Count; i++ )
             {
-                if (screen.ScreenState == ScreenState.Hidden)
+                if (screens[i].ScreenState == ScreenState.Hidden)
                     continue;
 
-                screen.Draw(gameTime);
+                screens[i].Draw(gameTime);
             }
         }
 

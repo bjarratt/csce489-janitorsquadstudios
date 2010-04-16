@@ -67,7 +67,7 @@ namespace WorldTest
 
             if (mAlphaValue <= 0 && player.isHit) // If player has regained health
             {
-                player.health = 100.0f;
+                //player.health = 100.0f;
                 player.isHit = false;
                 mAlphaValue = 255;
             }
