@@ -45,8 +45,8 @@ namespace WorldTest
             // Set gravity upside down, so the flames will 'fall' upward.
             settings.Gravity = new Vector3(0, 3, 0);
 
-            settings.MinColor = new Color(0, 255, 255, 255); //10
-            settings.MaxColor = new Color(0, 255, 255, 255); //40
+            settings.MinColor = new Color(255, 255, 255, 255); //10
+            settings.MaxColor = new Color(255, 255, 255, 255); //40
             
             settings.MinStartSize = 4;
             settings.MaxStartSize = 5;

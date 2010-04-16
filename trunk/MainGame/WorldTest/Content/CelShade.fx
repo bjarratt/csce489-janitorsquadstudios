@@ -48,7 +48,8 @@ float lightRadii[MAX_LIGHTS];
 // -------------------------------------------------
 float3 playerPosition;
 float transitionRadius;
-bool transitioning;
+float waveRadius;
+int transitioning;
 
 // Textures and Samplers
 // -------------------------------------------------
@@ -435,12 +436,18 @@ void StaticModelPS_Light(
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 	
-	if (transitioning)
+	if (transitioning == 1)
 	{
 		float distToPlayer = distance(inPosition,playerPosition);
 		if (distToPlayer > transitionRadius) 
 		{
 			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+		
+		
+		if (distToPlayer > waveRadius && distToPlayer < transitionRadius)
+		{
+			outColor0.rgb = float3(0,1,1) * ((distToPlayer - waveRadius) / (transitionRadius - waveRadius));
 		}
 	}
 }
@@ -473,13 +480,26 @@ void StaticModelGrayPS_Light(
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 	
-	if (transitioning)
+	if (transitioning == 1)
 	{
 		float distToPlayer = distance(inPosition,playerPosition);
 		if (distToPlayer < transitionRadius) 
 		{
-			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		
+			if (distToPlayer > waveRadius)
+			{
+				outColor0.rgb = float3(0,1,1) * ((distToPlayer - waveRadius) / (transitionRadius - waveRadius));
+			}
+			
+			else
+			{
+				outColor0.rgb = GrayscalePS(outColor0.rgb);
+			}
 		}
+	}
+	else
+	{
+		outColor0.rgb = GrayscalePS(outColor0.rgb);
 	}
 }
 
@@ -519,12 +539,17 @@ void animatedModelPS_Light(
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 	
-	if (transitioning)
+	if (transitioning == 1)
 	{
 		float distToPlayer = distance(inPosition,playerPosition);
 		if (distToPlayer > transitionRadius) 
 		{
 			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		}
+		
+		if (distToPlayer > waveRadius && distToPlayer < transitionRadius)
+		{
+			outColor0.rgb = float3(0,1,1) * ((distToPlayer - waveRadius) / (transitionRadius - waveRadius));
 		}
 	}
 }
@@ -557,13 +582,25 @@ void animatedModelGrayPS_Light(
 	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
 		eyeVector, diffuseColor, material.specularColor, material.specularPower);
 	
-	if (transitioning)
+	if (transitioning == 1)
 	{
 		float distToPlayer = distance(inPosition,playerPosition);
 		if (distToPlayer < transitionRadius) 
 		{
-			outColor0.rgb = GrayscalePS(outColor0.rgb);
+		
+			if (distToPlayer > waveRadius)
+			{
+				outColor0.rgb = float3(0,1,1) * ((distToPlayer - waveRadius) / (transitionRadius - waveRadius));
+			}
+			else
+			{
+				outColor0.rgb = GrayscalePS(outColor0.rgb);
+			}
 		}
+	}
+	else
+	{
+		outColor0.rgb = GrayscalePS(outColor0.rgb);
 	}
 }
 

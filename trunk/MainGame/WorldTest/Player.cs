@@ -153,9 +153,14 @@ namespace WorldTest
 
             if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released)
             {
-                this.ChangeDimension();
-                GameplayScreen.transitionRadius = 0;
-                GameplayScreen.transitioning = true;
+                // BIG HACK FOR TESTING... WE KNOW PORTAL IS AT VECTOR3.ZERO SO WE PASS IT IN DIRECTLY RATHER THAN
+                // GETTING IT FROM LEVELS LIST OF PORTALS
+                if (RayCircleIntersect(new Ray(position + new Vector3(0,50,0), Vector3.Down), Vector3.Zero, 50f))
+                {
+                    this.ChangeDimension();
+                    GameplayScreen.transitionRadius = 0;
+                    GameplayScreen.transitioning = true;
+                }
             }
 
             if (stickL.X != 0.0f)
@@ -192,6 +197,21 @@ namespace WorldTest
             // Update the animation according to the elapsed time
             controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
 
+        }
+
+        public bool RayCircleIntersect(Ray ray, Vector3 origin, float radius)
+        {
+            Vector3 w = origin - ray.Position;
+            float theta = (float)Math.Acos(Vector3.Dot(Vector3.Normalize(w), ray.Direction));
+            float d = w.Length() * (float)Math.Sin(theta);
+            if (d < radius)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         private void MoveForward(GameTime gameTime, ref Vector3 position, Quaternion rotationQuat, float speed, 
@@ -335,6 +355,7 @@ namespace WorldTest
                     effect.Parameters["diffuseMapEnabled"].SetValue(true);
                     effect.Parameters["playerPosition"].SetValue(this.position);
                     effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+                    effect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);
 
                     for (int i = 0; i < Lights.Count; i++)
                     {
@@ -358,7 +379,14 @@ namespace WorldTest
                         techniqueModifier = "_Gray";
                     }
 
-                    effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
+                    if (GameplayScreen.transitioning)
+                    {
+                        effect.Parameters["transitioning"].SetValue(1);
+                    }
+                    else
+                    {
+                        effect.Parameters["transitioning"].SetValue(0);
+                    }
 
                     switch (Lights.Count)
                     {

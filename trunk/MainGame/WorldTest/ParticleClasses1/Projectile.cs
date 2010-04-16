@@ -71,6 +71,7 @@ namespace WorldTest
         }
 
         public Light light;
+        public BoundingSphere collisionSphere;
 
         static Random random = new Random();
 
@@ -89,7 +90,7 @@ namespace WorldTest
         /// <summary>
         /// Updates the projectile.
         /// </summary>
-        public virtual bool Update(GameTime gameTime, ref Level level)
+        public virtual bool Update(GameTime gameTime, ref Level level, ref List<Enemy> enemies)
         {
             float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -105,6 +106,7 @@ namespace WorldTest
             velocity.Y -= elapsedTime * gravity;
             age += elapsedTime;
             light.position = this.position;
+            collisionSphere.Center = this.position;
 
             // Update the particle emitter, which will create our particle trail.
             trailEmitter.Update(gameTime, position);
@@ -115,6 +117,14 @@ namespace WorldTest
             if (level.EmitterCollideWith(this.position, this.velocity, 0.2f, out collidedPosition))
             {
                 age = projectileLifespan + 1;
+            }
+
+            for(int i = 0; i < enemies.Count; i++)
+            {
+                if (collisionSphere.Intersects(enemies[i].collisionSphere))
+                {
+                    age = projectileLifespan + 1;
+                }
             }
 
             // If enough time has passed or it collides with something, explode! Note how we pass 

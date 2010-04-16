@@ -44,8 +44,8 @@ namespace WorldTest
             settings.MinVerticalVelocity = -1;
             settings.MaxVerticalVelocity = 1;
 
-            settings.MinColor = new Color(0, 255, 255, 255);
-            settings.MaxColor = new Color(0, 255, 255, 128);
+            settings.MinColor = new Color(255, 255, 255, 255);
+            settings.MaxColor = new Color(255, 255, 255, 128);
 
             settings.MinRotateSpeed = -4;
             settings.MaxRotateSpeed = 4;

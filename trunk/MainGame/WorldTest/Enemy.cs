@@ -75,6 +75,8 @@ namespace WorldTest
             set { currentPath = value; }
         }
 
+        public BoundingSphere collisionSphere;
+
         #endregion
 
         #region Constructor
@@ -136,6 +138,8 @@ namespace WorldTest
             textures.SetValue(content.Load<Texture2D>("ColorMap"), (int)Tex_Select.model);
             textures.SetValue(content.Load<Texture2D>("Toon2"), (int)Tex_Select.cel_tex);
 
+            collisionSphere = new BoundingSphere(position + new Vector3(0,60,0), 100.0f);
+            collisionSphere.Radius = 100.0f;
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
             render_targets[(int)Target_Select.normalDepth] = new RenderTarget2D(graphics.GraphicsDevice,
@@ -354,6 +358,7 @@ namespace WorldTest
                 }
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }
+            collisionSphere.Center = position + new Vector3(0,60,0);
         }
 
         private void UpdateLocation(ref Level currentLevel, ref Player player)
@@ -618,94 +623,105 @@ namespace WorldTest
             ref RenderTarget2D scene, ref RenderTarget2D shadow, ref List<Light> Lights,
             Vector3 playerPosition, Dimension playerDimension)
         {
-
+            
             #region Cel Shading
 
-            //Cel shading
-            graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
-            graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
-            graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
-
-            // Set the MeshPart Effect to our shader and set the model texture
-            foreach (ModelMesh modelMesh in model.Model.Meshes)
+            if (playerDimension == this.currentDimension)
             {
-                for (int i = 0; i < modelMesh.MeshParts.Count; i++)
-                {
-                    modelMesh.MeshParts[i].Effect = shader;
-                }
-            }
+                //Cel shading
+                graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
+                graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
+                graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
 
-            // Set parameters for the shader
-            foreach (ModelMesh modelMesh in model.Model.Meshes)
-            {
-                foreach (Effect effect in modelMesh.Effects)
+                // Set the MeshPart Effect to our shader and set the model texture
+                foreach (ModelMesh modelMesh in model.Model.Meshes)
                 {
-                    effect.Parameters["matW"].SetValue(absoluteBoneTransforms[modelMesh.ParentBone.Index] * worldTransform);
-                    effect.Parameters["matBones"].SetValue(controller.SkinnedBoneTransforms);
-                    effect.Parameters["matVP"].SetValue(view * projection);
-                    effect.Parameters["matVI"].SetValue(Matrix.Invert(view));
-                    //effect.Parameters["shadowMap"].SetValue(shadow.GetTexture());
-                    effect.Parameters["diffuseMap0"].SetValue(textures[(int)Tex_Select.model]);
-                    effect.Parameters["CelMap"].SetValue(textures[(int)Tex_Select.cel_tex]);
-                    effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.01f));
-                    effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
-                    effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
-                    effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
-                    effect.Parameters["diffuseMapEnabled"].SetValue(true);
-                    effect.Parameters["playerPosition"].SetValue(playerPosition);
-                    effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
-
-                    for (int i = 0; i < Lights.Count; i++)
+                    for (int i = 0; i < modelMesh.MeshParts.Count; i++)
                     {
-                        if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                        modelMesh.MeshParts[i].Effect = shader;
+                    }
+                }
+
+                // Set parameters for the shader
+                foreach (ModelMesh modelMesh in model.Model.Meshes)
+                {
+                    foreach (Effect effect in modelMesh.Effects)
+                    {
+                        effect.Parameters["matW"].SetValue(absoluteBoneTransforms[modelMesh.ParentBone.Index] * worldTransform);
+                        effect.Parameters["matBones"].SetValue(controller.SkinnedBoneTransforms);
+                        effect.Parameters["matVP"].SetValue(view * projection);
+                        effect.Parameters["matVI"].SetValue(Matrix.Invert(view));
+                        //effect.Parameters["shadowMap"].SetValue(shadow.GetTexture());
+                        effect.Parameters["diffuseMap0"].SetValue(textures[(int)Tex_Select.model]);
+                        effect.Parameters["CelMap"].SetValue(textures[(int)Tex_Select.cel_tex]);
+                        effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.01f));
+                        effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
+                        effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
+                        effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
+                        effect.Parameters["diffuseMapEnabled"].SetValue(true);
+                        effect.Parameters["playerPosition"].SetValue(playerPosition);
+                        effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+                        effect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);
+
+                        for (int i = 0; i < Lights.Count; i++)
                         {
-                            break;
+                            if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                            {
+                                break;
+                            }
+                            effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights[i].color * (1 - Lights[i].currentExplosionTick));
+                            effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights[i].position);
+                            effect.Parameters["lightRadii"].Elements[i].SetValue(Lights[i].attenuationRadius);
                         }
-                        effect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(Lights[i].color * (1 - Lights[i].currentExplosionTick));
-                        effect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(Lights[i].position);
-                        effect.Parameters["lightRadii"].Elements[i].SetValue(Lights[i].attenuationRadius);
+
+                        string techniqueModifier = "";
+
+                        if (playerDimension == Dimension.FIRST)
+                        {
+                            techniqueModifier = "";
+                        }
+                        else
+                        {
+                            techniqueModifier = "_Gray";
+                        }
+
+                        if (GameplayScreen.transitioning)
+                        {
+                            effect.Parameters["transitioning"].SetValue(1);
+                        }
+                        else
+                        {
+                            effect.Parameters["transitioning"].SetValue(0);
+                        }
+
+                        switch (Lights.Count)
+                        {
+                            case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight" + techniqueModifier];
+                                break;
+                            case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight" + techniqueModifier];
+                                break;
+                            case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight" + techniqueModifier];
+                                break;
+                            case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight" + techniqueModifier];
+                                break;
+                            case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight" + techniqueModifier];
+                                break;
+                            case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight" + techniqueModifier];
+                                break;
+                            case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight" + techniqueModifier];
+                                break;
+                            case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
+                                break;
+                            default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
+                                break;
+                        }
                     }
 
-                    string techniqueModifier = "";
-
-                    if (playerDimension == Dimension.FIRST)
+                    // Draw model mesh
+                    foreach (EffectPass pass in shader.CurrentTechnique.Passes)
                     {
-                        techniqueModifier = "";
+                        modelMesh.Draw();
                     }
-                    else
-                    {
-                        techniqueModifier = "_Gray";
-                    }
-
-                    effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
-
-                    switch (Lights.Count)
-                    {
-                        case 1: effect.CurrentTechnique = effect.Techniques["AnimatedModel_OneLight" + techniqueModifier];
-                            break;
-                        case 2: effect.CurrentTechnique = effect.Techniques["AnimatedModel_TwoLight" + techniqueModifier];
-                            break;
-                        case 3: effect.CurrentTechnique = effect.Techniques["AnimatedModel_ThreeLight" + techniqueModifier];
-                            break;
-                        case 4: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FourLight" + techniqueModifier];
-                            break;
-                        case 5: effect.CurrentTechnique = effect.Techniques["AnimatedModel_FiveLight" + techniqueModifier];
-                            break;
-                        case 6: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SixLight" + techniqueModifier];
-                            break;
-                        case 7: effect.CurrentTechnique = effect.Techniques["AnimatedModel_SevenLight" + techniqueModifier];
-                            break;
-                        case 8: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
-                            break;
-                        default: effect.CurrentTechnique = effect.Techniques["AnimatedModel_EightLight" + techniqueModifier];
-                            break;
-                    }
-                }
-
-                // Draw model mesh
-                foreach (EffectPass pass in shader.CurrentTechnique.Passes)
-                {
-                    modelMesh.Draw();
                 }
             }
 

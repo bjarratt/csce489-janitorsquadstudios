@@ -965,6 +965,7 @@ namespace WorldTest
             cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
             cel_effect.Parameters["playerPosition"].SetValue(playerPosition);
             cel_effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+            cel_effect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);
 
             for (int i = 0; i < lights.Count; i++)
             {
@@ -988,7 +989,14 @@ namespace WorldTest
                 techniqueModifier = "_Gray";
             }
 
-            cel_effect.Parameters["transitioning"].SetValue(GameplayScreen.transitioning);
+            if (GameplayScreen.transitioning)
+            {
+                cel_effect.Parameters["transitioning"].SetValue(1);
+            }
+            else
+            {
+                cel_effect.Parameters["transitioning"].SetValue(0);
+            }
 
             switch (lights.Count)
             {
