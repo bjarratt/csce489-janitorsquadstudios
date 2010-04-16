@@ -116,6 +116,7 @@
     <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Screens\BackgroundScreen.cs" />
+    <Compile Include="Screens\GameOver.cs" />
     <Compile Include="Screens\GameplayScreen.cs" />
     <Compile Include="Screens\InGameOptions.cs" />
     <Compile Include="Screens\LoadingScreen.cs" />
