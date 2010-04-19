@@ -22,8 +22,8 @@ struct Material
 
 // Configurations
 // -------------------------------------------------
-bool diffuseMapEnabled;
-bool specularMapEnabled;
+//bool diffuseMapEnabled;
+//bool specularMapEnabled;
 
 // Matrix
 // -------------------------------------------------
@@ -423,13 +423,13 @@ void StaticModelPS_Light(
     
     // Reads texture diffuse color
     float3 diffuseColor = material.diffuseColor;
-    if (diffuseMapEnabled)
-        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    //if (diffuseMapEnabled)
+    diffuseColor *= tex2D(diffuseMapSampler, inUV0);
     
     // Reads texture specular color
     float3 specularColor = material.specularColor;
-    if (specularMapEnabled)
-        specularColor *= tex2D(specularMapSampler, inUV0);
+    //if (specularMapEnabled)
+    //    specularColor *= tex2D(specularMapSampler, inUV0);
        	
     // Calculate final color
     outColor0.a = 1.0f;
@@ -467,13 +467,13 @@ void StaticModelGrayPS_Light(
     
     // Reads texture diffuse color
     float3 diffuseColor = material.diffuseColor;
-    if (diffuseMapEnabled)
-        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    //if (diffuseMapEnabled)
+    diffuseColor *= tex2D(diffuseMapSampler, inUV0);
     
     // Reads texture specular color
     float3 specularColor = material.specularColor;
-    if (specularMapEnabled)
-        specularColor *= tex2D(specularMapSampler, inUV0);
+    //if (specularMapEnabled)
+    //    specularColor *= tex2D(specularMapSampler, inUV0);
        	
     // Calculate final color
     outColor0.a = 1.0f;
@@ -526,13 +526,13 @@ void animatedModelPS_Light(
     
     // Reads texture diffuse color
     float3 diffuseColor = material.diffuseColor;
-    if (diffuseMapEnabled)
-        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    //if (diffuseMapEnabled)
+    diffuseColor *= tex2D(diffuseMapSampler, inUV0);
     
     // Reads texture specular color
     float3 specularColor = material.specularColor;
-    if (specularMapEnabled)
-        specularColor *= tex2D(specularMapSampler, inUV0);
+    //if (specularMapEnabled)
+    //    specularColor *= tex2D(specularMapSampler, inUV0);
         	
     // Calculate final color
     outColor0.a = 1.0f;
@@ -569,13 +569,13 @@ void animatedModelGrayPS_Light(
     
     // Reads texture diffuse color
     float3 diffuseColor = material.diffuseColor;
-    if (diffuseMapEnabled)
-        diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    //if (diffuseMapEnabled)
+    diffuseColor *= tex2D(diffuseMapSampler, inUV0);
     
     // Reads texture specular color
     float3 specularColor = material.specularColor;
-    if (specularMapEnabled)
-        specularColor *= tex2D(specularMapSampler, inUV0);
+    //if (specularMapEnabled)
+    //    specularColor *= tex2D(specularMapSampler, inUV0);
         	
     // Calculate final color
     outColor0.a = 1.0f;
