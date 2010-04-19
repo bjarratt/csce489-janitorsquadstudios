@@ -65,6 +65,12 @@ namespace WorldTest
             ScreenManager.AddScreen(confirmQuitMessageBox, ControllingPlayer);
         }
 
+        public override void LoadContent()
+        {
+            // Start the sound!
+            soundBank.PlayCue("cave game_main");
+        }
+
         /// <summary>
         /// Event handler for when the options menu entry is selected.
         /// </summary>

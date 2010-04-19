@@ -8,6 +8,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
+using Microsoft.Xna.Framework.Audio;
 #endregion
 
 namespace WorldTest
@@ -33,6 +34,15 @@ namespace WorldTest
     /// </summary>
     public abstract class GameScreen
     {
+        #region Fields
+
+        //Sound stuff!
+        AudioEngine audioEngine;
+        WaveBank waveBank;
+        protected SoundBank soundBank;
+
+        #endregion
+
         #region Properties
 
 
@@ -181,6 +191,15 @@ namespace WorldTest
 
         #region Initialization
 
+        /// <summary>
+        /// Load audio content in the constructor
+        /// </summary>
+        public GameScreen()
+        {
+            audioEngine = new AudioEngine("Content/gameAudio.xgs");
+            waveBank = new WaveBank(audioEngine, "Content/Wave Bank.xwb");
+            soundBank = new SoundBank(audioEngine, "Content/Sound Bank.xsb");
+        }
 
         /// <summary>
         /// Load graphics content for the screen.
