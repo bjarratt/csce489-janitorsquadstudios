@@ -962,7 +962,7 @@ namespace WorldTest
             cel_effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
             cel_effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
             cel_effect.Parameters["material"].StructureMembers["specularPower"].SetValue(20);
-            cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
+            //cel_effect.Parameters["diffuseMapEnabled"].SetValue(true);
             cel_effect.Parameters["playerPosition"].SetValue(playerPosition);
             cel_effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
             cel_effect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);

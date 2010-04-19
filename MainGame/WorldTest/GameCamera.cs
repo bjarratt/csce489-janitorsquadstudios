@@ -41,6 +41,8 @@ namespace WorldTest
         private const float VERTICAL_ROT_SPEED = 0.05f;  // 0.025f
         private const float HORIZONTAL_ROT_SPEED = 0.1f; // 0.05f
 
+        private static Vector3 INITIAL_CAMERA_OFFSET = new Vector3(0, 0, 0);
+
         //Position and reference vectors
         public Vector3 position;
         public Vector3 up;
@@ -77,7 +79,7 @@ namespace WorldTest
             cam_movementside = false;
             if (first)
             {
-                position = Target.position;
+                position = Target.position + INITIAL_CAMERA_OFFSET;
                 up = new Vector3(0, 1, 0);
                 right = new Vector3(-1, 0, 0);
                 lookAt = /*position +*/ new Vector3(0, 0, 1);
@@ -142,7 +144,7 @@ namespace WorldTest
 
             if (first)
             {
-                position = Target.position;
+                position = Target.position + INITIAL_CAMERA_OFFSET;
                 Vector3 look = this.lookAt;
                 look.Y = 0;
                 look.Normalize();

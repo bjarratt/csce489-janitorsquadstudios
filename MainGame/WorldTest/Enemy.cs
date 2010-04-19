@@ -672,7 +672,7 @@ namespace WorldTest
                         effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
                         effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                         effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
-                        effect.Parameters["diffuseMapEnabled"].SetValue(true);
+                        //effect.Parameters["diffuseMapEnabled"].SetValue(true);
                         effect.Parameters["playerPosition"].SetValue(playerPosition);
                         effect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
                         effect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);
