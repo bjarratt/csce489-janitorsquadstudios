@@ -155,7 +155,7 @@ namespace WorldTest
             Light newLight = new Light();
             newLight.color = new Vector3(1, 1, 1);
             newLight.position = new Vector3(0, 100, 0);
-            newLight.attenuationRadius = 1000.0f;
+            newLight.attenuationRadius = 10000.0f;
             lights.Add(newLight);
             lightMeshWorld = Matrix.Identity;
             inputControlState = new ControlState();
@@ -194,7 +194,16 @@ namespace WorldTest
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, Dimension.FIRST));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,50,100),Dimension.FIRST));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(200, 50, 200),Dimension.FIRST));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 0), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 100), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, -100), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 100), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, -100), Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
 
             foreach (Enemy e in enemies)
             {

@@ -96,9 +96,9 @@ namespace WorldTest
         #region Constructor
 
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name,
-                     EnemyStats stats, Dimension currentDimension) : base(Graphics, Content, enemy_name)
+                     EnemyStats stats, Vector3 position, Dimension currentDimension) : base(Graphics, Content, enemy_name)
         {
-            position = new Vector3(0, 100, -100);
+            this.position = position;
             speed = 10.0f;
 
             this.stats = stats;
