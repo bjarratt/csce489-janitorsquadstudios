@@ -283,8 +283,8 @@ namespace WorldTest
 
             VertexPositionNormalTexture currentVertex;
 
-            Vector3 largestValues = new Vector3(-10000);
-            Vector3 smallestValues = new Vector3(10000);
+            //Vector3 largestValues = new Vector3(-10000);
+            //Vector3 smallestValues = new Vector3(10000);
 
             // Variables used for collision meshes
             CollisionPolygon currentPolygon;
@@ -325,15 +325,15 @@ namespace WorldTest
                 if (splitLine[0] == "v") // Position
                 {
                     Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
-                    if (position.X > largestValues.X)
-                    {
-                        largestValues = position;
-                    }
+                    //if (position.X > largestValues.X)
+                    //{
+                    //    largestValues = position;
+                    //}
 
-                    if (position.X < smallestValues.X)
-                    {
-                        smallestValues = position;
-                    }
+                    //if (position.X < smallestValues.X)
+                    //{
+                    //    smallestValues = position;
+                    //}
  
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }

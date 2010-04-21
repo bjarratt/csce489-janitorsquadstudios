@@ -19,7 +19,7 @@ using XNAnimation.Effects;
 
 namespace WorldTest
 {
-    #region enemy stats
+    #region Enemy Stats
 
     struct EnemyStats
     {
@@ -28,6 +28,7 @@ namespace WorldTest
         public float attackDistance;
         public float hysteresis;
         public float maxSpeed;
+        public float recoveryTime;
     }
 
     #endregion
@@ -45,17 +46,24 @@ namespace WorldTest
             Weakened //the enemy can be banished to the other dimension
         }
 
-        public EnemyStats stats;
+        private EnemyStats stats;
         public EnemyAiState state;
+
+        private float timeUntilRecovery = -1.0f;
 
         private int first_path_poly;
         private int second_path_poly;
 
-        public float timeBetweenDamage = 0;
+        private float timeBetweenDamage = 0;
 
-        public Vector3 lookAt = new Vector3(0, 0, 1);
+        private Vector3 lookAt = new Vector3(0, 0, 1);
 
         private LinkedList<NavMeshNode> currentPath;
+
+        public float TimeUntilRecovery
+        {
+            get { return timeUntilRecovery; }
+        }
 
         public int FirstPathPoly
         {
@@ -193,6 +201,17 @@ namespace WorldTest
                 //}
 
                 #region Behavior
+
+                if (this.state == EnemyAiState.Weakened)
+                {
+                    this.timeUntilRecovery -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                    if (this.timeUntilRecovery <= 0)
+                    {
+                        this.state = EnemyAiState.Idle;
+                        this.health = 100f;
+                    }
+                }
 
                 // First we have to use the current state to decide what the thresholds are
                 // for changing state
@@ -338,6 +357,11 @@ namespace WorldTest
                 // Update the animation according to the elapsed time
                 controller.Update(gameTime.ElapsedGameTime, Matrix.Identity);
             }
+        }
+
+        public void ResetRecoveryTime()
+        {
+            this.timeUntilRecovery = this.stats.recoveryTime;
         }
 
         //TODO: update to include results of AI pathfinding
