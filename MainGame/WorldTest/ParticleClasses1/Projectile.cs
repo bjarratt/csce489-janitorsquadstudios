@@ -135,12 +135,13 @@ namespace WorldTest
                         {
                             enemies[i].ChangeDimension();
                             enemies[i].state = Enemy.EnemyAiState.Idle;
-                            enemies[i].health = 100f;
+                            enemies[i].IncreaseMaxHealth();
+                            enemies[i].health = enemies[i].MaxHealth;
                         }
                     }
                     else
                     {
-                        enemies[i].health -= 50f;
+                        enemies[i].health -= 50;
                         if (enemies[i].health <= 0)
                         {
                             enemies[i].state = Enemy.EnemyAiState.Weakened;

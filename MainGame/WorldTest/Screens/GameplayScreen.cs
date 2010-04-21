@@ -132,6 +132,7 @@ namespace WorldTest
             this.ENEMY_STATS.dumbChaseDistance = 500f;
             this.ENEMY_STATS.hysteresis = 15f;
             this.ENEMY_STATS.recoveryTime = 7f;
+            this.ENEMY_STATS.maxHealth = 100;
 
             TransitionOnTime = TimeSpan.FromSeconds(1.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);
