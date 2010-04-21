@@ -49,7 +49,7 @@ namespace WorldTest
             position = new Vector3(0, 40, 0);
             velocity = Vector3.Zero;
             speed = 2.5f; // In meters/second
-            health = 100f;
+            health = 100;
             isHit = false;
 
             rotation = 0.0f;

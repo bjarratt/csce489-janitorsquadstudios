@@ -29,6 +29,7 @@ namespace WorldTest
         public float hysteresis;
         public float maxSpeed;
         public float recoveryTime;
+        public int maxHealth;
     }
 
     #endregion
@@ -63,6 +64,11 @@ namespace WorldTest
         public float TimeUntilRecovery
         {
             get { return timeUntilRecovery; }
+        }
+
+        public int MaxHealth
+        {
+            get { return stats.maxHealth; }
         }
 
         public int FirstPathPoly
@@ -103,7 +109,7 @@ namespace WorldTest
             turn_speed_reg = 1.6f;
             movement_speed_reg = 2.0f; // 14
 
-            health = 100f;
+            health = this.stats.maxHealth;
 
             orientation = Quaternion.Identity;
             worldTransform = Matrix.Identity;
@@ -209,7 +215,7 @@ namespace WorldTest
                     if (this.timeUntilRecovery <= 0)
                     {
                         this.state = EnemyAiState.Idle;
-                        this.health = 100f;
+                        this.health = this.stats.maxHealth;
                     }
                 }
 
@@ -334,7 +340,7 @@ namespace WorldTest
                     if (!player.isHit) // If player is not currently taking damage
                     {
                         player.isHit = true; // Player takes damage
-                        player.health -= 20f;
+                        player.health -= 20;
                         timeBetweenDamage = 0;
                     }
                 }
@@ -362,6 +368,11 @@ namespace WorldTest
         public void ResetRecoveryTime()
         {
             this.timeUntilRecovery = this.stats.recoveryTime;
+        }
+
+        public void IncreaseMaxHealth()
+        {
+            this.stats.maxHealth += 50;
         }
 
         //TODO: update to include results of AI pathfinding
