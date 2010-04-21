@@ -144,6 +144,7 @@ namespace WorldTest
                         if (enemies[i].health <= 0)
                         {
                             enemies[i].state = Enemy.EnemyAiState.Weakened;
+                            enemies[i].ResetRecoveryTime();
                         }
                     }
                 }
