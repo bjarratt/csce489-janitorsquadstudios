@@ -148,6 +148,8 @@ namespace WorldTest
                             enemies[i].ResetRecoveryTime();
                         }
                     }
+
+                    break;
                 }
             }
 
