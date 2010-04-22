@@ -42,6 +42,8 @@ namespace WorldTest
         private List<Resolution> validResolutions;
         private int currentResolution;
 
+        private bool changesApplied = false;
+
         #endregion
 
         #region Initialization
@@ -160,7 +162,14 @@ namespace WorldTest
 
             MenuEntry4.Text = "Antialiasing: " + aaText;
 
-            MenuEntry5.Text = "Apply Changes";
+            if (changesApplied)
+            {
+                MenuEntry5.Text = "Changes Applied";
+            }
+            else
+            {
+                MenuEntry5.Text = "Apply Changes";
+            }
         }
 
         #endregion
@@ -178,6 +187,7 @@ namespace WorldTest
             ScreenManager.graphics.PreferredBackBufferWidth = this.validResolutions[currentResolution].width;
             ScreenManager.graphics.PreferredBackBufferHeight = this.validResolutions[currentResolution].height;
 
+            changesApplied = false;
             //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
@@ -191,6 +201,7 @@ namespace WorldTest
         {
             screenManager.graphics.IsFullScreen = !screenManager.graphics.IsFullScreen;
 
+            changesApplied = false;
             //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
@@ -204,6 +215,7 @@ namespace WorldTest
         {
             GameplayScreen.invertYAxis = !GameplayScreen.invertYAxis;
 
+            changesApplied = false;
             SetMenuEntryText();
         }
 
@@ -234,6 +246,7 @@ namespace WorldTest
             ScreenManager.graphics.GraphicsDevice.PresentationParameters.MultiSampleType = OptionsMenuScreen.CURRENT_AA_SETTING;
 
             //ScreenManager.graphics.ApplyChanges();
+            changesApplied = false;
 
             SetMenuEntryText();
         }
@@ -245,6 +258,8 @@ namespace WorldTest
         void MenuEntry5Selected(object sender, PlayerIndexEventArgs e)
         {
             screenManager.graphics.ApplyChanges();
+
+            changesApplied = true;
 
             SetMenuEntryText();
         }

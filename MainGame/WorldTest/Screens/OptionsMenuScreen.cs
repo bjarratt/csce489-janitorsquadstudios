@@ -36,6 +36,8 @@ namespace WorldTest
         private List<Resolution> validResolutions;
         private int currentResolution;
 
+        private bool changesApplied = false;
+
         MenuEntry MenuEntry1;
         MenuEntry MenuEntry2;
         MenuEntry MenuEntry3;
@@ -166,7 +168,14 @@ namespace WorldTest
 
             MenuEntry4.Text = "Antialiasing: " + aaText;
 
-            MenuEntry5.Text = "Apply Changes";
+            if (changesApplied)
+            {
+                MenuEntry5.Text = "Changes Applied";
+            }
+            else
+            {
+                MenuEntry5.Text = "Apply Changes";
+            }
         }
 
 
@@ -185,6 +194,7 @@ namespace WorldTest
             ScreenManager.graphics.PreferredBackBufferWidth = this.validResolutions[currentResolution].width;
             ScreenManager.graphics.PreferredBackBufferHeight = this.validResolutions[currentResolution].height;
 
+            changesApplied = false;
             //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
@@ -198,6 +208,7 @@ namespace WorldTest
         {
             screenManager.graphics.IsFullScreen = !screenManager.graphics.IsFullScreen;
 
+            changesApplied = false;
             //screenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
@@ -210,6 +221,8 @@ namespace WorldTest
         void MenuEntry3Selected(object sender, PlayerIndexEventArgs e)
         {
             GameplayScreen.invertYAxis = !GameplayScreen.invertYAxis;
+
+            changesApplied = false;
 
             SetMenuEntryText();
         }
@@ -240,6 +253,7 @@ namespace WorldTest
 
             ScreenManager.graphics.GraphicsDevice.PresentationParameters.MultiSampleType = OptionsMenuScreen.CURRENT_AA_SETTING;
 
+            changesApplied = false;
             //ScreenManager.graphics.ApplyChanges();
 
             SetMenuEntryText();
@@ -251,6 +265,8 @@ namespace WorldTest
         void MenuEntry5Selected(object sender, PlayerIndexEventArgs e)
         {
             screenManager.graphics.ApplyChanges();
+
+            changesApplied = true;
 
             SetMenuEntryText();
         }

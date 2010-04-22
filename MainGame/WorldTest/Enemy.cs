@@ -277,7 +277,7 @@ namespace WorldTest
                         {
                             LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
 
-                            if (newPath.Count > 0) // If newPath is valid, use it; otherwise, use the original
+                            if (newPath.Count > 1) // If newPath is valid, use it; otherwise, use the original
                             {
                                 this.currentPath = newPath;
                                 this.FirstPathPoly = currentPath.First.Value.Index;
@@ -505,7 +505,7 @@ namespace WorldTest
                     {
                         LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
 
-                        if (newPath.Count > 0) // If newPath is valid, use it
+                        if (newPath.Count > 1) // If newPath is valid, use it
                         {
                             this.currentPath = newPath;
                             this.FirstPathPoly = currentPath.First.Value.Index;
