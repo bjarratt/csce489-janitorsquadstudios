@@ -50,6 +50,17 @@ namespace WorldTest
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
+        /// <summary>
+        /// Stuff for rendering Alternate Dimension with environment mapping...
+        /// </summary>
+        private Effect dimensionEffect;
+        private Effect dimensionPost;
+
+        private EffectTechnique dimensionEnvironmentShader;
+        private EffectTechnique dimensionDepthShader;
+
+
+
         GameCamera camera;
         static public bool invertYAxis;
 
@@ -205,8 +216,8 @@ namespace WorldTest
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,-480,100),Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(200, 50, 200),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,0,0),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0, 0, 0),Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 0), Dimension.FIRST));
@@ -244,7 +255,7 @@ namespace WorldTest
             explosionParticles.DrawOrder = 400;
             fireParticles.DrawOrder = 500;
 
-            portal = new Portal(new Vector3(0,15,0), 50f);
+            portal = new Portal(new Vector3(0,-330,0), 50f);
             portal.Load(this.ScreenManager.game, content);
 
             tips = new ToolTips();
@@ -511,7 +522,7 @@ namespace WorldTest
                 relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
                 relicLight.position = pos;
@@ -520,10 +531,10 @@ namespace WorldTest
             else if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
                       (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 if (player.velocity.X != 0 || player.velocity.Z != 0)
                 {
-                    pos += camera.right * 4;
+                    pos += camera.right * 5;
                     pos += camera.lookAt * 22;
                     relicLight.position = pos;
                     // set the world matrix for the particles
@@ -536,7 +547,7 @@ namespace WorldTest
                 }
                 else
                 {
-                    pos += camera.right * 4;
+                    pos += camera.right * 5;
                     pos += camera.lookAt * 20;
                     relicLight.position = pos;
                     fireParticles.SetWorldMatrix(player.worldTransform);
@@ -551,7 +562,7 @@ namespace WorldTest
             {
                 this.relicLightOn = false;
 
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
                 projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
@@ -568,7 +579,7 @@ namespace WorldTest
                 relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
                 relicLight.position = pos;
@@ -577,10 +588,10 @@ namespace WorldTest
             else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
                       (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
             {
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 if (player.velocity.X != 0 || player.velocity.Z != 0)
                 {
-                    pos += camera.right * 4;
+                    pos += camera.right * 5;
                     pos += camera.lookAt * 22;
                     relicLight.position = pos;
                     // set the world matrix for the particles
@@ -593,7 +604,7 @@ namespace WorldTest
                 }
                 else
                 {
-                    pos += camera.right * 4;
+                    pos += camera.right * 5;
                     pos += camera.lookAt * 20;
                     relicLight.position = pos;
                     for (int i = 0; i < 1; i++)
@@ -607,7 +618,7 @@ namespace WorldTest
             {
                 this.relicLightOn = false;
 
-                Vector3 pos = player.position + new Vector3(0, 20, 0);
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
                 projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, banisherExplosions,
@@ -758,17 +769,18 @@ namespace WorldTest
             portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingHandParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banisherExplosions.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
 
-            player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
+            //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension);
             }
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position);
 
             //Draw lights
             DrawLights();

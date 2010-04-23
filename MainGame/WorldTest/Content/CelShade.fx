@@ -1320,6 +1320,168 @@ technique AnimatedModel_EightLight_Gray
     }
 }
 
+/*
+technique StaticModel_OneLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+	pass p0
+	{
+		AlphaBlendEnable = FALSE;
+		
+		VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(1);
+        CullMode = CW;
+	}
+	
+	pass p1
+	{
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
+	}
+}
+
+technique StaticModel_TwoLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(2);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_2_0 Outline_Static();
+		PixelShader  = compile ps_2_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_ThreeLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(3);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FourLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(4);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_FiveLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(5);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SixLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(6);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_SevenLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_0"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(7);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+
+technique StaticModel_EightLight_Env
+< string vertexShaderProfile = "VS_2_0"; string pixelShaderProfile = "PS_2_b"; >
+{
+    pass p0
+    {
+		AlphaBlendEnable = FALSE;
+		
+        VertexShader = compile vs_3_0 StaticModelVS_Light();
+        PixelShader = compile ps_3_0 StaticModelEnvPS_Light(8);
+        CullMode = CW;
+    }
+    
+    pass p1
+    {
+		VertexShader = compile vs_3_0 Outline_Static();
+		PixelShader  = compile ps_3_0 Black();
+		CullMode = CCW;
+    }
+}
+*/
+
 
 
 /*
@@ -1428,3 +1590,183 @@ technique ShadowMap
         PixelShader = compile ps_3_0 ShadowMapPixelShader();
     }
 }
+
+// ------------------------------------------------------------------
+// Environment Mapping
+// ------------------------------------------------------------------
+/*
+float4x4 matWorldInv;
+
+texture ReflectionCubeMap;
+samplerCUBE ReflectionCubeMapSampler = sampler_state 
+{ 
+    texture = <ReflectionCubeMap>;     
+};
+
+struct ENV_OUT
+{
+	float4 Pos	: POSITION;
+	float2 Tex	: TEXCOORD0;
+	float3 N	: TEXCOORD1;
+	float3 V	: TEXCOORD2;
+};
+
+ENV_OUT EnvironmentVertexShader( float4 Pos: POSITION, float2 Tex : TEXCOORD, float3 N: NORMAL )
+{
+	ENV_OUT Out = (ENV_OUT) 0;
+	Out.Pos = mul(Pos, mul(matW, matVP));
+	Out.Tex = Tex;
+	Out.N = normalize(mul(matWorldInv, N));
+	Out.V = matVI[3].xyz - Pos;
+	
+	return Out;
+}
+
+void StaticModelEnvVS_Light(
+	in float4 inPosition		: POSITION,
+	in float3 inNormal			: NORMAL,
+	in float2 inUV0				: TEXCOORD0,
+	
+	out float4 outSVPosition	: POSITION,
+	out float3 outNormal		: TEXCOORD1,
+	out float2 outUV0			: TEXCOORD0,
+	out float3 outEyeVector		: TEXCOORD2,
+	out float4 outPos			: TEXCOORD3)
+{
+	// Transform vertex position and normal
+    float3 outPosition = mul(inPosition, matW);
+    outSVPosition = mul(float4(outPosition, 1.0f), matVP);
+    outPos = outSVPosition;
+    
+    // Transform vertex normal
+    outNormal = mul(inNormal, (float3x3)matW);
+    
+    // Calculate eye vector
+    outEyeVector = matVI[3].xyz - outPosition;
+    
+    // Texture coordinate
+    outUV0 = inUV0;
+}
+
+float4 EnvironmentPixelShader(float4 Pos: TEXCOORD3, float2 Tex: TEXCOORD0, float3 N: TEXCOORD1, float3 V: TEXCOORD2) : COLOR
+{
+	float3 ViewDir = normalize(V); 
+	float3 LightDir = lights[0].position - Pos;
+	LightDir = normalize(LightDir);
+	
+	// Calculate normal diffuse light.
+	float4 Color = tex2D(diffuseMapSampler, Tex);	
+	float Diff = saturate(dot(LightDir, N)); 
+
+	// Calculate reflection vector and specular
+	float3 Reflect = normalize(2 * Diff * N - LightDir);  
+    float Specular = pow(saturate(dot(Reflect, ViewDir)), 128); // R.V^n
+    
+    // use reflection vector to lookup in the cube map
+    float3 ReflectColor = texCUBE(ReflectionCubeMapSampler, Reflect);
+
+	// return the color
+    return Color*float4(ReflectColor,1) + Color * Diff*float4(ReflectColor,1) + Specular*float4(ReflectColor,1); 
+
+}
+
+void StaticModelEnvPS_Light(
+	uniform int lightCount,
+    in float3 inPosition	: TEXCOORD0,
+    in float3 inNormal		: TEXCOORD1,
+    in float2 inUV0			: TEXCOORD2,
+    in float3 inEyeVector	: TEXCOORD3,
+
+	out float4 outColor0	: COLOR0)
+{
+    // Normalize all input vectors
+	float3 normal = normalize(inNormal);
+    float3 eyeVector = normalize(inEyeVector);
+    
+    // Reads texture diffuse color
+    float3 diffuseColor = material.diffuseColor;
+    //if (diffuseMapEnabled)
+    diffuseColor *= tex2D(diffuseMapSampler, inUV0);
+    
+    // Reads texture specular color
+    float3 specularColor = material.specularColor;
+    //if (specularMapEnabled)
+    //    specularColor *= tex2D(specularMapSampler, inUV0);
+       	
+    // Calculate final color
+    outColor0.a = 1.0f;
+	outColor0.rgb = material.emissiveColor + PhongShadingPS(lightCount, inPosition, normal,
+		eyeVector, diffuseColor, material.specularColor, material.specularPower);
+	
+	if (transitioning == 1)
+	{
+		float distToPlayer = distance(inPosition,playerPosition);
+		if (distToPlayer < transitionRadius) 
+		{
+		
+			if (distToPlayer > waveRadius)
+			{
+				outColor0.rgb = float3(0,1,1) * ((distToPlayer - waveRadius) / (transitionRadius - waveRadius));
+			}
+			
+			else
+			{
+				outColor0.rgb = GrayscalePS(outColor0.rgb);
+			}
+		}
+	}
+	else
+	{
+		outColor0.rgb = GrayscalePS(outColor0.rgb);
+	}
+}
+
+///////////////////////////////////////////////////////////
+// Depth texture shader
+
+struct OUT_DEPTH
+{
+	float4 Position : POSITION;
+	float Distance : TEXCOORD0;
+};
+
+OUT_DEPTH RenderDepthMapVS(float4 vPos: POSITION)
+{
+	OUT_DEPTH Out;
+	// Translate the vertex using matWorldViewProj.
+	Out.Position = mul(vPos, mul(matW, matVP));
+	// Get the distance of the vertex between near and far clipping plane in matWorldViewProj.
+	Out.Distance.x = 1-(Out.Position.z/Out.Position.w);	
+	
+	return Out;
+}
+
+float4 RenderDepthMapPS( OUT_DEPTH In ) : COLOR
+{ 
+    return float4(In.Distance.x,0,0,1);
+}
+
+technique EnvironmentShader
+{
+	pass P0
+	{
+		VertexShader = compile vs_2_0 EnvironmentVertexShader();
+		PixelShader = compile ps_2_0 EnvironmentPixelShader();
+	}
+}
+
+
+technique DepthMapShader
+{
+	pass P0
+	{
+		ZEnable = TRUE;
+		ZWriteEnable = TRUE;
+		AlphaBlendEnable = FALSE;
+
+        VertexShader = compile vs_2_0 RenderDepthMapVS();
+        PixelShader  = compile ps_2_0 RenderDepthMapPS();
+	
+	}
+}
+*/
