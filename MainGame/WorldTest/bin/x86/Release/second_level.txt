@@ -1,0 +1,1 @@
+Lake_Cavern_Floor.obj Lake_Cavern_Floor_Collision.obj Lake_Cavern_Floor_Navigation.obj 0 -1503.4635 170.4724 147.0500 -1503.4635 12.9921 147.0500 -1503.3011 12.9921 -48.0267
