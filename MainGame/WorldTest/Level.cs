@@ -823,6 +823,11 @@ namespace WorldTest
 
         public Path<NavMeshNode> FindPath(int startIndex, int destinationIndex)
         {
+            if (startIndex < 0 || destinationIndex < 0)
+            {
+                return null;
+            }
+
             NavMeshNode start = navigationMesh[startIndex];
             NavMeshNode destination = navigationMesh[destinationIndex];
 
