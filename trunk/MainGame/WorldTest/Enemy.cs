@@ -384,19 +384,22 @@ namespace WorldTest
             velocity.Y = -1.0f;
             if (this.state == EnemyAiState.Attack)
             {
-                if (this.activeAnimationClip != 0)
+                if (this.activeAnimationClip != 2)
                 {
-                    this.activeAnimationClip = 0;
-                    controller.CrossFade(model.AnimationClips["Idle"],TimeSpan.FromMilliseconds(300));
+                    this.activeAnimationClip = 2;
+                    controller.CrossFade(model.AnimationClips["Attack"],TimeSpan.FromMilliseconds(300));
                     controller.Speed = 1.0f;
                 }
                 position = currentLevel.CollideWith(position, Vector3.Down, 0.1, Level.MAX_COLLISIONS);
             }
             else if (this.state == EnemyAiState.Weakened)
             {
-                this.activeAnimationClip = 0;
-                controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
-                controller.Speed = 1.0f;
+                if (this.activeAnimationClip != 0)
+                {
+                    this.activeAnimationClip = 0;
+                    controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
+                    controller.Speed = 1.0f;
+                }
             }
             else {
                 if (this.activeAnimationClip != 1)
