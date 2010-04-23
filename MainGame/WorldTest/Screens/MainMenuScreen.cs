@@ -27,7 +27,7 @@ namespace WorldTest
             : base("", sm)
         {
             // Create our menu entries.
-            MenuEntry playGameMenuEntry = new MenuEntry("Start");
+            MenuEntry playGameMenuEntry = new MenuEntry("New Game");
             MenuEntry optionsMenuEntry = new MenuEntry("Options");
             MenuEntry exitMenuEntry = new MenuEntry("Quit");
 
@@ -54,7 +54,7 @@ namespace WorldTest
         void PlayGameMenuEntrySelected(object sender, PlayerIndexEventArgs e)
         {
             LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
-                               new GameplayScreen(this.ScreenManager));
+                               new GameplayScreen(this.ScreenManager, "new_game.txt"));
         }
 
 

@@ -15,6 +15,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Input;
 using System.Runtime;
+using System.IO;
 #endregion
 
 namespace WorldTest
@@ -40,6 +41,8 @@ namespace WorldTest
         ContentManager content;
 
         SpriteFont gameFont;
+
+        private string loadFilename;
 
         Level firstLevel;
 
@@ -119,7 +122,7 @@ namespace WorldTest
         /// <summary>
         /// Constructor.
         /// </summary>
-        public GameplayScreen(ScreenManager sm)
+        public GameplayScreen(ScreenManager sm, string loadFilename)
         {
             this.ScreenManager = sm;
             //ScreenManager.Game.Content.RootDirectory = "Content";
@@ -136,6 +139,8 @@ namespace WorldTest
 
             TransitionOnTime = TimeSpan.FromSeconds(1.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);
+
+            this.loadFilename = loadFilename;
 
             this.Initialize();
         }
@@ -194,7 +199,7 @@ namespace WorldTest
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,-480,100),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,-480,100),Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(200, 50, 200),Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
@@ -205,10 +210,12 @@ namespace WorldTest
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, -100), Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
 
-            foreach (Enemy e in enemies)
-            {
-                e.LoadContent(ref player, ref firstLevel);
-            }
+            this.LoadGame(this.loadFilename);
+
+            //foreach (Enemy e in enemies)
+            //{
+            //    e.LoadContent(ref player, ref firstLevel);
+            //}
 
             // Construct our particle system components.
             explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content, false);
@@ -286,6 +293,118 @@ namespace WorldTest
 
         #endregion
 
+        #region Save and Load Game
+
+        public void SaveGame()
+        {
+            StreamWriter writer = new StreamWriter("save1.txt");
+            writer.Write("Player ");
+            if (player.CurrentDimension == Dimension.FIRST)
+            {
+                writer.Write("1 ");
+            }
+            else
+            {
+                writer.Write("2 ");
+            }
+            writer.Write(player.health.ToString() + " ");
+            writer.Write(player.position.X.ToString() + " ");
+            writer.Write(player.position.Y.ToString() + " ");
+            writer.WriteLine(player.position.Z.ToString());
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                writer.Write("Enemy ");
+                if (enemies[i].CurrentDimension == Dimension.FIRST)
+                {
+                    writer.Write("1 ");
+                }
+                else
+                {
+                    writer.Write("2 ");
+                }
+                writer.Write(enemies[i].health.ToString() + " ");
+                writer.Write(enemies[i].position.X.ToString() + " ");
+                writer.Write(enemies[i].position.Y.ToString() + " ");
+                writer.WriteLine(enemies[i].position.Z.ToString());
+            }
+
+            writer.Close();
+        }
+
+        public void LoadGame(string filename)
+        {
+            StreamReader reader = new StreamReader(filename);
+
+            string line = reader.ReadLine();
+            string[] splitLine;
+            char[] splitChars = { ' ' };
+
+            enemies.Clear();
+
+            while (line != null)
+            {
+                splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+
+                if (splitLine[0] == "Player") // Format: Player <dimension> <health> <x> <y> <z>
+                {
+                    // Dimension
+                    if (Convert.ToInt32(splitLine[1]) == 1)
+                    {
+                        player.ChangeDimension(Dimension.FIRST);
+                    }
+                    else
+                    {
+                        player.ChangeDimension(Dimension.SECOND);
+                    }
+
+                    // Health
+                    player.health = Convert.ToInt32(splitLine[2]);
+
+                    // Position
+                    player.position.X = (float)Convert.ToDouble(splitLine[3]);
+                    player.position.Y = (float)Convert.ToDouble(splitLine[4]);
+                    player.position.Z = (float)Convert.ToDouble(splitLine[5]);
+                }
+                else if (splitLine[0] == "Enemy") // Format: Enemy <dimension> <health> <x> <y> <z>
+                {
+                    // Dimension
+                    Dimension enemyDimension;
+
+                    if (Convert.ToInt32(splitLine[1]) == 1)
+                    {
+                        enemyDimension = Dimension.FIRST;
+                    }
+                    else
+                    {
+                        enemyDimension = Dimension.SECOND;
+                    }
+
+                    // Health
+                    int enemyHealth = Convert.ToInt32(splitLine[2]);
+
+                    // Position
+                    Vector3 enemyPosition;
+                    enemyPosition.X = (float)Convert.ToDouble(splitLine[3]);
+                    enemyPosition.Y = (float)Convert.ToDouble(splitLine[4]);
+                    enemyPosition.Z = (float)Convert.ToDouble(splitLine[5]);
+
+                    enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension));
+                }
+
+                line = reader.ReadLine();
+            }
+
+            foreach (Enemy e in enemies)
+            {
+                e.LoadContent(ref player, ref firstLevel);
+            }
+
+            reader.Close();
+        }
+
+        #endregion
+
         #region Update
 
         /// <summary>
@@ -311,6 +430,18 @@ namespace WorldTest
                 else
                 {
                     GameplayScreen.transitioning = false;
+                }
+
+                if (inputControlState.currentGamePadState.Buttons.LeftShoulder == ButtonState.Pressed &&
+                    inputControlState.lastGamePadState.Buttons.LeftShoulder == ButtonState.Released)
+                {
+                    SaveGame();
+                }
+
+                if (inputControlState.currentGamePadState.Buttons.RightShoulder == ButtonState.Pressed &&
+                    inputControlState.lastGamePadState.Buttons.RightShoulder == ButtonState.Released)
+                {
+                    LoadGame("save1.txt");
                 }
 
                 // Allows the game to exit
