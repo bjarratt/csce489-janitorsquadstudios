@@ -168,6 +168,10 @@ namespace WorldTest
             blood = new Damage(this.ScreenManager.game);
         }
 
+        #endregion
+
+        #region Load
+
         /// <summary>
         /// Load graphics content for the game.
         /// </summary>
