@@ -189,15 +189,15 @@ namespace WorldTest
             blood.LoadContent(content);
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            firstLevel = new Level(graphics.GraphicsDevice, ref content, "first_level.txt");
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, "second_level.txt");
             firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,50,100),Dimension.FIRST));
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(200, 50, 200),Dimension.FIRST));
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
-            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
+            enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,-480,100),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(200, 50, 200),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
+            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 0), Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 100), Dimension.FIRST));
             //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, -100), Dimension.FIRST));

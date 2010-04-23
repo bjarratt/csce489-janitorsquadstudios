@@ -29,7 +29,7 @@ namespace WorldTest
     {
         private int index;
         private bool obstacle;
-        private const int MAX_VERTICES = 4;
+        public const int NUM_VERTICES = 4;
 
         private Vector3[] vertices = {Vector3.Zero, Vector3.Zero, Vector3.Zero, Vector3.Zero};
         private Vector3 centroid;
@@ -77,9 +77,14 @@ namespace WorldTest
             set { centroid = value; }
         }
 
+        public Vector3 GetVertex(int index)
+        {
+            return vertices[index];
+        }
+
         public void SetVertex(int index, Vector3 value)
         {
-            if (index >= 0 && index < MAX_VERTICES)
+            if (index >= 0 && index < NUM_VERTICES)
             {
                 vertices[index] = value;
             }
