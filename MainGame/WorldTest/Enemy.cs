@@ -413,7 +413,7 @@ namespace WorldTest
         private void UpdateLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
-            if (currentLevel.RayTriangleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+            if (currentLevel.IntersectsNavTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
                 player.current_poly_index))
             {
                 // do nothing... player is still in his current polygon.
@@ -425,7 +425,7 @@ namespace WorldTest
             }
 
             //enemy... same process as player.
-            if (currentLevel.RayTriangleIntersect(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
+            if (currentLevel.IntersectsNavTriangle(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
                 this.current_poly_index))
             {
                 // do nothing... player is still in his current polygon.
@@ -646,24 +646,24 @@ namespace WorldTest
 
             // next, we'll turn the enemy back towards the center of the screen, to
             // prevent them from getting stuck on the edges of the screen.
-            Vector3 screenCenter = Vector3.Zero;
-            screenCenter.X = graphics.GraphicsDevice.Viewport.Width * 0.5f;
-            screenCenter.Z = graphics.GraphicsDevice.Viewport.Height * 0.5f;
+            //Vector3 screenCenter = Vector3.Zero;
+            //screenCenter.X = graphics.GraphicsDevice.Viewport.Width * 0.5f;
+            //screenCenter.Z = graphics.GraphicsDevice.Viewport.Height * 0.5f;
 
-            float distanceFromScreenCenter = Vector3.Distance(screenCenter, position);
-            float MaxDistanceFromScreenCenter =
-                Math.Min(screenCenter.Z, screenCenter.X);
+            //float distanceFromScreenCenter = Vector3.Distance(screenCenter, position);
+            //float MaxDistanceFromScreenCenter =
+            //    Math.Min(screenCenter.Z, screenCenter.X);
 
-            float normalizedDistance =
-                distanceFromScreenCenter / MaxDistanceFromScreenCenter;
+            //float normalizedDistance =
+            //    distanceFromScreenCenter / MaxDistanceFromScreenCenter;
 
-            float turnToCenterSpeed = .3f * normalizedDistance * normalizedDistance *
-                turnSpeed;
+            //float turnToCenterSpeed = .3f * normalizedDistance * normalizedDistance *
+            //    turnSpeed;
 
-            // once we've calculated how much we want to turn towards the center, we can
-            // use the TurnToFace function to actually do the work.
-            orientation = TurnToFace(position, screenCenter, orientation,
-                turnToCenterSpeed);
+            //// once we've calculated how much we want to turn towards the center, we can
+            //// use the TurnToFace function to actually do the work.
+            //orientation = TurnToFace(position, screenCenter, orientation,
+            //    turnToCenterSpeed);
         }
 
         #endregion

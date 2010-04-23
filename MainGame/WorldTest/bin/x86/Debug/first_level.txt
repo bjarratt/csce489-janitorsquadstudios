@@ -1,2 +1,2 @@
-Cave1_with_Roof.obj Cave1_with_Collision_Roof.obj navigation_mesh.obj 1 -1503.4635 170.4724 147.0500 -1503.4635 12.9921 147.0500 -1503.3011 12.9921 -48.0267
-Cave1_with_Roof.obj Cave1_with_Collision_Roof.obj navigation_mesh.obj 0 -1503.4635 12.9921 147.0500 -1503.3011 12.9921 -48.0267 -1503.3011 170.4724 -48.0267
+Cave1_with_Roof.obj Cave1_with_Collision_Roof.obj Cave1_Navigation.obj 1 -1503.4635 170.4724 147.0500 -1503.4635 12.9921 147.0500 -1503.3011 12.9921 -48.0267
+Cave1_with_Roof.obj Cave1_with_Collision_Roof.obj Cave1_Navigation.obj 0 -1503.4635 12.9921 147.0500 -1503.3011 12.9921 -48.0267 -1503.3011 170.4724 -48.0267

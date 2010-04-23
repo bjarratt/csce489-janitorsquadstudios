@@ -480,7 +480,7 @@ namespace WorldTest
                     NavMeshNode currentFace = new NavMeshNode();
                     currentFace.adjacent_polygons = new List<int>();
 
-                    for (int i = 1; i < 4; i++) // Read each of the three vertices
+                    for (int i = 1; i < NavMeshNode.NUM_VERTICES + 1; i++) // Read each of the three vertices
                     {
                         int currentVertexIndex = -1;
 
@@ -524,13 +524,30 @@ namespace WorldTest
 
                         currentFace.SetVertex(i - 1, currentVertex.Position);
 
-                        triangleList.Add(currentVertex);
-
-                        if (i == 3)
+                        if (i == NavMeshNode.NUM_VERTICES) // On last vertex
                         {
-                            currentFace.Centroid = (currentFace.V0 + currentFace.V1 + currentFace.V2) / 3.0f;
+                            VertexPositionNormalTexture vertex = new VertexPositionNormalTexture();
+                            vertex.Normal = Vector3.Zero;
+                            vertex.TextureCoordinate = Vector2.Zero;
+
+                            vertex.Position = currentFace.V0;
+                            triangleList.Add(vertex);
+                            vertex.Position = currentFace.V1;
+                            triangleList.Add(vertex);
+                            vertex.Position = currentFace.V2;
+                            triangleList.Add(vertex);
+
+                            vertex.Position = currentFace.V2;
+                            triangleList.Add(vertex);
+                            vertex.Position = currentFace.V3;
+                            triangleList.Add(vertex);
+                            vertex.Position = currentFace.V0;
+                            triangleList.Add(vertex);
+
+                            currentFace.Centroid = (currentFace.V0 + currentFace.V1 + currentFace.V2 + currentFace.V3) / 4.0f;
                             currentFace.Index = navigationMesh.Count;
                             navigationMesh.Add(currentFace);
+
                             break;
                         }
 
@@ -846,7 +863,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < navigationMesh.Count; i++)
                 {
-                    if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
+                    if (IntersectsNavTriangle(new Ray(position, Vector3.Down), i))
                     {
                         return i;
                     }
@@ -856,7 +873,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
                 {
-                    if (RayTriangleIntersect(new Ray(position, Vector3.Down), i))
+                    if (IntersectsNavTriangle(new Ray(position, Vector3.Down), i))
                     {
                         return navigationMesh[currentLocation].adjacent_polygons[i];
                     }
@@ -866,7 +883,74 @@ namespace WorldTest
             return -1;
         }
 
-        public bool RayTriangleIntersect(Ray R, int nodeIndex)
+        // Splits quad into two triangles to perform intersection test
+        public bool IntersectsNavQuad(Ray R, int nodeIndex)
+        {
+            return (IntersectsNavTriangle(R, nodeIndex, 0, 1, 2) || IntersectsNavTriangle(R, nodeIndex, 2, 3, 0));
+        }
+
+        public bool IntersectsNavTriangle(Ray R, int nodeIndex, int firstVertexIndex, int secondVertexIndex, int thirdVertexIndex)
+        {
+            //Vector3 u, v, n;             // triangle vectors
+            //Vector3 dir, w0, w;          // ray vectors
+
+            if (nodeIndex < 0)
+            {
+                return false;
+            }
+
+            NavMeshNode node = this.navigationMesh[nodeIndex];
+
+            Vector3 intersection = Vector3.Zero;
+            float r, a, b;             // params to calc ray-plane intersect
+
+            // get triangle edge vectors and plane normal
+            Vector3 u = node.GetVertex(secondVertexIndex) - node.GetVertex(firstVertexIndex);
+            Vector3 v = node.GetVertex(thirdVertexIndex) - node.GetVertex(firstVertexIndex);
+            Vector3 n = Vector3.Cross(u, v);             // cross product
+            if (n == Vector3.Zero)            // triangle is degenerate
+                return false;                 // do not deal with this case
+
+            Vector3 w0 = R.Position - node.GetVertex(firstVertexIndex);
+            a = -Vector3.Dot(n, w0);
+            b = Vector3.Dot(n, R.Direction);
+            if (Math.Abs(b) < 0.00001f)
+            {     // ray is parallel to triangle plane
+                if (a == 0) { }//return true;                // ray lies in triangle plane
+                else return false;             // ray disjoint from plane
+            }
+
+            // get intersect point of ray with triangle plane
+            r = a / b;
+            if (r < 0.0f)                   // ray goes away from triangle
+                return false;                  // => no intersect
+            // for a segment, also test if (r > 1.0) => no intersect
+
+            intersection = R.Position + r * R.Direction;           // intersect point of ray and plane
+
+            // is I inside T?
+            float uu, uv, vv, wu, wv, D;
+            uu = Vector3.Dot(u, u);
+            uv = Vector3.Dot(u, v);
+            vv = Vector3.Dot(v, v);
+            Vector3 w = intersection - node.GetVertex(firstVertexIndex);
+            wu = Vector3.Dot(w, u);
+            wv = Vector3.Dot(w, v);
+            D = uv * uv - uu * vv;
+
+            // get and test parametric coords
+            float s, t;
+            s = (uv * wv - vv * wu) / D;
+            if (s < 0.0 || s > 1.0)        // I is outside T
+                return false;
+            t = (uv * wu - uu * wv) / D;
+            if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+                return false;
+
+            return true;                      // I is in T
+        }
+
+        public bool IntersectsNavTriangle(Ray R, int nodeIndex)
         {
             //Vector3 u, v, n;             // triangle vectors
             //Vector3 dir, w0, w;          // ray vectors
