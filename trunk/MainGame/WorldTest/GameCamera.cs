@@ -148,7 +148,7 @@ namespace WorldTest
                 Vector3 look = this.lookAt;
                 look.Y = 0;
                 look.Normalize();
-                position.Y = position.Y + 22;
+                position.Y = position.Y + 110;
                 position = position + look * 5.0f;
                 cameraArc = 0;
                 cameraRot = 0;
