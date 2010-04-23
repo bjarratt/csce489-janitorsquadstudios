@@ -40,6 +40,8 @@ namespace WorldTest
             set { state = value; }
         }
 
+        public bool insidePortal;
+
         #endregion
 
         #region Constructor

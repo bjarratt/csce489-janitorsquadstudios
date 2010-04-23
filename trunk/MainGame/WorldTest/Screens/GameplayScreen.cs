@@ -36,10 +36,10 @@ namespace WorldTest
     public class GameplayScreen : GameScreen
     {
         #region Fields
-
+        
         GraphicsDeviceManager graphics;
         ContentManager content;
-
+        
         SpriteFont gameFont;
 
         private string loadFilename;
@@ -113,6 +113,8 @@ namespace WorldTest
         RenderTarget2D shadowRenderTarget;
 
         Portal portal;
+
+        ToolTips tips;
 
         #endregion
 
@@ -244,6 +246,9 @@ namespace WorldTest
 
             portal = new Portal(new Vector3(0,15,0), 50f);
             portal.Load(this.ScreenManager.game, content);
+
+            tips = new ToolTips();
+            tips.LoadContent(graphics.GraphicsDevice, content);
 
             //Set up RenderTargets
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
@@ -479,6 +484,7 @@ namespace WorldTest
                 UpdateProjectiles(gameTime);
 
                 portal.Update(gameTime);
+                tips.Update(gameTime, ref player, ref firstLevel);
 
                 // Save previous states
                 inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
@@ -775,6 +781,8 @@ namespace WorldTest
                 blood.Draw(spriteBatch);
             }
 
+            tips.Draw(spriteBatch, graphics.GraphicsDevice.PresentationParameters);
+            
             if (player.health <= 0)
             {
                 //ScreenManager.RemoveScreen(this);
