@@ -134,6 +134,7 @@
     <Compile Include="StaticGeometry.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="ToolTips.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />
