@@ -471,7 +471,11 @@ namespace WorldTest
                         this.FirstPathPoly = this.SecondPathPoly;
                         if (currentPath.Count < 2)
                         {
-                            this.SecondPathPoly = this.CurrentPath.First.Value.Index;
+                            //this.SecondPathPoly = this.CurrentPath.First.Value.Index;
+                            this.state = EnemyAiState.ChasingDumb;
+                            Vector3 direction = player.position - this.position;
+                            direction.Normalize();
+                            return direction;
                         }
                         else
                         {

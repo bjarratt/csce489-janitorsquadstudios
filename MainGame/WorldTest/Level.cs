@@ -522,24 +522,18 @@ namespace WorldTest
                             positionList[currentVertexIndex].adjacentFaces.Add(navigationMesh.Count);
                         }
 
-                        if (i == 1)
-                        {
-                            currentFace.V0 = currentVertex.Position;
-                        }
-                        else if (i == 2)
-                        {
-                            currentFace.V1 = currentVertex.Position;
-                        }
-                        else if (i == 3)
-                        {
-                            currentFace.V2 = currentVertex.Position;
+                        currentFace.SetVertex(i - 1, currentVertex.Position);
 
+                        triangleList.Add(currentVertex);
+
+                        if (i == 3)
+                        {
                             currentFace.Centroid = (currentFace.V0 + currentFace.V1 + currentFace.V2) / 3.0f;
                             currentFace.Index = navigationMesh.Count;
                             navigationMesh.Add(currentFace);
+                            break;
                         }
 
-                        triangleList.Add(currentVertex);
                     }
                 }
                 else // Unused line format, skipping
