@@ -29,10 +29,9 @@ namespace WorldTest
     {
         private int index;
         private bool obstacle;
+        private const int MAX_VERTICES = 4;
 
-        private Vector3 v0;
-        private Vector3 v1;
-        private Vector3 v2;
+        private Vector3[] vertices = {Vector3.Zero, Vector3.Zero, Vector3.Zero, Vector3.Zero};
         private Vector3 centroid;
         public List<int> adjacent_polygons;
 
@@ -50,26 +49,40 @@ namespace WorldTest
 
         public Vector3 V0
         {
-            get { return v0; }
-            set { v0 = value; }
+            get { return vertices[0]; }
+            set { vertices[0] = value; }
         }
 
         public Vector3 V1
         {
-            get { return v1; }
-            set { v1 = value; }
+            get { return vertices[1]; }
+            set { vertices[1] = value; }
         }
 
         public Vector3 V2
         {
-            get { return v2; }
-            set { v2 = value; }
+            get { return vertices[2]; }
+            set { vertices[2] = value; }
+        }
+
+        public Vector3 V3
+        {
+            get { return vertices[3]; }
+            set { vertices[3] = value; }
         }
 
         public Vector3 Centroid
         {
             get { return centroid; }
             set { centroid = value; }
+        }
+
+        public void SetVertex(int index, Vector3 value)
+        {
+            if (index >= 0 && index < MAX_VERTICES)
+            {
+                vertices[index] = value;
+            }
         }
     }
 
