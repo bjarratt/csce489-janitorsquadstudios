@@ -44,6 +44,14 @@ namespace WorldTest
         private Effect cel_effect;
         private Texture2D m_celMap;
         private Texture2D terrainTexture;
+        private RenderTarget2D sceneTarget;
+        private Texture2D sceneTex;
+
+        private Water water;
+        private bool drawWater;
+        private RenderTargetCube waterCube;
+        private TextureCube texCube;
+        private Matrix viewMatrix;
 
         // Collision mesh variables
         private List<CollisionPolygon> collisionMesh;
@@ -67,6 +75,12 @@ namespace WorldTest
 
         public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
         {
+            water = new Water(ref device);
+            water.LoadContent(content);
+            drawWater = true;
+            waterCube = new RenderTargetCube(device, 256, 1, SurfaceFormat.Color);
+            sceneTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
+
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
 
@@ -1027,7 +1041,7 @@ namespace WorldTest
 
         public void Draw(GraphicsDevice device, ref GameCamera camera, bool drawCollisionMesh,
                          bool drawNavigationMesh, ref List<Light> lights, Dimension currentDimension,
-                         Vector3 playerPosition)
+                         Vector3 playerPosition, ref SpriteBatch spriteBatch, GameTime gameTime)
         {
             int currentLocationIndex = 0;
 
@@ -1105,28 +1119,80 @@ namespace WorldTest
                     break;
             }
 
-            this.cel_effect.Begin();
-            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+            if (drawWater)
             {
-                pass.Begin();
-
-                levelPieces[currentLocationIndex].Draw(device, ref camera);
-
-                pass.End();
-            }
-
-            for (int i = 0; i < adjacencyList[currentLocationIndex].Count; i++)
-            {
-                foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+                
+                // Render our cube map, once for each cube face( 6 times ).
+                for (int i = 0; i < 6; i++)
                 {
-                    pass.Begin();
+                    // render the scene to all cubemap faces
+                    CubeMapFace cubeMapFace = (CubeMapFace)i;
 
-                    levelPieces[adjacencyList[currentLocationIndex][i].index].Draw(device, ref camera);
+                    switch (cubeMapFace)
+                    {
+                        case CubeMapFace.NegativeX:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Left, Vector3.Up);
+                                break;
+                            }
+                        case CubeMapFace.NegativeY:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Down, Vector3.Forward);
+                                break;
+                            }
+                        case CubeMapFace.NegativeZ:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Backward, Vector3.Up);
+                                break;
+                            }
+                        case CubeMapFace.PositiveX:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Right, Vector3.Up);
+                                break;
+                            }
+                        case CubeMapFace.PositiveY:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Up, Vector3.Backward);
+                                break;
+                            }
+                        case CubeMapFace.PositiveZ:
+                            {
+                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Forward, Vector3.Up);
+                                break;
+                            }
+                    }
 
-                    pass.End();
+                    cel_effect.Parameters["matW"].SetValue(Matrix.CreateTranslation(new Vector3(300,0,0)));
+                    cel_effect.Parameters["matVP"].SetValue(viewMatrix * Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, (float)device.Viewport.Width / (float)device.Viewport.Height, 1, 10000));
+                    cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(viewMatrix));
+
+                    // Set the cubemap render target, using the selected face
+                    device.SetRenderTarget(0, waterCube, cubeMapFace);
+                    device.Clear(Color.Black);
+                    this.DrawScene(device, ref camera, currentLocationIndex);
                 }
+                device.SetRenderTarget(0, sceneTarget);
+                device.Clear(Color.Black);
+                texCube = waterCube.GetTexture();
+                water.Update(gameTime);
+                water.Draw(gameTime, ref camera, ref texCube);
             }
-            this.cel_effect.End();
+
+            //device.SetRenderTarget(0, sceneTarget);
+            //device.Clear(Color.Black);
+            cel_effect.Parameters["matW"].SetValue(Matrix.Identity);
+            cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
+            cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
+
+            DrawScene(device, ref camera, currentLocationIndex);
+            device.SetRenderTarget(0, null);
+            sceneTex = sceneTarget.GetTexture();
+            
+            
+            //device.Clear(Color.Black);
+            spriteBatch.Begin();
+            spriteBatch.Draw(sceneTex, new Rectangle(0, 0, device.Viewport.Width, device.Viewport.Height), Color.White);
+            spriteBatch.End();
 
             if (drawCollisionMesh || drawNavigationMesh)
             {
@@ -1163,6 +1229,31 @@ namespace WorldTest
             device.RenderState.CullMode = previousCullMode;
         }
 
+        public void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc)
+        {
+            this.cel_effect.Begin();
+            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+
+                levelPieces[Loc].Draw(device, ref camera);
+
+                pass.End();
+            }
+
+            for (int i = 0; i < adjacencyList[Loc].Count; i++)
+            {
+                foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+                {
+                    pass.Begin();
+
+                    levelPieces[adjacencyList[Loc][i].index].Draw(device, ref camera);
+
+                    pass.End();
+                }
+            }
+            this.cel_effect.End();
+        }
         
         #endregion
 
