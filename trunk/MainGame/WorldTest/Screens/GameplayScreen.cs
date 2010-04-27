@@ -50,16 +50,6 @@ namespace WorldTest
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
-        /// <summary>
-        /// Stuff for rendering Alternate Dimension with environment mapping...
-        /// </summary>
-        private Effect dimensionEffect;
-        private Effect dimensionPost;
-
-        private EffectTechnique dimensionEnvironmentShader;
-        private EffectTechnique dimensionDepthShader;
-
-
 
         GameCamera camera;
         static public bool invertYAxis;
@@ -773,14 +763,14 @@ namespace WorldTest
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
 
+            //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension);
             }
-
-            //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position);
 
             //Draw lights
             DrawLights();
