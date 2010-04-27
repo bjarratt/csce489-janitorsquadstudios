@@ -273,14 +273,14 @@ struct VS_OUTPUT2
 //The outline vertex shader
 //This tranforms the model and
 //"peaks" the surface (scales it out on it's normal) 
-VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input)
+VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input, out float3 outPosition : TEXCOORD0)
 {
 	//Here's the important value. It determins the thickness of the outline.
 	//The value is completely dependent on the size of the model.
 	//My model is very tiny so my outine is very tiny.
 	//You may need to increase this or better yet, caluclate it based on the distance
 	//between your camera and your model.
-	float offset = 0.1;
+	float offset = 0.5;
 	
 	// Calculate the final bone transformation matrix
     float4x3 matSmoothSkin = 0;
@@ -301,6 +301,7 @@ VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input)
 	VS_OUTPUT2 Output;
 	Output.Normal			= mul(Input.Normal, matSmoothSkinWorld); //POSSIBLE ERROR: dropped the cast to float3x3
 	Output.Position			= mul(Input.Position, WorldViewProjection)+(mul(offset, mul(Input.Normal, WorldViewProjection)));
+	outPosition = Output.Position.xyz;
 	
 	return Output;
 }
@@ -620,6 +621,28 @@ float4 Black() : COLOR
    return float4(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+//This is the ouline pixel shader for animated models. It is shown only if pixel is not clipped.
+float4 Black_Animated(in float3 inPosition : TEXCOORD0) : COLOR
+{
+	if (transitioning == 1)
+	{
+		float distToPlayer = distance(inPosition.xyz,playerPosition);
+		if (distToPlayer > waveRadius)
+		{
+			clip(inOtherDimension);
+		}
+		else
+		{
+			clip(inOtherDimension * -1);
+		}
+		return float4(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+	else
+	{
+		return float4(0.0f, 0.0f, 0.0f, 1.0f);
+	}
+}
+
 
 // Techniques
 // -------------------------------------------------
@@ -807,14 +830,12 @@ technique AnimatedModel_NoLight
         PixelShader = compile ps_3_0 animatedModelPS_Light(0);
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_OneLight
@@ -828,14 +849,12 @@ technique AnimatedModel_OneLight
         PixelShader = compile ps_3_0 animatedModelPS_Light(1);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 /*
 technique AnimatedModel_OneLight_Gray
@@ -869,14 +888,12 @@ technique AnimatedModel_TwoLight
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_ThreeLight
@@ -890,14 +907,12 @@ technique AnimatedModel_ThreeLight
         PixelShader = compile ps_3_0 animatedModelPS_Light(3);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_FourLight
@@ -912,14 +927,12 @@ technique AnimatedModel_FourLight
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_FiveLight
@@ -933,14 +946,12 @@ technique AnimatedModel_FiveLight
         PixelShader = compile ps_3_0 animatedModelPS_Light(5);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_SixLight
@@ -955,14 +966,12 @@ technique AnimatedModel_SixLight
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_SevenLight
@@ -976,14 +985,12 @@ technique AnimatedModel_SevenLight
         PixelShader = compile ps_3_0 animatedModelPS_Light(7);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_EightLight
@@ -998,14 +1005,12 @@ technique AnimatedModel_EightLight
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 //
@@ -1184,14 +1189,12 @@ technique AnimatedModel_NoLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(0);
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_OneLight_Gray
@@ -1205,14 +1208,12 @@ technique AnimatedModel_OneLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(1);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_TwoLight_Gray
@@ -1227,14 +1228,12 @@ technique AnimatedModel_TwoLight_Gray
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_ThreeLight_Gray
@@ -1248,14 +1247,12 @@ technique AnimatedModel_ThreeLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(3);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_FourLight_Gray
@@ -1270,14 +1267,12 @@ technique AnimatedModel_FourLight_Gray
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_FiveLight_Gray
@@ -1291,14 +1286,12 @@ technique AnimatedModel_FiveLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(5);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_SixLight_Gray
@@ -1313,14 +1306,12 @@ technique AnimatedModel_SixLight_Gray
         CullMode = CCW;
     }
     
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_SevenLight_Gray
@@ -1334,14 +1325,12 @@ technique AnimatedModel_SevenLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(7);
         CullMode = CCW;
     }
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 technique AnimatedModel_EightLight_Gray
@@ -1355,15 +1344,12 @@ technique AnimatedModel_EightLight_Gray
         PixelShader = compile ps_3_0 animatedModelGrayPS_Light(8);
         CullMode = CCW;
     }
-    
-    /*
     pass p1
     {
 		VertexShader = compile vs_3_0 Outline_Animated();
-		PixelShader  = compile ps_3_0 Black();
+		PixelShader  = compile ps_3_0 Black_Animated();
 		CullMode = CW;
     }
-    */
 }
 
 /*
