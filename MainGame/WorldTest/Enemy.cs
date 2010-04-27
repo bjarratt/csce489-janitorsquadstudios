@@ -787,10 +787,10 @@ namespace WorldTest
                     }
 
                     // Draw model mesh
-                    foreach (EffectPass pass in shader.CurrentTechnique.Passes)
-                    {
-                        modelMesh.Draw();
-                    }
+                    //foreach (EffectPass pass in shader.CurrentTechnique.Passes)
+                    //{
+                    modelMesh.Draw();
+                    //}
                 }
             }
 
