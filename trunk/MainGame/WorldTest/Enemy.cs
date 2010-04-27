@@ -682,10 +682,12 @@ namespace WorldTest
             
             #region Cel Shading
 
-            if (playerDimension == this.currentDimension)
+            if (playerDimension == this.currentDimension || GameplayScreen.transitioning)
             {
                 //Cel shading
                 graphics.GraphicsDevice.RenderState.AlphaBlendEnable = false;
+                //graphics.GraphicsDevice.RenderState.AlphaSourceBlend = Blend.SourceAlpha;
+                //graphics.GraphicsDevice.RenderState.AlphaDestinationBlend = Blend.InverseSourceAlpha;
                 graphics.GraphicsDevice.RenderState.AlphaTestEnable = false;
                 graphics.GraphicsDevice.RenderState.DepthBufferEnable = true;
 
@@ -748,6 +750,17 @@ namespace WorldTest
                         else
                         {
                             effect.Parameters["transitioning"].SetValue(0);
+                        }
+
+                        if (playerDimension == this.currentDimension)
+                        {
+                            // If enemy is in player's dimension and is beyond the transition effect, clip
+                            effect.Parameters["inOtherDimension"].SetValue(-1);
+                        }
+                        else
+                        {
+                            // If enemy is not in player's dimension and is beyond the transition effect, don't clip
+                            effect.Parameters["inOtherDimension"].SetValue(1);
                         }
 
                         switch (Lights.Count)
