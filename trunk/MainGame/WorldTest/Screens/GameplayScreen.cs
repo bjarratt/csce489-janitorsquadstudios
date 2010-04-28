@@ -309,6 +309,7 @@ namespace WorldTest
         {
             StreamWriter writer = new StreamWriter("save1.txt");
 
+            // Format: Camera <lookAt.x> <.y> <.z> <right.x> <.y> <.z> <up.x> <.y> <.z>
             writer.Write("Camera ");
             writer.Write(camera.lookAt.X.ToString() + " ");
             writer.Write(camera.lookAt.Y.ToString() + " ");
@@ -320,6 +321,7 @@ namespace WorldTest
             writer.Write(camera.up.Y.ToString() + " ");
             writer.WriteLine(camera.up.Z.ToString());
 
+            // Format: Player <dimension> <health> <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
             writer.Write("Player ");
             if (player.CurrentDimension == Dimension.FIRST)
             {
@@ -338,7 +340,7 @@ namespace WorldTest
             writer.Write(player.orientation.Z.ToString() + " ");
             writer.WriteLine(player.orientation.W.ToString());
             
-
+            // Format: Enemy <dimension> <current_health> <max_health> <position.x> <.y> <.z>
             for (int i = 0; i < enemies.Count; i++)
             {
                 writer.Write("Enemy ");
@@ -351,6 +353,7 @@ namespace WorldTest
                     writer.Write("2 ");
                 }
                 writer.Write(enemies[i].health.ToString() + " ");
+                writer.Write(enemies[i].MaxHealth.ToString() + " ");
                 writer.Write(enemies[i].position.X.ToString() + " ");
                 writer.Write(enemies[i].position.Y.ToString() + " ");
                 writer.WriteLine(enemies[i].position.Z.ToString());
@@ -373,7 +376,8 @@ namespace WorldTest
             {
                 splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
 
-                if (splitLine[0] == "Player") // Format: Player <dimension> <health> <x> <y> <z>
+                // Format: Player <dimension> <health> <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
+                if (splitLine[0] == "Player")
                 {
                     // Dimension
                     if (Convert.ToInt32(splitLine[1]) == 1)
@@ -399,7 +403,8 @@ namespace WorldTest
                     player.orientation.Z = (float)Convert.ToDouble(splitLine[8]);
                     player.orientation.W = (float)Convert.ToDouble(splitLine[9]);
                 }
-                else if (splitLine[0] == "Enemy") // Format: Enemy <dimension> <health> <x> <y> <z>
+                // Format: Enemy <dimension> <current_health> <max_health> <position.x> <.y> <.z>
+                else if (splitLine[0] == "Enemy")
                 {
                     // Dimension
                     Dimension enemyDimension;
@@ -416,14 +421,18 @@ namespace WorldTest
                     // Health
                     int enemyHealth = Convert.ToInt32(splitLine[2]);
 
+                    // Max health
+                    ENEMY_STATS.maxHealth = Convert.ToInt32(splitLine[3]);
+
                     // Position
                     Vector3 enemyPosition;
-                    enemyPosition.X = (float)Convert.ToDouble(splitLine[3]);
-                    enemyPosition.Y = (float)Convert.ToDouble(splitLine[4]);
-                    enemyPosition.Z = (float)Convert.ToDouble(splitLine[5]);
+                    enemyPosition.X = (float)Convert.ToDouble(splitLine[4]);
+                    enemyPosition.Y = (float)Convert.ToDouble(splitLine[5]);
+                    enemyPosition.Z = (float)Convert.ToDouble(splitLine[6]);
 
                     enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension));
                 }
+                // Format: Camera <lookAt.x> <.y> <.z> <right.x> <.y> <.z> <up.x> <.y> <.z>
                 else if (splitLine[0] == "Camera")
                 {
                     camera.lookAt.X = (float)Convert.ToDouble(splitLine[1]);
