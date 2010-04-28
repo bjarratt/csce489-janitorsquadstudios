@@ -195,17 +195,6 @@ namespace WorldTest
 
                 timeBetweenDamage += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                //if (currentGPState.Buttons.LeftShoulder == ButtonState.Pressed && lastGPState.Buttons.LeftShoulder == ButtonState.Released)
-                //{
-                //    controller.CrossFade(model.AnimationClips["Idle"], TimeSpan.FromMilliseconds(300));
-                //    controller.Speed = 1.0f;
-                //}
-                //else if (currentGPState.Buttons.RightShoulder == ButtonState.Pressed && lastGPState.Buttons.RightShoulder == ButtonState.Released)
-                //{
-                //    controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
-                //    controller.Speed = 3.0f;
-                //}
-
                 #region Behavior
 
                 if (this.state == EnemyAiState.Weakened)
@@ -322,10 +311,10 @@ namespace WorldTest
                 else if (this.state == EnemyAiState.Idle)
                 {
                     // call the wander function for the enemy
-                    Wander(this.position, ref this.velocity, ref this.rotation,
-                        this.turn_speed);
-                    currentEnemySpeed = .25f * this.speed;
-                    currentEnemySpeed = 0.0f;
+                    //Wander(this.position, ref this.velocity, ref this.rotation,
+                    //    this.turn_speed);
+                    //currentEnemySpeed = .25f * this.speed;
+                    //currentEnemySpeed = 0.0f;
                 }
                 else if (this.state == EnemyAiState.Attack)
                 {
@@ -388,11 +377,11 @@ namespace WorldTest
                 {
                     this.activeAnimationClip = 2;
                     controller.CrossFade(model.AnimationClips["Attack"],TimeSpan.FromMilliseconds(300));
-                    controller.Speed = 1.0f;
+                    controller.Speed = 2.0f;
                 }
                 position = currentLevel.CollideWith(position, Vector3.Down, 0.1, Level.MAX_COLLISIONS);
             }
-            else if (this.state == EnemyAiState.Weakened)
+            else if (this.state == EnemyAiState.Weakened || this.state == EnemyAiState.Idle)
             {
                 if (this.activeAnimationClip != 0)
                 {
@@ -404,9 +393,9 @@ namespace WorldTest
             else {
                 if (this.activeAnimationClip != 1)
                 {
-                    this.activeAnimationClip = 1;
                     controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
-                    controller.Speed = 4.0f;
+                    this.activeAnimationClip = 1;
+                    controller.Speed = 2.0f;
                 }
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }

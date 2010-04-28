@@ -133,7 +133,7 @@ namespace WorldTest
 
             //set enemy stats
             this.ENEMY_STATS.maxSpeed = 2.0f;
-            this.ENEMY_STATS.attackDistance = 100f;
+            this.ENEMY_STATS.attackDistance = 200f;
             this.ENEMY_STATS.smartChaseDistance = 2000f;
             this.ENEMY_STATS.dumbChaseDistance = 500f;
             this.ENEMY_STATS.hysteresis = 15f;
@@ -308,6 +308,18 @@ namespace WorldTest
         public void SaveGame()
         {
             StreamWriter writer = new StreamWriter("save1.txt");
+
+            writer.Write("Camera ");
+            writer.Write(camera.lookAt.X.ToString() + " ");
+            writer.Write(camera.lookAt.Y.ToString() + " ");
+            writer.Write(camera.lookAt.Z.ToString() + " ");
+            writer.Write(camera.right.X.ToString() + " ");
+            writer.Write(camera.right.Y.ToString() + " ");
+            writer.Write(camera.right.Z.ToString() + " ");
+            writer.Write(camera.up.X.ToString() + " ");
+            writer.Write(camera.up.Y.ToString() + " ");
+            writer.WriteLine(camera.up.Z.ToString());
+
             writer.Write("Player ");
             if (player.CurrentDimension == Dimension.FIRST)
             {
@@ -320,7 +332,12 @@ namespace WorldTest
             writer.Write(player.health.ToString() + " ");
             writer.Write(player.position.X.ToString() + " ");
             writer.Write(player.position.Y.ToString() + " ");
-            writer.WriteLine(player.position.Z.ToString());
+            writer.Write(player.position.Z.ToString() + " ");
+            writer.Write(player.orientation.X.ToString() + " ");
+            writer.Write(player.orientation.Y.ToString() + " ");
+            writer.Write(player.orientation.Z.ToString() + " ");
+            writer.WriteLine(player.orientation.W.ToString());
+            
 
             for (int i = 0; i < enemies.Count; i++)
             {
@@ -375,6 +392,12 @@ namespace WorldTest
                     player.position.X = (float)Convert.ToDouble(splitLine[3]);
                     player.position.Y = (float)Convert.ToDouble(splitLine[4]);
                     player.position.Z = (float)Convert.ToDouble(splitLine[5]);
+
+                    // Orientation
+                    player.orientation.X = (float)Convert.ToDouble(splitLine[6]);
+                    player.orientation.Y = (float)Convert.ToDouble(splitLine[7]);
+                    player.orientation.Z = (float)Convert.ToDouble(splitLine[8]);
+                    player.orientation.W = (float)Convert.ToDouble(splitLine[9]);
                 }
                 else if (splitLine[0] == "Enemy") // Format: Enemy <dimension> <health> <x> <y> <z>
                 {
@@ -400,6 +423,18 @@ namespace WorldTest
                     enemyPosition.Z = (float)Convert.ToDouble(splitLine[5]);
 
                     enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension));
+                }
+                else if (splitLine[0] == "Camera")
+                {
+                    camera.lookAt.X = (float)Convert.ToDouble(splitLine[1]);
+                    camera.lookAt.Y = (float)Convert.ToDouble(splitLine[2]);
+                    camera.lookAt.Z = (float)Convert.ToDouble(splitLine[3]);
+                    camera.right.X = (float)Convert.ToDouble(splitLine[4]);
+                    camera.right.Y = (float)Convert.ToDouble(splitLine[5]);
+                    camera.right.Z = (float)Convert.ToDouble(splitLine[6]);
+                    camera.up.X = (float)Convert.ToDouble(splitLine[7]);
+                    camera.up.Y = (float)Convert.ToDouble(splitLine[8]);
+                    camera.up.Z = (float)Convert.ToDouble(splitLine[9]);
                 }
 
                 line = reader.ReadLine();
