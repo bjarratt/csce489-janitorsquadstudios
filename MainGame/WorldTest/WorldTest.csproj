@@ -135,7 +135,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ToolTips.cs" />
-    <Compile Include="Water.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Game.ico" />

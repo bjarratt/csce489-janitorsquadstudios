@@ -542,7 +542,7 @@ namespace WorldTest
 
         private static bool explosionLightHasExpired(Light light)
         {
-            return (light.currentExplosionTick > GameplayScreen.EXPLOSION_INCR * 40.0f);
+            return (light.currentExplosionTick > GameplayScreen.EXPLOSION_INCR * 20f);
         }
 
         /// <summary>
@@ -803,12 +803,14 @@ namespace WorldTest
             portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingHandParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banisherExplosions.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
-            
+
+            base.Draw(gameTime);
+
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
@@ -838,7 +840,7 @@ namespace WorldTest
 
             spriteBatch.End();
 
-            base.Draw(gameTime);
+            //base.Draw(gameTime);
 
             // If the game is transitioning on or off, fade it out to black.
             if (TransitionPosition > 0)

@@ -44,14 +44,22 @@ namespace WorldTest
         private Effect cel_effect;
         private Texture2D m_celMap;
         private Texture2D terrainTexture;
-        private RenderTarget2D sceneTarget;
-        private Texture2D sceneTex;
 
-        private Water water;
+        /// <summary>
+        /// Water Rendering Stuff... theres only 1 lake in the cave, so only 
+        /// one water per Level.
+        /// </summary>
         private bool drawWater;
-        private RenderTargetCube waterCube;
-        private TextureCube texCube;
-        private Matrix viewMatrix;
+        const float waterHeight = -390.0f;
+        private RenderTarget2D refractionRenderTarget;
+        private Texture2D refractionMap;
+        private RenderTarget2D reflectionRenderTarget;
+        private Texture2D reflectionMap;
+        private Matrix reflectionViewMatrix;
+        private Effect waterEffect;
+        private Texture2D waterBumpMap;
+        VertexBuffer waterVertexBuffer;
+        VertexDeclaration waterVertexDeclaration;
 
         // Collision mesh variables
         private List<CollisionPolygon> collisionMesh;
@@ -75,11 +83,7 @@ namespace WorldTest
 
         public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
         {
-            water = new Water(ref device);
-            water.LoadContent(content);
             drawWater = true;
-            waterCube = new RenderTargetCube(device, 256, 1, SurfaceFormat.Color);
-            sceneTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
 
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
@@ -273,6 +277,13 @@ namespace WorldTest
             cel_effect = content.Load<Effect>("CelShade");
             m_celMap = content.Load<Texture2D>("Toon2");
             terrainTexture = content.Load<Texture2D>("tex_small");
+            
+            // Load water stuff
+            refractionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
+            reflectionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
+            waterEffect = content.Load<Effect>("Water");
+            waterBumpMap = content.Load<Texture2D>("waterbump");
+            LoadVertices(ref device);
         }
 
         /// <summary>
@@ -1122,77 +1133,14 @@ namespace WorldTest
             if (drawWater)
             {
                 
-                // Render our cube map, once for each cube face( 6 times ).
-                for (int i = 0; i < 6; i++)
-                {
-                    // render the scene to all cubemap faces
-                    CubeMapFace cubeMapFace = (CubeMapFace)i;
-
-                    switch (cubeMapFace)
-                    {
-                        case CubeMapFace.NegativeX:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Left, Vector3.Up);
-                                break;
-                            }
-                        case CubeMapFace.NegativeY:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Down, Vector3.Forward);
-                                break;
-                            }
-                        case CubeMapFace.NegativeZ:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Backward, Vector3.Up);
-                                break;
-                            }
-                        case CubeMapFace.PositiveX:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Right, Vector3.Up);
-                                break;
-                            }
-                        case CubeMapFace.PositiveY:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Up, Vector3.Backward);
-                                break;
-                            }
-                        case CubeMapFace.PositiveZ:
-                            {
-                                viewMatrix = Matrix.CreateLookAt(Vector3.Zero, Vector3.Forward, Vector3.Up);
-                                break;
-                            }
-                    }
-
-                    cel_effect.Parameters["matW"].SetValue(Matrix.CreateTranslation(new Vector3(300,0,0)));
-                    cel_effect.Parameters["matVP"].SetValue(viewMatrix * Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver2, (float)device.Viewport.Width / (float)device.Viewport.Height, 1, 10000));
-                    cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(viewMatrix));
-
-                    // Set the cubemap render target, using the selected face
-                    device.SetRenderTarget(0, waterCube, cubeMapFace);
-                    device.Clear(Color.Black);
-                    this.DrawScene(device, ref camera, currentLocationIndex);
-                }
-                device.SetRenderTarget(0, sceneTarget);
-                device.Clear(Color.Black);
-                texCube = waterCube.GetTexture();
-                water.Update(gameTime);
-                water.Draw(gameTime, ref camera, ref texCube);
+                DrawRefractionMap(ref device, ref camera, currentLocationIndex);
+                MakeReflectionMatrix(ref camera);
+                DrawReflectionMap(ref device, ref camera, currentLocationIndex);
+                float time = (float)gameTime.TotalGameTime.TotalMilliseconds / 100.0f;
+                DrawWater(time, ref camera, ref device, ref lights);
             }
-
-            //device.SetRenderTarget(0, sceneTarget);
-            //device.Clear(Color.Black);
-            cel_effect.Parameters["matW"].SetValue(Matrix.Identity);
-            cel_effect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
-            cel_effect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
-
+            
             DrawScene(device, ref camera, currentLocationIndex);
-            device.SetRenderTarget(0, null);
-            sceneTex = sceneTarget.GetTexture();
-            
-            
-            //device.Clear(Color.Black);
-            spriteBatch.Begin();
-            spriteBatch.Draw(sceneTex, new Rectangle(0, 0, device.Viewport.Width, device.Viewport.Height), Color.White);
-            spriteBatch.End();
 
             if (drawCollisionMesh || drawNavigationMesh)
             {
@@ -1252,9 +1200,147 @@ namespace WorldTest
                     pass.End();
                 }
             }
+            
             this.cel_effect.End();
         }
-        
+
+        #region Water Rendering Helpers
+
+        private Plane CreatePlane(float height, Vector3 planeNormalDirection, ref GameCamera camera, bool clipSide, bool reflection, Matrix alternateView)
+        {
+            planeNormalDirection.Normalize();
+            Vector4 planeCoeffs = new Vector4(planeNormalDirection, height);
+            if (clipSide) planeCoeffs *= -1;
+            Matrix worldViewProjection;
+            if (reflection) worldViewProjection = alternateView * camera.GetProjectionMatrix();
+            else worldViewProjection = camera.GetViewMatrix() * camera.GetProjectionMatrix();
+
+            Matrix inverseWorldViewProjection = Matrix.Invert(worldViewProjection);
+            inverseWorldViewProjection = Matrix.Transpose(inverseWorldViewProjection);
+            planeCoeffs = Vector4.Transform(planeCoeffs, inverseWorldViewProjection);
+            Plane finalPlane = new Plane(planeCoeffs);
+            return finalPlane;
+        }
+
+        private void DrawRefractionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc)
+        {
+            Plane refractionPlane = CreatePlane(waterHeight + 1.5f, new Vector3(0, -1, 0), ref camera, false, false, Matrix.Identity);
+            device.ClipPlanes[0].Plane = refractionPlane;
+            device.ClipPlanes[0].IsEnabled = true;
+            device.SetRenderTarget(0, refractionRenderTarget);
+            device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+            //DrawTerrain(viewMatrix);
+            DrawScene(device, ref camera, currentLoc);
+            device.ClipPlanes[0].IsEnabled = false;
+          
+            device.SetRenderTarget(0, null);
+            refractionMap = refractionRenderTarget.GetTexture();
+            //refractionMap.Save("refractionmap.jpg", ImageFileFormat.Jpg);
+        }
+
+        private void MakeReflectionMatrix(ref GameCamera camera)
+        {
+            Vector3 reflCameraPosition = camera.position;
+            reflCameraPosition.Y = -camera.position.Y + waterHeight * 2;
+            Vector3 reflTargetPos = camera.position + camera.lookAt * 1f;
+            reflTargetPos.Y = -reflTargetPos.Y + waterHeight * 2;
+
+            Vector3 cameraRight = camera.right;
+            Vector3 invUpVector = Vector3.Cross(cameraRight, reflTargetPos - reflCameraPosition);
+
+            reflectionViewMatrix = Matrix.CreateLookAt(reflCameraPosition, reflTargetPos, invUpVector);
+        }
+
+        private void DrawReflectionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc)
+        {
+            Plane reflectionPlane = CreatePlane(waterHeight - 0.5f, new Vector3(0, -1, 0), ref camera, true, true, reflectionViewMatrix);
+            device.ClipPlanes[0].Plane = reflectionPlane;
+            device.ClipPlanes[0].IsEnabled = true;
+            device.SetRenderTarget(0, reflectionRenderTarget);
+            device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+            //DrawTerrain(reflectionViewMatrix);
+            DrawScene(device, ref camera, currentLoc);
+            //DrawSkyDome(reflectionViewMatrix);
+            device.ClipPlanes[0].IsEnabled = false;
+
+            device.SetRenderTarget(0, null);
+            reflectionMap = reflectionRenderTarget.GetTexture();
+            device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
+            //reflectionMap.Save("reflectionMap.jpg", ImageFileFormat.Jpg);
+        }
+
+        private void SetUpWaterVertices(ref GraphicsDevice device)
+        {
+            VertexPositionTexture[] waterVertices = new VertexPositionTexture[6];
+            float terrainWidth = 4000;
+            float terrainLength = 7500;
+            waterVertices[0] = new VertexPositionTexture(new Vector3(0, waterHeight, 0), new Vector2(0, 1));
+            waterVertices[2] = new VertexPositionTexture(new Vector3(terrainWidth, waterHeight, -terrainLength), new Vector2(1, 0));
+            waterVertices[1] = new VertexPositionTexture(new Vector3(0, waterHeight, -terrainLength), new Vector2(0, 0));
+
+            waterVertices[3] = new VertexPositionTexture(new Vector3(0, waterHeight, 0), new Vector2(0, 1));
+            waterVertices[5] = new VertexPositionTexture(new Vector3(terrainWidth, waterHeight, 0), new Vector2(1, 1));
+            waterVertices[4] = new VertexPositionTexture(new Vector3(terrainWidth, waterHeight, -terrainLength), new Vector2(1, 0));
+
+            waterVertexBuffer = new VertexBuffer(device, waterVertices.Length * VertexPositionTexture.SizeInBytes, BufferUsage.WriteOnly);
+            waterVertexBuffer.SetData(waterVertices);
+        }
+
+        private void LoadVertices(ref GraphicsDevice device)
+        {
+            SetUpWaterVertices(ref device);
+            waterVertexDeclaration = new VertexDeclaration(device, VertexPositionTexture.VertexElements);
+        }
+
+        private void DrawWater(float time, ref GameCamera camera, ref GraphicsDevice device, ref List<Light> lights)
+        {
+            waterEffect.CurrentTechnique = waterEffect.Techniques["Water"];
+            Matrix World = Matrix.CreateTranslation(new Vector3(0, 0, 3500));
+            waterEffect.Parameters["xWorld"].SetValue(World);
+            waterEffect.Parameters["xView"].SetValue(camera.GetViewMatrix());
+            waterEffect.Parameters["xReflectionView"].SetValue(reflectionViewMatrix);
+            waterEffect.Parameters["xProjection"].SetValue(camera.GetProjectionMatrix());
+            waterEffect.Parameters["xReflectionMap"].SetValue(reflectionMap);
+            waterEffect.Parameters["xRefractionMap"].SetValue(refractionMap);
+            waterEffect.Parameters["xWaterBumpMap"].SetValue(waterBumpMap);
+            waterEffect.Parameters["xWaveLength"].SetValue(0.5f);
+            waterEffect.Parameters["xWaveHeight"].SetValue(0.4f);
+            waterEffect.Parameters["xCamPos"].SetValue(camera.position);
+            waterEffect.Parameters["xTime"].SetValue(time);
+            waterEffect.Parameters["xWindForce"].SetValue(0.001f);
+            waterEffect.Parameters["xWindDirection"].SetValue(new Vector3(1,0,0.3f));
+            //for (int i = 0; i < lights.Count; i++)
+            //{
+            //    if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+            //    {
+            //        break;
+            //    }
+            //    waterEffect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(new Vector4(lights[i].color * (1 - lights[i].currentExplosionTick), 1.0f));
+            //    waterEffect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(lights[i].position);
+            //}
+            //waterEffect.Parameters["lightCount"].SetValue(lights.Count);
+            waterEffect.Parameters["xLightPosition1"].SetValue(lights[0].position);
+            waterEffect.Parameters["xLightPosition2"].SetValue(lights[1].position);
+            waterEffect.Parameters["lightColor1"].SetValue(lights[0].color);
+            waterEffect.Parameters["lightColor2"].SetValue(lights[1].color);
+
+            waterEffect.Begin();
+            foreach (EffectPass pass in waterEffect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+
+                device.Vertices[0].SetSource(waterVertexBuffer, 0, VertexPositionTexture.SizeInBytes);
+                device.VertexDeclaration = waterVertexDeclaration;
+                int noVertices = waterVertexBuffer.SizeInBytes / VertexPositionTexture.SizeInBytes;
+                device.DrawPrimitives(PrimitiveType.TriangleList, 0, noVertices / 3);
+
+                pass.End();
+            }
+            waterEffect.End();
+        }
+
+        #endregion
+
         #endregion
 
     }
