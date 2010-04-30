@@ -46,6 +46,8 @@ namespace WorldTest
 
         Level firstLevel;
 
+        public static Sound soundControl = new Sound();
+
         private Model pointLightMesh;
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
@@ -184,6 +186,8 @@ namespace WorldTest
                 content = new ContentManager(ScreenManager.Game.Services, "Content");
 
             gameFont = content.Load<SpriteFont>("gamefont");
+
+            GameplayScreen.soundControl.PlayMusic("cave game first area");
 
             //main game screen content
             // Create a new SpriteBatch, which can be used to draw textures.
@@ -458,7 +462,7 @@ namespace WorldTest
         }
 
         #endregion
-
+        
         #region Update
 
         /// <summary>
@@ -561,10 +565,12 @@ namespace WorldTest
                 pos += camera.lookAt * 20;
                 relicLight.position = pos;
                 this.relicLightOn = true;
+                GameplayScreen.soundControl.Play("fireball_ignite");
             }
             else if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
                       (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
+                //GameplayScreen.soundControl.Play("fireball_held");
                 Vector3 pos = player.position + new Vector3(0, 105, 0);
                 if (player.velocity.X != 0 || player.velocity.Z != 0)
                 {
@@ -595,7 +601,7 @@ namespace WorldTest
                  (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
                 this.relicLightOn = false;
-
+                GameplayScreen.soundControl.Play("fireball_deploy");
                 Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
@@ -610,6 +616,7 @@ namespace WorldTest
             if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
                  (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
             {
+                GameplayScreen.soundControl.Play("banish activated");
                 relicLight.attenuationRadius = 3000.0f;
                 relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
                 relicLight.currentExplosionTick = 0.0f;
@@ -651,7 +658,7 @@ namespace WorldTest
                  (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
             {
                 this.relicLightOn = false;
-
+                GameplayScreen.soundControl.Play("banish deployed");
                 Vector3 pos = player.position + new Vector3(0, 105, 0);
                 pos += camera.right * 5;
                 pos += camera.lookAt * 20;
@@ -835,6 +842,8 @@ namespace WorldTest
             {
                 //ScreenManager.RemoveScreen(this);
                 this.ScreenState = ScreenState.Hidden;
+                soundBank.Dispose();
+                soundControl.StopMusic("cave game first area");
                 GameOver.Load(ScreenManager, null, new BackgroundScreen(), new MainMenuScreen(this.ScreenManager));
             }
 

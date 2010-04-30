@@ -57,8 +57,8 @@ namespace WorldTest
         public override void LoadContent()
         {
             ContentManager content = ScreenManager.Game.Content;
-
             gameOverScreen = content.Load<Texture2D>("game_over");
+            soundBank.PlayCue("game over");
         }
 
         public override void Update(GameTime gameTime, bool otherScreenHasFocus,

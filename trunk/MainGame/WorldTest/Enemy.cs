@@ -44,7 +44,8 @@ namespace WorldTest
             ChasingDumb, //chasing the player when close
             Attack,  //has caught the player and can stop chasing
             Idle,    //enemy can't see the player and wanders
-            Weakened //the enemy can be banished to the other dimension
+            Weakened, //the enemy can be banished to the other dimension
+            Airborne //the enemy is in the air and needs to stay still until it hits the ground
         }
 
         private EnemyStats stats;
@@ -330,6 +331,7 @@ namespace WorldTest
                     {
                         player.isHit = true; // Player takes damage
                         player.health -= 20;
+                        GameplayScreen.soundControl.Play("player hit 1");
                         timeBetweenDamage = 0;
                     }
                 }
@@ -378,6 +380,7 @@ namespace WorldTest
                     this.activeAnimationClip = 2;
                     controller.CrossFade(model.AnimationClips["Attack"],TimeSpan.FromMilliseconds(300));
                     controller.Speed = 2.0f;
+                    GameplayScreen.soundControl.Play("enemy attacking");
                 }
                 position = currentLevel.CollideWith(position, Vector3.Down, 0.1, Level.MAX_COLLISIONS);
             }

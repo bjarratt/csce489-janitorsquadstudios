@@ -131,7 +131,6 @@ namespace WorldTest
             MenuEntries.Add(backMenuEntry);
         }
 
-
         /// <summary>
         /// Fills in the latest values for the options screen menu text.
         /// </summary>

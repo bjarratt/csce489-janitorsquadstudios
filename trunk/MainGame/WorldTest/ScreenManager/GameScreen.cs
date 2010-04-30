@@ -37,9 +37,13 @@ namespace WorldTest
         #region Fields
 
         //Sound stuff!
-        AudioEngine audioEngine;
-        WaveBank waveBank;
-        protected SoundBank soundBank;
+        static AudioEngine audioEngine;
+        static WaveBank waveBank;
+        static protected SoundBank soundBank;
+
+        // 3D audio objects
+        AudioEmitter emitter = new AudioEmitter();
+        AudioListener listener = new AudioListener();
 
         #endregion
 
