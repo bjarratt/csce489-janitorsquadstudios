@@ -119,6 +119,10 @@ namespace WorldTest
 
         ToolTips tips;
 
+        // Hud
+        Reticle fireReticle;
+        Reticle banishReticle;
+
         #endregion
 
         #region Initialization
@@ -171,6 +175,8 @@ namespace WorldTest
             inputControlState = new ControlState();
             //init damage object
             blood = new Damage(this.ScreenManager.game);
+            fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
+            banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 80);
         }
 
         #endregion
@@ -202,6 +208,7 @@ namespace WorldTest
             player.InitCamera(ref camera);
 
             player.LoadContent();
+
             blood.LoadContent(content);
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
@@ -266,6 +273,9 @@ namespace WorldTest
                 pp.BackBufferWidth, pp.BackBufferHeight, 1,
                 pp.BackBufferFormat, pp.MultiSampleType, pp.MultiSampleQuality);
             //player and HUD content
+
+            fireReticle.LoadContent(ref content);
+            banishReticle.LoadContent(ref content);
 
             // Start the sound!
 
@@ -600,15 +610,19 @@ namespace WorldTest
             if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
                  (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
             {
-                this.relicLightOn = false;
-                GameplayScreen.soundControl.Play("fireball_deploy");
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                pos += camera.right * 5;
-                pos += camera.lookAt * 20;
-                projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
-                                               explosionSmokeParticles,
-                                               projectileTrailParticles, ref enemies, false));
-                projectiles[projectiles.Count - 1].is_released = true;
+                if (!this.fireReticle.AnimationRunning)
+                {
+                    this.relicLightOn = false;
+                    this.fireReticle.StartAnimation();
+                    GameplayScreen.soundControl.Play("fireball_deploy");
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 20;
+                    projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
+                                                   explosionSmokeParticles,
+                                                   projectileTrailParticles, ref enemies, false));
+                    projectiles[projectiles.Count - 1].is_released = true;
+                }
             }
 
 
@@ -657,15 +671,19 @@ namespace WorldTest
             if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Released && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
                  (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
             {
-                this.relicLightOn = false;
+                if (!this.banishReticle.AnimationRunning)
+                {
+                    this.relicLightOn = false;
+                    this.banishReticle.StartAnimation();
                 GameplayScreen.soundControl.Play("banish deployed");
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                pos += camera.right * 5;
-                pos += camera.lookAt * 20;
-                projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, banisherExplosions,
-                                               banisherExplosions,
-                                               banishingParticleProj, ref enemies, true));
-                projectiles[projectiles.Count - 1].is_released = true;
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 20;
+                    projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, banisherExplosions,
+                                                   banisherExplosions,
+                                                   banishingParticleProj, ref enemies, true));
+                    projectiles[projectiles.Count - 1].is_released = true;
+                }
             }
         }
 
@@ -741,6 +759,13 @@ namespace WorldTest
         #endregion
 
         #region Draw
+
+        public void DrawHud()
+        {
+            fireReticle.Draw(this.graphics.GraphicsDevice);
+            banishReticle.Draw(this.graphics.GraphicsDevice);
+        }
+
         /// <summary>
         /// Draws the gameplay screen.
         /// </summary>
@@ -849,6 +874,8 @@ namespace WorldTest
 
             spriteBatch.End();
 
+            this.DrawHud();
+
             //base.Draw(gameTime);
 
             // If the game is transitioning on or off, fade it out to black.
@@ -884,8 +911,7 @@ namespace WorldTest
                 pointLightMeshEffect.Parameters["world"].SetValue(lightMeshWorld);
                 pointLightMeshEffect.Parameters["view"].SetValue(camera.GetViewMatrix());
                 pointLightMeshEffect.Parameters["projection"].SetValue(camera.GetProjectionMatrix());
-                pointLightMeshEffect.Parameters["lightColor"].SetValue(
-                   new Vector4(lights[i].color, 1f));
+                pointLightMeshEffect.Parameters["lightColor"].SetValue(new Vector4(lights[i].color, 1f));
                 pointLightMeshEffect.CommitChanges();
 
                 graphics.GraphicsDevice.DrawIndexedPrimitives(

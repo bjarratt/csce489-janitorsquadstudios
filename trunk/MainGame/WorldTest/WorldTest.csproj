@@ -110,6 +110,7 @@
     <Compile Include="ParticleSystems1\ProjectileTrailParticleSystem.cs" />
     <Compile Include="ParticleSystems1\SmokePlumeParticleSystem.cs" />
     <Compile Include="Portal.cs" />
+    <Compile Include="Reticle.cs" />
     <Compile Include="ScreenManager\GameScreen.cs" />
     <Compile Include="ScreenManager\InputState.cs" />
     <Compile Include="ScreenManager\ScreenManager.cs" />
