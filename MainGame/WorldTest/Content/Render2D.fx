@@ -49,6 +49,14 @@ void ReticlePixelShader(
 	}
 }
 
+void HandPixelShader(
+	in float3 inPosition		: TEXCOORD0,
+	out float4 outColor0		: COLOR0)
+{
+	outColor0 = float4(1,1,1,1);
+	//return outColor0;
+}
+
 technique Reticle
 {
     pass Pass1
@@ -56,4 +64,13 @@ technique Reticle
         VertexShader = compile vs_3_0 ReticleVertexShader();
         PixelShader = compile ps_3_0 ReticlePixelShader();
     }
+}
+
+technique Hand
+{
+	pass Pass1
+	{
+		VertexShader = compile vs_3_0 ReticleVertexShader();
+		PixelShader = compile ps_3_0 HandPixelShader();
+	}
 }

@@ -1466,20 +1466,20 @@ namespace WorldTest
             waterEffect.Parameters["xTime"].SetValue(time);
             waterEffect.Parameters["xWindForce"].SetValue(0.001f);
             waterEffect.Parameters["xWindDirection"].SetValue(new Vector3(1,0,0.3f));
-            //for (int i = 0; i < lights.Count; i++)
-            //{
-            //    if ((i + 1) > GameplayScreen.MAX_LIGHTS)
-            //    {
-            //        break;
-            //    }
-            //    waterEffect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(new Vector4(lights[i].color * (1 - lights[i].currentExplosionTick), 1.0f));
-            //    waterEffect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(lights[i].position);
-            //}
-            //waterEffect.Parameters["lightCount"].SetValue(lights.Count);
-            waterEffect.Parameters["xLightPosition1"].SetValue(lights[0].position);
-            waterEffect.Parameters["xLightPosition2"].SetValue(lights[1].position);
-            waterEffect.Parameters["lightColor1"].SetValue(lights[0].color);
-            waterEffect.Parameters["lightColor2"].SetValue(lights[1].color);
+            for (int i = 0; i < lights.Count; i++)
+            {
+                if ((i + 1) > GameplayScreen.MAX_LIGHTS)
+                {
+                    break;
+                }
+                waterEffect.Parameters["lights"].Elements[i].StructureMembers["color"].SetValue(lights[i].color);
+                waterEffect.Parameters["lights"].Elements[i].StructureMembers["position"].SetValue(lights[i].position);
+            }
+            waterEffect.Parameters["lightCount"].SetValue(lights.Count);
+            //waterEffect.Parameters["xLightPosition1"].SetValue(lights[0].position);
+            //waterEffect.Parameters["xLightPosition2"].SetValue(lights[1].position);
+            //waterEffect.Parameters["lightColor1"].SetValue(lights[0].color);
+            //waterEffect.Parameters["lightColor2"].SetValue(lights[1].color);
 
             waterEffect.Begin();
             foreach (EffectPass pass in waterEffect.CurrentTechnique.Passes)

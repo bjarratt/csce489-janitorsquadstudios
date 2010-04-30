@@ -50,6 +50,10 @@ namespace WorldTest
 
         private Model pointLightMesh;
         private Model enemySphereMesh;
+        private Model hand;
+        private Texture2D handDiffuse;
+        private Texture2D handCel;
+        private Effect handEffect;
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
@@ -139,10 +143,10 @@ namespace WorldTest
             this.graphics = sm.graphics;
 
             //set enemy stats
-            this.ENEMY_STATS.maxSpeed = 2.0f;
+            this.ENEMY_STATS.maxSpeed = 10.0f;
             this.ENEMY_STATS.attackDistance = 200f;
-            this.ENEMY_STATS.smartChaseDistance = 2000f;
-            this.ENEMY_STATS.dumbChaseDistance = 500f;
+            this.ENEMY_STATS.smartChaseDistance = 4000f;
+            this.ENEMY_STATS.dumbChaseDistance = 250f;
             this.ENEMY_STATS.hysteresis = 15f;
             this.ENEMY_STATS.recoveryTime = 7f;
             this.ENEMY_STATS.maxHealth = 100;
@@ -204,6 +208,10 @@ namespace WorldTest
             pointLightMeshEffect = content.Load<Effect>("PointLightMesh");
             pointLightMesh = content.Load<Model>("SphereLowPoly");
             enemySphereMesh = content.Load<Model>("SphereLowPoly");
+            hand = content.Load<Model>("player_hand");
+            handEffect = content.Load<Effect>("Render2D");
+            handDiffuse = content.Load<Texture2D>("ColorMap");
+            handCel = content.Load<Texture2D>("Toon2");
 
             player = new Player(graphics, content);
             camera = new GameCamera(graphics, ref player);
@@ -620,7 +628,7 @@ namespace WorldTest
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, explosionParticles,
+                    projectiles.Add(new Attack(pos, camera.lookAt * 800f, 100, 30, 20, 5f, 0, explosionParticles,
                                                    explosionSmokeParticles,
                                                    projectileTrailParticles, ref enemies, false));
                     projectiles[projectiles.Count - 1].is_released = true;
@@ -681,7 +689,7 @@ namespace WorldTest
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 400f, 100, 30, 20, 5f, 0, banisherExplosions,
+                    projectiles.Add(new Attack(pos, camera.lookAt * 800f, 100, 30, 20, 5f, 0, banisherExplosions,
                                                    banisherExplosions,
                                                    banishingParticleProj, ref enemies, true));
                     projectiles[projectiles.Count - 1].is_released = true;
@@ -855,6 +863,7 @@ namespace WorldTest
 
             //Draw lights
             DrawLights();
+            //DrawHand();
 
             //draw all on-screen hud or damage indicators
             spriteBatch.Begin();
@@ -961,6 +970,65 @@ namespace WorldTest
             //}
             pointLightMeshEffect.CurrentTechnique.Passes[0].End();
             pointLightMeshEffect.End();
+        }
+
+        public void DrawHand()
+        {
+            ModelMesh mesh = this.hand.Meshes[0];
+            ModelMeshPart meshPart = mesh.MeshParts[0];
+
+            graphics.GraphicsDevice.Vertices[0].SetSource(
+                mesh.VertexBuffer, meshPart.StreamOffset, meshPart.VertexStride);
+            graphics.GraphicsDevice.VertexDeclaration = meshPart.VertexDeclaration;
+            graphics.GraphicsDevice.Indices = mesh.IndexBuffer;
+
+            Vector3 screenOffset = new Vector3((float)graphics.GraphicsDevice.Viewport.Width / 2.0f, (float)graphics.GraphicsDevice.Viewport.Height / 2.0f, -1.0f);
+            Matrix projectionMatrix = Matrix.CreateOrthographicOffCenter(0,
+                (float)graphics.GraphicsDevice.Viewport.Width,
+                (float)graphics.GraphicsDevice.Viewport.Height,
+                0, 1.0f, 10000.0f);
+
+            Matrix worldMatrix = Matrix.CreateScale(0.05f);
+            worldMatrix.Translation = new Vector3(screenOffset.X, screenOffset.Y, 0.0f);
+            Matrix viewMatrix = Matrix.CreateLookAt(new Vector3(0, 0, 1), Vector3.Zero, Vector3.Up);
+            handEffect.Parameters["World"].SetValue(worldMatrix);
+            handEffect.Parameters["View"].SetValue(viewMatrix);
+            handEffect.Parameters["Projection"].SetValue(projectionMatrix);
+            handEffect.Parameters["reticleColor"].SetValue(new Vector4(1, 1, 1, 1));
+            handEffect.Parameters["reticlePosition"].SetValue(screenOffset);
+            //shader.Parameters["reticleInnerRadius"].SetValue(innerRadius);
+            //shader.Parameters["reticleOuterRadius"].SetValue(outerRadius);
+
+            handEffect.CurrentTechnique = handEffect.Techniques["Reticle"];
+
+            handEffect.Begin(SaveStateMode.None);
+
+            foreach (EffectPass pass in handEffect.CurrentTechnique.Passes)
+            {
+                //lightMeshWorld = Matrix.Multiply(Matrix.CreateScale(0.05f), Matrix.CreateTranslation(0, -650, 0));//Matrix.CreateScale(0.05f) * Matrix.CreateTranslation(0,-550,0);
+
+                //handEffect.Parameters["matW"].SetValue(lightMeshWorld);
+                //handEffect.Parameters["matVP"].SetValue(camera.GetViewMatrix() * camera.GetProjectionMatrix());
+                //handEffect.Parameters["matVI"].SetValue(Matrix.Invert(camera.GetViewMatrix()));
+                ////handEffect.Parameters["shadowMap"].SetValue(shadowRenderTarget.GetTexture());
+                //handEffect.Parameters["diffuseMap0"].SetValue(handDiffuse);
+                //handEffect.Parameters["CelMap"].SetValue(handCel);
+                //handEffect.Parameters["ambientLightColor"].SetValue(new Vector3(0.0f));
+                //handEffect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
+                //handEffect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.1f));
+                //handEffect.Parameters["material"].StructureMembers["specularPower"].SetValue(55);
+                ////handEffect.Parameters["diffuseMapEnabled"].SetValue(true);
+                //handEffect.Parameters["playerPosition"].SetValue(player.position);
+                //handEffect.Parameters["transitionRadius"].SetValue(GameplayScreen.transitionRadius);
+                //handEffect.Parameters["waveRadius"].SetValue(GameplayScreen.transitionRadius - GameplayScreen.WAVE_FRONT_SIZE);
+                //handEffect.CommitChanges();
+
+                graphics.GraphicsDevice.DrawIndexedPrimitives(
+                    PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
+                    meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
+            }
+            
+            handEffect.End();
         }
 
         #endregion
