@@ -48,12 +48,8 @@ namespace WorldTest
         /// <param name="sound"></param>
         public virtual void Play(String sound)
         {
-            // Get the cue and play it.
-            // For 3D cues, you must call Apply3D before calling Play.
-            /*if (cue != null && cue.IsPlaying)
-            {
-                cue.Stop(AudioStopOptions.AsAuthored);
-            }*/
+            //Get the cue and play it.
+            //For 3D cues, you must call Apply3D before calling Play.
             cue = soundBank.GetCue(sound);
             cue.Apply3D(listener, emitter);
             cue.Play();
@@ -80,6 +76,11 @@ namespace WorldTest
         public virtual void StopMusic(String sound)
         {
             cue2.Stop(AudioStopOptions.AsAuthored);
+        }
+
+        public virtual void Stop(String sound)
+        {
+            cue.Stop(AudioStopOptions.AsAuthored);
         }
 
         /// <summary>

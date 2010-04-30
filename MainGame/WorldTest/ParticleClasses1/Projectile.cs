@@ -166,6 +166,14 @@ namespace WorldTest
 
                 this.position = this.position + ((collidedPosition - this.position) / 2.0f);
 
+                if (this.is_banisher)
+                {
+                    GameplayScreen.soundControl.Play("banish hit");
+                }
+                else
+                {
+                    GameplayScreen.soundControl.Play("fireball_hit");
+                }
                 return false;
             }
                 

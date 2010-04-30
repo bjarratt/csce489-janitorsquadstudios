@@ -862,7 +862,7 @@ namespace WorldTest
             }
 
             tips.Draw(spriteBatch, graphics.GraphicsDevice.PresentationParameters);
-            
+
             if (player.health <= 0)
             {
                 //ScreenManager.RemoveScreen(this);
