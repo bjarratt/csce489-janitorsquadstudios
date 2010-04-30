@@ -9,7 +9,7 @@ float4x4 xProjection;
 struct PointLight
 {
     float3 position;
-    float4 color;
+    float3 color;
 };
 
 float xWaveLength;
@@ -20,6 +20,7 @@ float3 xWindDirection;
 float xWindForce;
 float3 xLightPosition1;
 float3 xLightPosition2;
+
 float3 lightColor1;
 float3 lightColor2;
 
@@ -130,19 +131,21 @@ WPixelToFrame WaterPS(WVertexToPixel PSIn)
     Output.Color = lerp(combinedRefrRefl, dullColor, 0.2f);
     
     //float specular = (float)0;
-    //for(int i=0; i<lightCount; i++){
-		float3 lightVector1 = xLightPosition1 - PSIn.Position3D;
+    for(int i=0; i<lightCount; i++){
+		float3 lightVector1 = lights[i].position - PSIn.Position3D;
 		float3 reflectionVector1 = -reflect(normalize(lightVector1), normalVector);
 		float specular1 = dot(normalize(reflectionVector1), normalize(eyeVector));
-    //}
-	specular1 = pow(specular1, 200);        
-	Output.Color.rgb += specular1 * lightColor1;
+		specular1 = pow(specular1, 200);
+		Output.Color.rgb += specular1 * lights[i].color;
+    }
+	//specular1 = pow(specular1, 200);        
+	//Output.Color.rgb += specular1 * lightColor1;
 	
-	float3 lightVector2 = xLightPosition2 - PSIn.Position3D;
-	float3 reflectionVector2 = -reflect(normalize(lightVector2), normalVector);
-	float specular2 = dot(normalize(reflectionVector2), eyeVector);
-	specular2 = pow(specular2, 256);
-	Output.Color.rgb += specular2 * lightColor2;
+	//float3 lightVector2 = xLightPosition2 - PSIn.Position3D;
+	//float3 reflectionVector2 = -reflect(normalize(lightVector2), normalVector);
+	//float specular2 = dot(normalize(reflectionVector2), eyeVector);
+	//specular2 = pow(specular2, 256);
+	//Output.Color.rgb += specular2 * lightColor2;
 
     return Output;
 }
@@ -151,7 +154,7 @@ technique Water
 {
     pass Pass0
     {
-        VertexShader = compile vs_1_1 WaterVS();
-        PixelShader = compile ps_2_0 WaterPS();
+        VertexShader = compile vs_3_0 WaterVS();
+        PixelShader = compile ps_3_0 WaterPS();
     }
 }

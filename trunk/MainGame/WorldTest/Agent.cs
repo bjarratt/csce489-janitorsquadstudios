@@ -67,7 +67,7 @@ namespace WorldTest
         public AnimationController controller;
         public int activeAnimationClip = 0;
 
-        public int health;
+        public float health;
         public bool isHit;
 
         protected Dimension currentDimension;

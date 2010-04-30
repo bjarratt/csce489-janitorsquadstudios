@@ -108,7 +108,7 @@ namespace WorldTest
             rotation = 0.0f;
             turn_speed = 1.5f;
             turn_speed_reg = 1.6f;
-            movement_speed_reg = 2.0f; // 14
+            movement_speed_reg = 14.0f; // 14
 
             health = this.stats.maxHealth;
 
@@ -375,7 +375,7 @@ namespace WorldTest
         {
             worldTransform = Matrix.CreateFromQuaternion(orientation);
             worldTransform.Translation = position;
-            velocity = heading * speed;
+            velocity = heading * 30;
             velocity.Y = -1.0f;
             if (this.state == EnemyAiState.Attack)
             {

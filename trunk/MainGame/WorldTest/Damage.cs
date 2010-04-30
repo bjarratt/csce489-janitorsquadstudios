@@ -39,6 +39,10 @@ namespace WorldTest
 
         public void Update(GameTime theGameTime, ref Player player)
         {
+            // Player recovers health fully from 0 in 7 seconds (@60 fps).
+            player.health += 0.059524f;
+
+            if (player.health > 100) player.health = 100;
             health = player.health;
             //Decrement the delay by the number of seconds that have elapsed since
             //the last time that the Update method was called
