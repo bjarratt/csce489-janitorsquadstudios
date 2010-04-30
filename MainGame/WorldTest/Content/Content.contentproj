@@ -134,11 +134,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="gameAudio.xap">
-      <Name>gameAudio</Name>
-      <Importer>XactImporter</Importer>
-      <Processor>XactProcessor</Processor>
-    </Compile>
     <Compile Include="gamefont.spritefont">
       <Name>gamefont</Name>
       <Importer>FontDescriptionImporter</Importer>
@@ -325,6 +320,11 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="gameAudio.xap">
+      <Name>gameAudio</Name>
+      <Importer>XactImporter</Importer>
+      <Processor>XactProcessor</Processor>
+    </Compile>
     <Compile Include="waterbump.dds">
       <Name>waterbump</Name>
       <Importer>TextureImporter</Importer>

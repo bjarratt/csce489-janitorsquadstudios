@@ -161,6 +161,7 @@ namespace WorldTest
                 if (RayCircleIntersect(new Ray(position + new Vector3(0,50,0), Vector3.Down), Vector3.Zero, 50f))
                 {
                     this.ChangeDimension();
+                    GameplayScreen.soundControl.Play("change dimensions");
                     GameplayScreen.transitionRadius = 0;
                     GameplayScreen.transitioning = true;
                 }
