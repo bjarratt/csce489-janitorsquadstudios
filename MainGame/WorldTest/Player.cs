@@ -241,6 +241,8 @@ namespace WorldTest
                     velocity -= camera.right * speed;
                 }
 
+                bool didSet = false;
+
                 if ((stick.Y > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
@@ -257,6 +259,7 @@ namespace WorldTest
                 {
                     float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
                     velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
+                    didSet = true;
                 }
                 else 
                 {
@@ -266,6 +269,13 @@ namespace WorldTest
                 if (Status == State.running || Status == State.idle)
                 {
                     velocity.Y = -0.5f;
+                }
+
+                if (Status == State.jumping && !didSet)
+                {
+                    float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
+                    didSet = false;
                 }
 
                 if (!(Status == State.jumping) && 
@@ -279,17 +289,25 @@ namespace WorldTest
                 }
 
                 Vector3 oldpos = position;
+                Vector3 oldvel = velocity;
                 position = currentLevel.CollideWith(position, velocity, 0.8, Level.MAX_COLLISIONS);
-
-                if ((oldpos + velocity) == position)    //no collisions
+                Vector3 outPos_dummy; 
+                bool isFloor = currentLevel.PlayerCollideWithWalls(position, oldvel, 0.8, out outPos_dummy);
+                if ((oldpos + velocity) == position && !isFloor)    //no collisions
                 {
                     Status = State.jumping;
                 }
-                else if ((stick.Y > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
+                else if ((oldpos + velocity) != position && !isFloor)
+                {
+                    Status = State.jumping;
+                    velocity.X = -velocity.X * 0.5f;
+                    velocity.Z = -velocity.Y * 0.5f;
+                }
+                else if (((stick.Y > 0 || stick.X > 0) || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                 }
-                else if ((stick.Y < 0 || inputState.currentKeyboardState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
+                else if (((stick.Y < 0 || stick.X < 0) || inputState.currentKeyboardState.IsKeyDown(Keys.S)) && !(Status == State.jumping))
                 {
                     Status = State.running;
                 }
@@ -313,7 +331,7 @@ namespace WorldTest
                 }
                 else
                 {
-                    position = currentLevel.CollideWith(position, addVector * speed + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
+                    position = currentLevel.CollideWith(position, -addVector * speed + new Vector3(0, -1, 0), 0.8, Level.MAX_COLLISIONS);
                     //position += addVector * speed;
                 }
             }

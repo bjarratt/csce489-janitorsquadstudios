@@ -155,7 +155,7 @@ namespace WorldTest
             textures.SetValue(content.Load<Texture2D>("ColorMap"), (int)Tex_Select.model);
             textures.SetValue(content.Load<Texture2D>("Toon2"), (int)Tex_Select.cel_tex);
 
-            collisionSphere = new BoundingSphere(position + lookAt * 100 + new Vector3(0,60,0), 100f);
+            collisionSphere = new BoundingSphere(position + lookAt * 50 + new Vector3(0,40,0), 100f);
             PresentationParameters pp = graphics.GraphicsDevice.PresentationParameters;
 
             render_targets[(int)Target_Select.normalDepth] = new RenderTarget2D(graphics.GraphicsDevice,
@@ -406,7 +406,7 @@ namespace WorldTest
                 }
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }
-            collisionSphere.Center = position + lookAt * 100 + new Vector3(0,60,0);
+            collisionSphere.Center = position + lookAt * 10 + new Vector3(0,25,0);
         }
 
         private void UpdateLocation(ref Level currentLevel, ref Player player)
