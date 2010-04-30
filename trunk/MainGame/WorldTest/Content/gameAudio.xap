@@ -1200,7 +1200,7 @@ Sound Bank
     Sound
     {
         Name = heartbeat;
-        Volume = -1200;
+        Volume = -600;
         Pitch = 0;
         Priority = 0;
 
@@ -1216,6 +1216,7 @@ Sound Bank
 
             Play Wave Event
             {
+                Loop Count = 2;
                 Break Loop = 0;
                 Use Speaker Position = 0;
                 Use Center Speaker = 1;
@@ -1531,7 +1532,7 @@ Sound Bank
     Sound
     {
         Name = fireball_ignite;
-        Volume = -1200;
+        Volume = -1000;
         Pitch = 0;
         Priority = 0;
 
@@ -1813,7 +1814,7 @@ Sound Bank
     Sound
     {
         Name = banish deployed;
-        Volume = -2200;
+        Volume = -2400;
         Pitch = 0;
         Priority = 0;
 
@@ -1860,7 +1861,7 @@ Sound Bank
     Sound
     {
         Name = banish activated;
-        Volume = -2200;
+        Volume = -2400;
         Pitch = 0;
         Priority = 0;
 

@@ -41,6 +41,8 @@ namespace WorldTest
         }
 
         public bool insidePortal;
+        public bool HealthIsLow { get { return this.health <= 20; } }
+        public bool IsDead { get { return this.health <= 0; } }
 
         #endregion
 

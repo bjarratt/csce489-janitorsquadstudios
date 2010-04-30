@@ -331,6 +331,10 @@ namespace WorldTest
                     {
                         player.isHit = true; // Player takes damage
                         player.health -= 20;
+                        if (player.HealthIsLow && !player.IsDead)
+                        {
+                            GameplayScreen.soundControl.Play("heartbeat");
+                        }
                         GameplayScreen.soundControl.Play("player hit 1");
                         timeBetweenDamage = 0;
                     }
