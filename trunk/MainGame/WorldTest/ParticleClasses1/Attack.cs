@@ -39,7 +39,7 @@ namespace WorldTest
             {
                 light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
             }
-            collisionSphere = new BoundingSphere(position, 10);
+            //collisionSphere = new BoundingSphere(position, 20);
             is_released = false;
         }
 

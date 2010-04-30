@@ -35,7 +35,7 @@ namespace WorldTest
         public float cameraDistance = 50;
         public float cameraMovementUp = 0;
         public float cameraMovementSide = 0;
-
+        private float accumulatedArc = 0;
         //Camera movement and rotation speeds
         public float rotationSpeed = 0.05f;
         private const float VERTICAL_ROT_SPEED = 0.05f;  // 0.025f
@@ -200,11 +200,17 @@ namespace WorldTest
 
             if (invertYAxis)
             {
+                float tempArc = accumulatedArc;
                 cameraArc -= inputState.currentGamePadState.ThumbSticks.Right.Y * time * HORIZONTAL_ROT_SPEED;
+                if ((tempArc + cameraArc) > 55.0f || (tempArc + cameraArc) < -55.0f) cameraArc = 0;
+                else accumulatedArc += cameraArc;
             }
             else
             {
+                float tempArc = accumulatedArc;
                 cameraArc += inputState.currentGamePadState.ThumbSticks.Right.Y * time * HORIZONTAL_ROT_SPEED;
+                if ((tempArc + cameraArc) > 55.0f || (tempArc + cameraArc) < -55.0f) cameraArc = 0;
+                else accumulatedArc += cameraArc;
             }
 
             // Limit the arc movement.
@@ -297,9 +303,10 @@ namespace WorldTest
                 //right = Vector3.Transform(right, yawMatrix);
                 Matrix pitchMatrix = Matrix.CreateFromAxisAngle(right, MathHelper.ToRadians(cameraArc));
                 Matrix combine = Matrix.Multiply(yawMatrix, pitchMatrix);
-                lookAt = Vector3.Transform(lookAt, combine);
-                right = Vector3.Transform(right, combine);
-                up = Vector3.Transform(up, combine);
+                lookAt = Vector3.Normalize(Vector3.Transform(lookAt, combine));
+                right = Vector3.Normalize(Vector3.Transform(right, combine));
+                up = Vector3.Normalize(Vector3.Transform(up, combine));
+                 
                 Vector3 target = position + lookAt;
                 view = Matrix.CreateLookAt(position, target, up);
             }

@@ -71,7 +71,7 @@ namespace WorldTest
         }
 
         public Light light;
-        public BoundingSphere collisionSphere;
+        public Ray projRay;
         public bool is_banisher;
 
         static Random random = new Random();
@@ -107,50 +107,62 @@ namespace WorldTest
             velocity.Y -= elapsedTime * gravity;
             age += elapsedTime;
             light.position = this.position;
-            collisionSphere.Center = this.position;
+            //collisionSphere.Center = this.position;
+
 
             // Update the particle emitter, which will create our particle trail.
             trailEmitter.Update(gameTime, position);
 
             Vector3 collidedPosition = this.position;
+            Ray dir = new Ray(this.position, Vector3.Normalize(this.velocity));
 
-            //collision detect whether emitter collided with geometry or agents
-            if (level.EmitterCollideWith(this.position, this.velocity, 0.2f, out collidedPosition))
-            {
-                age = projectileLifespan + 1;
-            }
-
-            for(int i = 0; i < enemies.Count; i++)
+            for (int i = 0; i < enemies.Count; i++)
             {
                 if (enemies[i].CurrentDimension != playerDimension)
                 {
                     //pass over enemy in other dimension
                 }
-                else if (collisionSphere.Intersects(enemies[i].collisionSphere))
+                else
                 {
-                    age = projectileLifespan + 1;
-                    if (this.is_banisher)
+                    float? dist = this.intersectRaySphere(dir, enemies[i].collisionSphere);
+                    if (dist == null) continue;
+                    Vector3 len = dir.Position - enemies[i].collisionSphere.Center;
+                    if (len.Length() <= enemies[i].collisionSphere.Radius)
                     {
-                        if (enemies[i].state == Enemy.EnemyAiState.Weakened)
+                        age = projectileLifespan + 1;
+                        if (this.is_banisher)
                         {
-                            enemies[i].ChangeDimension();
-                            enemies[i].state = Enemy.EnemyAiState.Idle;
-                            enemies[i].IncreaseMaxHealth();
-                            enemies[i].health = enemies[i].MaxHealth;
+                            if (enemies[i].state == Enemy.EnemyAiState.Weakened)
+                            {
+                                enemies[i].ChangeDimension();
+                                enemies[i].state = Enemy.EnemyAiState.Idle;
+                                enemies[i].IncreaseMaxHealth();
+                                enemies[i].health = enemies[i].MaxHealth;
+                            }
                         }
+                        else
+                        {
+                            enemies[i].health -= 50;
+                            if (enemies[i].health <= 0)
+                            {
+                                enemies[i].state = Enemy.EnemyAiState.Weakened;
+                                enemies[i].ResetRecoveryTime();
+                            }
+                        }
+
+                        break;
                     }
                     else
                     {
-                        enemies[i].health -= 50;
-                        if (enemies[i].health <= 0)
-                        {
-                            enemies[i].state = Enemy.EnemyAiState.Weakened;
-                            enemies[i].ResetRecoveryTime();
-                        }
+                        //do nothing because it's not close enough yet
                     }
-
-                    break;
                 }
+            }
+
+            //collision detect whether emitter collided with geometry or agents
+            if (level.EmitterCollideWith(this.position, this.velocity, 0.005f))
+            {
+                age = projectileLifespan + 1;
             }
 
             // If enough time has passed or it collides with something, explode! Note how we pass 
@@ -179,5 +191,15 @@ namespace WorldTest
                 
             return true;
         }
+
+        public float? intersectRaySphere(Ray ray, BoundingSphere sphere) {
+	        Vector3 dst = ray.Position - sphere.Center;
+	        float B = Vector3.Dot(dst, ray.Direction);
+	        float C = Vector3.Dot(dst, dst) - sphere.Radius*sphere.Radius;
+	        float D = B*B - C;
+	        return D > 0 ? -B - (float?)Math.Sqrt(D) : null;
+        }
+
+
     }
 }

@@ -49,6 +49,7 @@ namespace WorldTest
         public static Sound soundControl = new Sound();
 
         private Model pointLightMesh;
+        private Model enemySphereMesh;
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
@@ -202,6 +203,7 @@ namespace WorldTest
 
             pointLightMeshEffect = content.Load<Effect>("PointLightMesh");
             pointLightMesh = content.Load<Model>("SphereLowPoly");
+            enemySphereMesh = content.Load<Model>("SphereLowPoly");
 
             player = new Player(graphics, content);
             camera = new GameCamera(graphics, ref player);
@@ -842,12 +844,13 @@ namespace WorldTest
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension);
+                //DrawEnemySphere(e.collisionSphere.Radius, e.collisionSphere.Center);
             }
 
             //Draw lights
@@ -919,6 +922,43 @@ namespace WorldTest
                     meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
 
             }
+            pointLightMeshEffect.CurrentTechnique.Passes[0].End();
+            pointLightMeshEffect.End();
+        }
+
+        public void DrawEnemySphere(float radius, Vector3 center)
+        {
+            ModelMesh mesh = this.enemySphereMesh.Meshes[0];
+            ModelMeshPart meshPart = mesh.MeshParts[0];
+
+            graphics.GraphicsDevice.Vertices[0].SetSource(
+                mesh.VertexBuffer, meshPart.StreamOffset, meshPart.VertexStride);
+            graphics.GraphicsDevice.VertexDeclaration = meshPart.VertexDeclaration;
+            graphics.GraphicsDevice.Indices = mesh.IndexBuffer;
+
+
+            pointLightMeshEffect.Begin(SaveStateMode.None);
+            pointLightMeshEffect.CurrentTechnique.Passes[0].Begin();
+
+            //for (int i = 0; i < lights.Count; i++)
+            //{
+                //lightMeshWorld.M41 = lights[i].position.X;
+                //lightMeshWorld.M42 = lights[i].position.Y;
+                //lightMeshWorld.M43 = lights[i].position.Z;
+            lightMeshWorld = Matrix.Multiply(Matrix.CreateScale(radius), Matrix.CreateTranslation(center));
+
+                pointLightMeshEffect.Parameters["world"].SetValue(lightMeshWorld);
+                pointLightMeshEffect.Parameters["view"].SetValue(camera.GetViewMatrix());
+                pointLightMeshEffect.Parameters["projection"].SetValue(camera.GetProjectionMatrix());
+                pointLightMeshEffect.Parameters["lightColor"].SetValue(
+                   new Vector4(1,1,1, 0.5f));
+                pointLightMeshEffect.CommitChanges();
+
+                graphics.GraphicsDevice.DrawIndexedPrimitives(
+                    PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
+                    meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
+
+            //}
             pointLightMeshEffect.CurrentTechnique.Passes[0].End();
             pointLightMeshEffect.End();
         }

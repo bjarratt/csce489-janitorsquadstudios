@@ -34,6 +34,18 @@ namespace WorldTest
         public Vector3 normal;
     }
 
+    public class CollisionResult
+    {
+        public Vector3 position;
+        public bool isFloor;
+
+        public CollisionResult(Vector3 pos, bool floor)
+        {
+            this.position = pos;
+            this.isFloor = floor;
+        }
+    }
+
     class Level
     {
         #region Properties
@@ -52,9 +64,18 @@ namespace WorldTest
         private bool drawWater;
         const float waterHeight = -390.0f;
         private RenderTarget2D refractionRenderTarget;
+        private RenderTarget2D refractionRenderTarget2X;
+        private RenderTarget2D refractionRenderTarget4X;
         private Texture2D refractionMap;
         private RenderTarget2D reflectionRenderTarget;
+        private RenderTarget2D reflectionRenderTarget2X;
+        private RenderTarget2D reflectionRenderTarget4X;
         private Texture2D reflectionMap;
+        private DepthStencilBuffer stencilNone;
+        private DepthStencilBuffer stencil2X;
+        private DepthStencilBuffer stencil4X;
+        private DepthStencilBuffer tempStencil;
+        private MultiSampleType previousMSType = MultiSampleType.None;
         private Matrix reflectionViewMatrix;
         private Effect waterEffect;
         private Texture2D waterBumpMap;
@@ -279,8 +300,15 @@ namespace WorldTest
             terrainTexture = content.Load<Texture2D>("tex_small");
             
             // Load water stuff
-            refractionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
-            reflectionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color);
+            refractionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, device.PresentationParameters.MultiSampleType, device.PresentationParameters.MultiSampleQuality);
+            refractionRenderTarget2X = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, MultiSampleType.TwoSamples, device.PresentationParameters.MultiSampleQuality);
+            refractionRenderTarget4X = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, MultiSampleType.FourSamples, device.PresentationParameters.MultiSampleQuality);
+            reflectionRenderTarget = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, device.PresentationParameters.MultiSampleType, device.PresentationParameters.MultiSampleQuality);
+            reflectionRenderTarget2X = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, MultiSampleType.TwoSamples, device.PresentationParameters.MultiSampleQuality);
+            reflectionRenderTarget4X = new RenderTarget2D(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, 1, SurfaceFormat.Color, MultiSampleType.FourSamples, device.PresentationParameters.MultiSampleQuality);
+            stencilNone = new DepthStencilBuffer(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, device.DepthStencilBuffer.Format, MultiSampleType.None, device.PresentationParameters.MultiSampleQuality);
+            stencil2X = new DepthStencilBuffer(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, device.DepthStencilBuffer.Format, MultiSampleType.TwoSamples, device.PresentationParameters.MultiSampleQuality);
+            stencil4X = new DepthStencilBuffer(device, device.PresentationParameters.BackBufferWidth, device.PresentationParameters.BackBufferHeight, device.DepthStencilBuffer.Format, MultiSampleType.FourSamples, device.PresentationParameters.MultiSampleQuality);
             waterEffect = content.Load<Effect>("Water");
             waterBumpMap = content.Load<Texture2D>("waterbump");
             LoadVertices(ref device);
@@ -663,6 +691,7 @@ namespace WorldTest
         private float closestT;
         private Vector3 closestVelocityVector;
         private Vector3 closestCollisionPoint;
+        private int closestCollisionIndex;
         private float distToPlane;
 
         private const float minVelocityVectorLen = 2.0f;
@@ -692,7 +721,6 @@ namespace WorldTest
             this.newVelocityVector.Normalize();
 
             int i;
-
             //
             // Check collision with each polygon in collision mesh
             //
@@ -741,12 +769,11 @@ namespace WorldTest
                         this.closestT = tValue;
                         this.closestVelocityVector = this.newVelocityVector;
                         this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
-
+                        closestCollisionIndex = i;
                         firstTimeThrough = false;
                     }
                 }
             }
-
             if (firstTimeThrough)
             {
                 return this.newPosition; // No collisions, just apply velocity vector
@@ -757,9 +784,9 @@ namespace WorldTest
             }
         }
 
-        public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius, out Vector3 collisionPoint)
+        public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
         {
-            bool collide = this.EmitterCollideWithGeometry(originalPosition, velocityVector, radius, out collisionPoint);
+            bool collide = this.EmitterCollideWithGeometry(new Ray(originalPosition,velocityVector));
 
             return collide;
         }
@@ -771,7 +798,31 @@ namespace WorldTest
         /// <param name="velocityVector">The velocity of the particle emitter</param>
         /// <param name="radius">Effective radius of the emitter</param>
         /// <returns>This returns either true or false in one pass with no recursion.</returns>
-        public bool EmitterCollideWithGeometry(Vector3 originalPosition, Vector3 velocityVector, double radius, out Vector3 outCollisionPoint)
+        public bool EmitterCollideWithGeometry(Ray ray)
+        {
+
+            for (int i = 0; i < collisionMesh.Count; i++)
+            {
+                if (IntersectTriangle(ray, collisionMesh[i]))
+                {
+                    float? dist = ray.Intersects(new Plane(collisionMesh[i].v1, collisionMesh[i].v2, collisionMesh[i].v3));
+                    if (dist == null) return false;
+                    else if (dist <= 0.1f) return true;
+                    else return false;
+                }
+            }
+            return false;
+            
+        }
+
+        /// <summary>
+        /// Determine whether or not a particle emitter collided with the geometry.
+        /// </summary>
+        /// <param name="originalPosition">The original position of the particle emitter</param>
+        /// <param name="velocityVector">The velocity of the particle emitter</param>
+        /// <param name="radius">Effective radius of the emitter</param>
+        /// <returns>This returns either true or false in one pass with no recursion.</returns>
+        public bool PlayerCollideWithWalls(Vector3 originalPosition, Vector3 velocityVector, double radius, out Vector3 outCollisionPoint)
         {
 
             bool firstTimeThrough = true;
@@ -781,7 +832,6 @@ namespace WorldTest
             this.newVelocityVector.Normalize();
 
             int i;
-
             for (i = 0; i < this.collisionMesh.Count; i++)
             {
                 this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
@@ -824,7 +874,7 @@ namespace WorldTest
                         this.closestT = tValue;
                         this.closestVelocityVector = this.newVelocityVector;
                         this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
-
+                        closestCollisionIndex = i;
                         firstTimeThrough = false;
                     }
                 }
@@ -838,8 +888,63 @@ namespace WorldTest
             else
             {
                 outCollisionPoint = this.closestCollisionPoint;
-                return true;
+                if (collisionMesh[closestCollisionIndex].normal.Y <= 0.0009f && collisionMesh[closestCollisionIndex].normal.Y >= -0.0009f) return false;
+                else return true; 
             }
+        }
+
+        public bool IntersectTriangle(Ray R, CollisionPolygon Poly)
+        {
+            //Vector3 u, v, n;             // triangle vectors
+            //Vector3 dir, w0, w;          // ray vectors
+
+            Vector3 intersection = Vector3.Zero;
+            float r, a, b;             // params to calc ray-plane intersect
+
+            // get triangle edge vectors and plane normal
+            Vector3 u = Poly.v2 - Poly.v1;
+            Vector3 v = Poly.v3 - Poly.v1;
+            Vector3 n = Vector3.Cross(u, v);             // cross product
+            if (n == Vector3.Zero)            // triangle is degenerate
+                return false;                 // do not deal with this case
+
+            Vector3 w0 = R.Position - Poly.v1;
+            a = -Vector3.Dot(n, w0);
+            b = Vector3.Dot(n, R.Direction);
+            if (Math.Abs(b) < 0.00001f)
+            {     // ray is parallel to triangle plane
+                if (a == 0) { }//return true;                // ray lies in triangle plane
+                else return false;             // ray disjoint from plane
+            }
+
+            // get intersect point of ray with triangle plane
+            r = a / b;
+            if (r < 0.0f)                   // ray goes away from triangle
+                return false;                  // => no intersect
+            // for a segment, also test if (r > 1.0) => no intersect
+
+            intersection = R.Position + r * R.Direction;           // intersect point of ray and plane
+
+            // is I inside T?
+            float uu, uv, vv, wu, wv, D;
+            uu = Vector3.Dot(u, u);
+            uv = Vector3.Dot(u, v);
+            vv = Vector3.Dot(v, v);
+            Vector3 w = intersection - Poly.v1;
+            wu = Vector3.Dot(w, u);
+            wv = Vector3.Dot(w, v);
+            D = uv * uv - uu * vv;
+
+            // get and test parametric coords
+            float s, t;
+            s = (uv * wv - vv * wu) / D;
+            if (s < 0.0 || s > 1.0)        // I is outside T
+                return false;
+            t = (uv * wu - uu * wv) / D;
+            if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+                return false;
+
+            return true;                      // I is in T
         }
 
         #endregion
@@ -1227,14 +1332,37 @@ namespace WorldTest
             Plane refractionPlane = CreatePlane(waterHeight + 1.5f, new Vector3(0, -1, 0), ref camera, false, false, Matrix.Identity);
             device.ClipPlanes[0].Plane = refractionPlane;
             device.ClipPlanes[0].IsEnabled = true;
-            device.SetRenderTarget(0, refractionRenderTarget);
+            tempStencil = device.DepthStencilBuffer;
+
+            switch (device.PresentationParameters.MultiSampleType)
+            {
+                case MultiSampleType.None: device.SetRenderTarget(0, refractionRenderTarget);
+                    device.DepthStencilBuffer = stencilNone;
+                    break;
+                case MultiSampleType.TwoSamples: device.SetRenderTarget(0, refractionRenderTarget2X);
+                    device.DepthStencilBuffer = stencil2X;
+                    break;
+                case MultiSampleType.FourSamples: device.SetRenderTarget(0, refractionRenderTarget4X);
+                    device.DepthStencilBuffer = stencil4X;
+                    break;
+            }
+
+            //device.SetRenderTarget(0, refractionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(viewMatrix);
             DrawScene(device, ref camera, currentLoc);
             device.ClipPlanes[0].IsEnabled = false;
           
             device.SetRenderTarget(0, null);
-            refractionMap = refractionRenderTarget.GetTexture();
+            switch (device.PresentationParameters.MultiSampleType)
+            {
+                case MultiSampleType.None: refractionMap = refractionRenderTarget.GetTexture();
+                    break;
+                case MultiSampleType.TwoSamples: refractionMap = refractionRenderTarget2X.GetTexture();
+                    break;
+                case MultiSampleType.FourSamples: refractionMap = refractionRenderTarget4X.GetTexture();
+                    break;
+            }
             //refractionMap.Save("refractionmap.jpg", ImageFileFormat.Jpg);
         }
 
@@ -1256,7 +1384,24 @@ namespace WorldTest
             Plane reflectionPlane = CreatePlane(waterHeight - 0.5f, new Vector3(0, -1, 0), ref camera, true, true, reflectionViewMatrix);
             device.ClipPlanes[0].Plane = reflectionPlane;
             device.ClipPlanes[0].IsEnabled = true;
-            device.SetRenderTarget(0, reflectionRenderTarget);
+        
+            switch (device.PresentationParameters.MultiSampleType)
+            {
+                case MultiSampleType.None: device.SetRenderTarget(0, reflectionRenderTarget);
+                    //device.DepthStencilBuffer = stencilNone;
+                    break;
+                case MultiSampleType.TwoSamples: device.SetRenderTarget(0, reflectionRenderTarget2X);
+                    //device.DepthStencilBuffer = stencil2X;
+                    break;
+                case MultiSampleType.FourSamples: device.SetRenderTarget(0, reflectionRenderTarget4X);
+                    //device.DepthStencilBuffer = stencil4X;
+                    break;
+                //case MultiSampleType.EightSamples: device.SetRenderTarget(0, reflectionRenderTarget8X);
+                //    device.DepthStencilBuffer = stencil8X;
+                //    break;
+            }
+
+            //device.SetRenderTarget(0, reflectionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(reflectionViewMatrix);
             DrawScene(device, ref camera, currentLoc);
@@ -1264,7 +1409,19 @@ namespace WorldTest
             device.ClipPlanes[0].IsEnabled = false;
 
             device.SetRenderTarget(0, null);
-            reflectionMap = reflectionRenderTarget.GetTexture();
+            //device.DepthStencilBuffer = backBufferDepthStencil;
+            switch (device.PresentationParameters.MultiSampleType)
+            {
+                case MultiSampleType.None: reflectionMap = reflectionRenderTarget.GetTexture();
+                    break;
+                case MultiSampleType.TwoSamples: reflectionMap = reflectionRenderTarget2X.GetTexture();
+                    break;
+                case MultiSampleType.FourSamples: reflectionMap = reflectionRenderTarget4X.GetTexture();
+                    break;
+                //case MultiSampleType.EightSamples: reflectionMap = reflectionRenderTarget8X.GetTexture();
+                //    break;
+            }
+            device.DepthStencilBuffer = tempStencil;
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //reflectionMap.Save("reflectionMap.jpg", ImageFileFormat.Jpg);
         }
