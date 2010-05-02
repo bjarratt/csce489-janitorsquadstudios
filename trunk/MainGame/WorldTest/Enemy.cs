@@ -411,6 +411,7 @@ namespace WorldTest
             }
             collisionSphere.Center = position + lookAt * 10 + new Vector3(0,25,0);
         }
+
         private void UpdatePlayerLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
@@ -426,6 +427,7 @@ namespace WorldTest
             }
 
         }
+
         private void UpdateEnemyLocation(ref Level currentLevel)
         {
             //enemy... same process as player.

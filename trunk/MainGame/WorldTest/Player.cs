@@ -275,8 +275,8 @@ namespace WorldTest
                     this.Status = State.jumping;
                     Vector3 normalVelocity = Vector3.Normalize(velocity);
                     velocity.Y += 8;
-                    velocity.X = normalVelocity.X * 10;
-                    velocity.Z = normalVelocity.Z * 10;
+                    velocity.X = normalVelocity.X * 7;
+                    velocity.Z = normalVelocity.Z * 7;
                 }
 
                 Vector3 oldpos = position;
