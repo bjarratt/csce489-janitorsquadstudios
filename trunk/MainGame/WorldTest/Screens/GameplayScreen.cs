@@ -146,7 +146,7 @@ namespace WorldTest
             this.ENEMY_STATS.maxSpeed = 10.0f;
             this.ENEMY_STATS.attackDistance = 200f;
             this.ENEMY_STATS.smartChaseDistance = 4000f;
-            this.ENEMY_STATS.dumbChaseDistance = 250f;
+            this.ENEMY_STATS.dumbChaseDistance = 500f;
             this.ENEMY_STATS.hysteresis = 15f;
             this.ENEMY_STATS.recoveryTime = 7f;
             this.ENEMY_STATS.maxHealth = 100;
@@ -179,7 +179,7 @@ namespace WorldTest
             lightMeshWorld = Matrix.Identity;
             inputControlState = new ControlState();
             //init damage object
-            blood = new Damage(this.ScreenManager.game);
+            blood = new Damage(ref this.ScreenManager.game);
             fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
             banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 80);
         }
@@ -628,7 +628,7 @@ namespace WorldTest
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 800f, 100, 30, 20, 5f, 0, explosionParticles,
+                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, explosionParticles,
                                                    explosionSmokeParticles,
                                                    projectileTrailParticles, ref enemies, false));
                     projectiles[projectiles.Count - 1].is_released = true;
@@ -689,7 +689,7 @@ namespace WorldTest
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 800f, 100, 30, 20, 5f, 0, banisherExplosions,
+                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, banisherExplosions,
                                                    banisherExplosions,
                                                    banishingParticleProj, ref enemies, true));
                     projectiles[projectiles.Count - 1].is_released = true;
@@ -852,7 +852,7 @@ namespace WorldTest
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
@@ -868,10 +868,10 @@ namespace WorldTest
             //draw all on-screen hud or damage indicators
             spriteBatch.Begin();
 
-            if (player.isHit)
-            {
-                blood.Draw(spriteBatch);
-            }
+            //if (player.isHit)
+            //{
+                blood.Draw(spriteBatch, ref player, device.PresentationParameters);
+            //}
 
             tips.Draw(spriteBatch, graphics.GraphicsDevice.PresentationParameters);
 

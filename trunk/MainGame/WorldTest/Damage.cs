@@ -16,11 +16,13 @@ namespace WorldTest
         //give the bar a reference to the player so it knows the new health at each update
         private float health;
         Texture2D blood;
+        Texture2D border;
         int mAlphaValue = 255;
+        int healthAlpha = 0;
         int mFadeIncrement = 3;
         double mFadeDelay = .02;
 
-        public Damage(Game game1)
+        public Damage(ref Game game1)
         {
             game = game1;
         }
@@ -30,6 +32,7 @@ namespace WorldTest
             base.LoadContent(theContentManager, DAMAGE_ASSET_NAME);
             this.Scale = 0.5f;
             blood = theContentManager.Load<Texture2D>("splatter");
+            border = theContentManager.Load<Texture2D>("damage_border");
         }
 
         public void ResetAlpha()
@@ -40,7 +43,7 @@ namespace WorldTest
         public void Update(GameTime theGameTime, ref Player player)
         {
             // Player recovers health fully from 0 in 7 seconds (@60 fps).
-            player.health += 0.059524f;
+            player.health += 0.089524f;
 
             if (player.health > 100) player.health = 100;
             health = player.health;
@@ -76,12 +79,18 @@ namespace WorldTest
                 mAlphaValue = 255;
             }
 
+            healthAlpha = 255 - (int)Math.Truncate((health * 0.01) * 255);
+
             base.Update(theGameTime);
         }
 
-        public override void Draw(SpriteBatch theSpriteBatch)
+        public void Draw(SpriteBatch theSpriteBatch, ref Player player, PresentationParameters pres)
         {
-            theSpriteBatch.Draw(blood, new Rectangle(0, 0, 800, 600), new Color(255, 255, 255, (byte)MathHelper.Clamp(mAlphaValue, 0, 255)));
+            if (player.isHit)
+            {
+                theSpriteBatch.Draw(blood, new Rectangle(0, 0, pres.BackBufferWidth, pres.BackBufferHeight), new Color(255, 255, 255, (byte)MathHelper.Clamp(mAlphaValue, 0, 255)));
+            }
+            theSpriteBatch.Draw(border, new Rectangle(-40, -40, pres.BackBufferWidth + 40, pres.BackBufferHeight + 40), new Color(255, 255, 255, (byte)MathHelper.Clamp(healthAlpha, 0, 255)));
         }
     }
 }

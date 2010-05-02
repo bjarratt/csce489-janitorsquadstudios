@@ -352,13 +352,7 @@ float3 PhongShadingPS(
 	float3 diffuseLightColor = float3(0,0,0);
 	float3 specularLightColor = float3(0,0,0);
 	float4 CelColor = float4(0,0,0,0);
-	//float4 light_pos = mul(inPosition, lightview[0]);
-	//float shadow_test = light_pos.z / light_pos.w;
-	//float4 map_val = tex2D(ShadowMapSampler, light_pos.xy);
 	
-	//if (shadow_test > map_val.z)
-	//	return diffuseLightColor;
-	//else {
 		for (int i = 0; i < lightCount; i+=2)
 		{
 			// 
@@ -407,7 +401,6 @@ float3 PhongShadingPS(
 		}
 
 		return (diffuseLightColor * inDiffuseColor + specularLightColor * inSpecularColor) * CelColor;
-	//}
 }
 
 void StaticModelPS_Light(

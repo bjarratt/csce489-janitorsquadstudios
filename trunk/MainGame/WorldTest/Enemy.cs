@@ -50,6 +50,7 @@ namespace WorldTest
 
         private EnemyStats stats;
         public EnemyAiState state;
+        public EnemyAiState prevState;
 
         private float timeUntilRecovery = -1.0f;
 
@@ -107,7 +108,7 @@ namespace WorldTest
 
             rotation = 0.0f;
             turn_speed = 1.5f;
-            turn_speed_reg = 1.6f;
+            turn_speed_reg = 2.6f;
             movement_speed_reg = 14.0f; // 14
 
             health = this.stats.maxHealth;
@@ -185,10 +186,11 @@ namespace WorldTest
         {
             //reset rotation
             //rotation = 0.0f;
+            UpdatePlayerLocation(ref currentLevel, ref player);
 
             if (this.CurrentDimension == player.CurrentDimension)
             {
-                UpdateLocation(ref currentLevel, ref player);
+                UpdateEnemyLocation(ref currentLevel);
 
                 //turn speed is same even if machine running slow
                 turn_speed = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
@@ -377,6 +379,7 @@ namespace WorldTest
             worldTransform.Translation = position;
             velocity = heading * 30;
             velocity.Y = -1.0f;
+            
             if (this.state == EnemyAiState.Attack)
             {
                 if (this.activeAnimationClip != 2)
@@ -402,14 +405,13 @@ namespace WorldTest
                 {
                     controller.CrossFade(model.AnimationClips["Walk"], TimeSpan.FromMilliseconds(300));
                     this.activeAnimationClip = 1;
-                    controller.Speed = 2.0f;
+                    controller.Speed = 4.0f;
                 }
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }
             collisionSphere.Center = position + lookAt * 10 + new Vector3(0,25,0);
         }
-
-        private void UpdateLocation(ref Level currentLevel, ref Player player)
+        private void UpdatePlayerLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
             if (currentLevel.IntersectsNavTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
@@ -423,11 +425,14 @@ namespace WorldTest
                 player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
             }
 
+        }
+        private void UpdateEnemyLocation(ref Level currentLevel)
+        {
             //enemy... same process as player.
             if (currentLevel.IntersectsNavTriangle(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
                 this.current_poly_index))
             {
-                // do nothing... player is still in his current polygon.
+                // do nothing... enemy is still in his current polygon.
             }
             else
             {
@@ -695,7 +700,7 @@ namespace WorldTest
                         modelMesh.MeshParts[i].Effect = shader;
                     }
                 }
-
+                
                 // Set parameters for the shader
                 foreach (ModelMesh modelMesh in model.Model.Meshes)
                 {
@@ -709,7 +714,7 @@ namespace WorldTest
                         effect.Parameters["diffuseMap0"].SetValue(textures[(int)Tex_Select.model]);
                         effect.Parameters["CelMap"].SetValue(textures[(int)Tex_Select.cel_tex]);
                         effect.Parameters["ambientLightColor"].SetValue(new Vector3(0.01f));
-                        effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3(1.0f));
+                        effect.Parameters["material"].StructureMembers["diffuseColor"].SetValue(new Vector3((float)this.health * 0.01f, (float)this.health * 0.01f, (float)this.health * 0.01f));
                         effect.Parameters["material"].StructureMembers["specularColor"].SetValue(new Vector3(0.3f));
                         effect.Parameters["material"].StructureMembers["specularPower"].SetValue(10);
                         //effect.Parameters["diffuseMapEnabled"].SetValue(true);

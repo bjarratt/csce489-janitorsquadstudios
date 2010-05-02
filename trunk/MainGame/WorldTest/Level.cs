@@ -96,6 +96,14 @@ namespace WorldTest
         private VertexDeclaration navigationVertexDeclaration;
         private int navigationVertexCount;
 
+        // Portals
+        private List<Portal> portalList;
+
+        // Lights
+        private List<Light> lightList;
+
+        // 
+
         public const int MAX_COLLISIONS = 5;
 
         #endregion
@@ -998,7 +1006,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < navigationMesh.Count; i++)
                 {
-                    if (IntersectsNavTriangle(new Ray(position, Vector3.Down), i))
+                    if (IntersectsNavTriangle(new Ray(position + new Vector3(0,5,0), Vector3.Down), i))
                     {
                         return i;
                     }
@@ -1008,7 +1016,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
                 {
-                    if (IntersectsNavTriangle(new Ray(position, Vector3.Down), i))
+                    if (IntersectsNavTriangle(new Ray(position + new Vector3(0,5,0), Vector3.Down), i))
                     {
                         return navigationMesh[currentLocation].adjacent_polygons[i];
                     }
