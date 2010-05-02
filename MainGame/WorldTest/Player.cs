@@ -58,7 +58,7 @@ namespace WorldTest
 
             rotation = 0.0f;
             turn_speed = 0.10f; // 0.05
-            turn_speed_reg = 1.6f;
+            turn_speed_reg = 5.6f;
             movement_speed_reg = 2.0f; // 14
             this.speedScale = 200.0f;
             this.previousVelocity = Vector3.Zero;
@@ -241,8 +241,6 @@ namespace WorldTest
                     velocity -= camera.right * speed;
                 }
 
-                bool didSet = false;
-
                 if ((stick.Y > 0 || inputState.currentKeyboardState.IsKeyDown(Keys.W)) && !(Status == State.jumping))
                 {
                     this.Status = State.running;
@@ -259,7 +257,6 @@ namespace WorldTest
                 {
                     float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
                     velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
-                    didSet = true;
                 }
                 else 
                 {
@@ -271,21 +268,15 @@ namespace WorldTest
                     velocity.Y = -0.5f;
                 }
 
-                if (Status == State.jumping && !didSet)
-                {
-                    float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
-                    didSet = false;
-                }
-
                 if (!(Status == State.jumping) && 
                     ((inputState.currentGamePadState.Buttons.A == ButtonState.Pressed && inputState.lastGamePadState.Buttons.A == ButtonState.Released) || 
                      inputState.currentKeyboardState.IsKeyDown(Keys.Space) && inputState.lastKeyboardState.IsKeyUp(Keys.Space)))
                 {
                     this.Status = State.jumping;
+                    Vector3 normalVelocity = Vector3.Normalize(velocity);
                     velocity.Y += 8;
-                    velocity.X *= 0.5f;
-                    velocity.Z *= 0.5f;
+                    velocity.X = normalVelocity.X * 10;
+                    velocity.Z = normalVelocity.Z * 10;
                 }
 
                 Vector3 oldpos = position;
