@@ -17,7 +17,7 @@ namespace WorldTest
                             ParticleSystem contactParticles,
                             ParticleSystem extraContactParticles,
                             ParticleSystem projectileTrailParticles,
-                            ref List<Enemy> enemies, bool is_banisher) : base()
+                            ref List<Enemy> enemies, bool is_banisher, bool needLight) : base()
         {
             this.position = position;
             this.velocity = velocity;
@@ -27,6 +27,7 @@ namespace WorldTest
             this.projectileLifespan = lifespan;
             this.gravity = gravity;
             this.is_banisher = is_banisher;
+            this.needLight = needLight;
             this.contactParticles = contactParticles;
             this.extraContactParticles = extraContactParticles;
             trailEmitter = new ParticleEmitter(projectileTrailParticles,

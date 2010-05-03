@@ -73,6 +73,7 @@ namespace WorldTest
         public Light light;
         public Ray projRay;
         public bool is_banisher;
+        public bool needLight;
 
         static Random random = new Random();
 

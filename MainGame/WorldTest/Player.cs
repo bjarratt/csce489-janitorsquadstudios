@@ -269,7 +269,7 @@ namespace WorldTest
                 }
 
                 if (!(Status == State.jumping) && 
-                    ((inputState.currentGamePadState.Buttons.A == ButtonState.Pressed && inputState.lastGamePadState.Buttons.A == ButtonState.Released) || 
+                    ((inputState.currentGamePadState.Triggers.Left != 0 && inputState.lastGamePadState.Triggers.Left == 0) || 
                      inputState.currentKeyboardState.IsKeyDown(Keys.Space) && inputState.lastKeyboardState.IsKeyUp(Keys.Space)))
                 {
                     this.Status = State.jumping;

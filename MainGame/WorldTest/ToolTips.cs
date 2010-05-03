@@ -31,6 +31,9 @@ namespace WorldTest
         public Texture2D LBumper;
         public Texture2D RTrigger;
         public Texture2D LTrigger;
+
+        public Texture2D attackHud;
+        public bool drawAttackHud;
         public List<Texture2D> displayList;
         public List<bool> boolList;
 
@@ -53,6 +56,7 @@ namespace WorldTest
             LBumper = content.Load<Texture2D>("bumper_left");
             RTrigger = content.Load<Texture2D>("trigger_right");
             LTrigger = content.Load<Texture2D>("trigger_left");
+            attackHud = content.Load<Texture2D>("attack_hud");
 
             displayList.Add(backButton);
             displayList.Add(startButton);
@@ -75,9 +79,11 @@ namespace WorldTest
             boolList.Add(false);
             boolList.Add(false);
             boolList.Add(false);
+
+            drawAttackHud = false;
         }
 
-        public void Update(GameTime theGameTime, ref Player player, ref Level theLevel)
+        public void Update(GameTime theGameTime, ref Player player, ref Level theLevel, ControlState state)
         {
            // HACKED UP CODE STILL USES VECTOR3.ZERO AS THE POSITION OF THE PORTAL
             if (player.RayCircleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down), Vector3.Zero, 50f))
@@ -85,7 +91,10 @@ namespace WorldTest
                 //if (displayList[3] != null) displayList.Insert(3, XButton);
                 boolList[3] = true;
             }
-            else boolList[3] = false;  
+            else boolList[3] = false;
+
+            if (state.currentGamePadState.Triggers.Right != 0) drawAttackHud = true;
+            else drawAttackHud = false;
         }
 
         public void Draw(SpriteBatch theSpriteBatch, PresentationParameters currentParams)
@@ -96,6 +105,10 @@ namespace WorldTest
                 {
                     theSpriteBatch.Draw(displayList[i], new Rectangle((int)(currentParams.BackBufferWidth * 0.5f) - 20, 
                         currentParams.BackBufferHeight - 80, 64, 64), Color.White);
+                }
+                if (drawAttackHud == true)
+                {
+                    theSpriteBatch.Draw(attackHud, new Rectangle(20, currentParams.BackBufferHeight - 150, 120, 120), Color.White);
                 }
             }
         }

@@ -105,6 +105,7 @@ namespace WorldTest
         ParticleSystem banishingParticleProj;
         ParticleSystem banishingHandParticles;
         ParticleSystem banisherExplosions;
+        ParticleSystem lavaBalls;
 
         /// <summary>
         /// List of attacks
@@ -123,6 +124,7 @@ namespace WorldTest
         RenderTarget2D shadowRenderTarget;
 
         Portal portal;
+        IceAttack iceAttack;
 
         ToolTips tips;
 
@@ -253,6 +255,7 @@ namespace WorldTest
             banishingParticleProj = new BanishingParticleSystem(this.ScreenManager.game, content, false);
             banishingHandParticles = new BanishingHandSystem(this.ScreenManager.game, content, false);
             banisherExplosions = new BanisherExplosion(this.ScreenManager.game, content, false);
+            lavaBalls = new LavaBall(this.ScreenManager.game, content, false);
 
             // Set the draw order so the explosions and fire
             // will appear over the top of the smoke.
@@ -262,11 +265,15 @@ namespace WorldTest
             banishingParticleProj.DrawOrder = 350;
             banishingHandParticles.DrawOrder = 375;
             banisherExplosions.DrawOrder = 380;
+            lavaBalls.DrawOrder = 390;
             explosionParticles.DrawOrder = 400;
             fireParticles.DrawOrder = 500;
 
             portal = new Portal(new Vector3(0,-330,0), 50f);
             portal.Load(this.ScreenManager.game, content);
+
+            iceAttack = new IceAttack(player.position, 200f);
+            iceAttack.Load(this.ScreenManager.game, content);
 
             tips = new ToolTips();
             tips.LoadContent(graphics.GraphicsDevice, content);
@@ -303,6 +310,7 @@ namespace WorldTest
             this.ScreenManager.game.Components.Add(banishingParticleProj);
             this.ScreenManager.game.Components.Add(banishingHandParticles);
             this.ScreenManager.game.Components.Add(banisherExplosions);
+            this.ScreenManager.game.Components.Add(lavaBalls);
 
             // initialize enemy and player... figure out what polygons in the navigatin mesh they're in
             player.current_poly_index = this.firstLevel.NavigationIndex(player.position);
@@ -562,7 +570,8 @@ namespace WorldTest
                 UpdateProjectiles(gameTime);
 
                 portal.Update(gameTime);
-                tips.Update(gameTime, ref player, ref firstLevel);
+                iceAttack.Update(gameTime, inputControlState, ref player);
+                tips.Update(gameTime, ref player, ref firstLevel, inputControlState);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
@@ -590,127 +599,135 @@ namespace WorldTest
         /// </summary>
         void UpdateAttacks(GameTime gameTime, ControlState inputState)
         {
-            if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
-                 (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released) )
+            if (inputControlState.currentGamePadState.Triggers.Right != 0)
             {
-                relicLight.attenuationRadius = 3000.0f;
-                relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
-                relicLight.currentExplosionTick = 0.0f;
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                pos += camera.right * 5;
-                pos += camera.lookAt * 20;
-                relicLight.position = pos;
-                this.relicLightOn = true;
-                GameplayScreen.soundControl.Play("fireball_ignite");
-            }
-            else if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
-                      (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
-            {
-                //GameplayScreen.soundControl.Play("fireball_held");
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                if (player.velocity.X != 0 || player.velocity.Z != 0)
+                if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
+                     (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released))
                 {
-                    pos += camera.right * 5;
-                    pos += camera.lookAt * 22;
-                    relicLight.position = pos;
-                    // set the world matrix for the particles
-                    //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
-                    //fireParticles.SetWorldMatrix(world);
-                    for (int i = 0; i < 3; i++)
-                    {
-                        fireParticles.AddParticle(pos, Vector3.Zero);
-                    }
-                }
-                else
-                {
-                    pos += camera.right * 5;
-                    pos += camera.lookAt * 20;
-                    relicLight.position = pos;
-                    fireParticles.SetWorldMatrix(player.worldTransform);
-                    for (int i = 0; i < 1; i++)
-                    {
-                        fireParticles.AddParticle(pos, Vector3.Zero);
-                    }
-                }
-            }
-            if ( (inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
-                 (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed) )
-            {
-                if (!this.fireReticle.AnimationRunning)
-                {
-                    this.relicLightOn = false;
-                    this.fireReticle.StartAnimation();
-                    GameplayScreen.soundControl.Play("fireball_deploy");
+                    relicLight.attenuationRadius = 3000.0f;
+                    relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
+                    relicLight.currentExplosionTick = 0.0f;
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, explosionParticles,
-                                                   explosionSmokeParticles,
-                                                   projectileTrailParticles, ref enemies, false));
-                    projectiles[projectiles.Count - 1].is_released = true;
+                    relicLight.position = pos;
+                    this.relicLightOn = true;
+                    GameplayScreen.soundControl.Play("fireball_ignite");
+                }
+                else if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                          (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+                {
+                    //GameplayScreen.soundControl.Play("fireball_held");
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    if (player.velocity.X != 0 || player.velocity.Z != 0)
+                    {
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 22;
+                        relicLight.position = pos;
+                        // set the world matrix for the particles
+                        //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
+                        //fireParticles.SetWorldMatrix(world);
+                        for (int i = 0; i < 3; i++)
+                        {
+                            fireParticles.AddParticle(pos, Vector3.Zero);
+                        }
+                    }
+                    else
+                    {
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 20;
+                        relicLight.position = pos;
+                        fireParticles.SetWorldMatrix(player.worldTransform);
+                        for (int i = 0; i < 1; i++)
+                        {
+                            fireParticles.AddParticle(pos, Vector3.Zero);
+                        }
+                    }
+                }
+                if ((inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                     (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+                {
+                    if (!this.fireReticle.AnimationRunning)
+                    {
+                        this.relicLightOn = false;
+                        this.fireReticle.StartAnimation();
+                        GameplayScreen.soundControl.Play("fireball_deploy");
+                        Vector3 pos = player.position + new Vector3(0, 105, 0);
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 20;
+                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 6, 5f, 0, explosionParticles,
+                                                       lavaBalls,
+                                                       projectileTrailParticles, ref enemies, false, true));
+                        projectiles[projectiles.Count - 1].is_released = true;
+                    }
                 }
             }
+            else relicLightOn = false;
 
 
             // Y BUTTON
-            if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
-                 (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
+            if (inputControlState.currentGamePadState.Triggers.Right != 0)
             {
-                GameplayScreen.soundControl.Play("banish activated");
-                relicLight.attenuationRadius = 3000.0f;
-                relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
-                relicLight.currentExplosionTick = 0.0f;
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                pos += camera.right * 5;
-                pos += camera.lookAt * 20;
-                relicLight.position = pos;
-                this.relicLightOn = true;
-            }
-            else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
-                      (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
-            {
-                Vector3 pos = player.position + new Vector3(0, 105, 0);
-                if (player.velocity.X != 0 || player.velocity.Z != 0)
+                if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
+                     (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
                 {
-                    pos += camera.right * 5;
-                    pos += camera.lookAt * 22;
-                    relicLight.position = pos;
-                    // set the world matrix for the particles
-                    //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
-                    //fireParticles.SetWorldMatrix(world);
-                    for (int i = 0; i < 3; i++)
-                    {
-                        banishingHandParticles.AddParticle(pos, Vector3.Zero);
-                    }
-                }
-                else
-                {
-                    pos += camera.right * 5;
-                    pos += camera.lookAt * 20;
-                    relicLight.position = pos;
-                    for (int i = 0; i < 1; i++)
-                    {
-                        banishingHandParticles.AddParticle(pos, Vector3.Zero);
-                    }
-                }
-            }
-            if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Released && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
-                 (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
-            {
-                if (!this.banishReticle.AnimationRunning)
-                {
-                    this.relicLightOn = false;
-                    this.banishReticle.StartAnimation();
-                GameplayScreen.soundControl.Play("banish deployed");
+                    GameplayScreen.soundControl.Play("banish activated");
+                    relicLight.attenuationRadius = 3000.0f;
+                    relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
+                    relicLight.currentExplosionTick = 0.0f;
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
-                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, banisherExplosions,
-                                                   banisherExplosions,
-                                                   banishingParticleProj, ref enemies, true));
-                    projectiles[projectiles.Count - 1].is_released = true;
+                    relicLight.position = pos;
+                    this.relicLightOn = true;
+                }
+                else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
+                          (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
+                {
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    if (player.velocity.X != 0 || player.velocity.Z != 0)
+                    {
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 22;
+                        relicLight.position = pos;
+                        // set the world matrix for the particles
+                        //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
+                        //fireParticles.SetWorldMatrix(world);
+                        for (int i = 0; i < 3; i++)
+                        {
+                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                        }
+                    }
+                    else
+                    {
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 20;
+                        relicLight.position = pos;
+                        for (int i = 0; i < 1; i++)
+                        {
+                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                        }
+                    }
+                }
+                if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Released && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
+                     (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
+                {
+                    if (!this.banishReticle.AnimationRunning)
+                    {
+                        this.relicLightOn = false;
+                        this.banishReticle.StartAnimation();
+                        GameplayScreen.soundControl.Play("banish deployed");
+                        Vector3 pos = player.position + new Vector3(0, 105, 0);
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 20;
+                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, banisherExplosions,
+                                                       banisherExplosions,
+                                                       banishingParticleProj, ref enemies, true, true));
+                        projectiles[projectiles.Count - 1].is_released = true;
+                    }
                 }
             }
+            else relicLightOn = false;
         }
 
         void UpdateFire()
@@ -724,7 +741,6 @@ namespace WorldTest
         void UpdateProjectiles(GameTime gameTime)
         {
             int i = 0;
-
             while (i < projectiles.Count)
             {
                 if (!projectiles[i].Update(gameTime, ref firstLevel, ref enemies, player.CurrentDimension))
@@ -738,6 +754,7 @@ namespace WorldTest
                     {
                         explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
                     }
+
                     projectiles.RemoveAt(i);
                 }
                 else
@@ -859,8 +876,10 @@ namespace WorldTest
             fireParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingParticleProj.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            iceAttack.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingHandParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banisherExplosions.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            lavaBalls.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
 
             base.Draw(gameTime);
 
@@ -884,11 +903,7 @@ namespace WorldTest
             //draw all on-screen hud or damage indicators
             spriteBatch.Begin();
 
-            //if (player.isHit)
-            //{
-                blood.Draw(spriteBatch, ref player, device.PresentationParameters);
-            //}
-
+            blood.Draw(spriteBatch, ref player, device.PresentationParameters);
             tips.Draw(spriteBatch, graphics.GraphicsDevice.PresentationParameters);
 
             if (player.health <= 0)
