@@ -415,7 +415,7 @@ namespace WorldTest
         private void UpdatePlayerLocation(ref Level currentLevel, ref Player player)
         {
             //player... first check current current_poly
-            if (currentLevel.IntersectsNavTriangle(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+            if (currentLevel.IntersectsNavQuad(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
                 player.current_poly_index))
             {
                 // do nothing... player is still in his current polygon.
@@ -431,7 +431,7 @@ namespace WorldTest
         private void UpdateEnemyLocation(ref Level currentLevel)
         {
             //enemy... same process as player.
-            if (currentLevel.IntersectsNavTriangle(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
+            if (currentLevel.IntersectsNavQuad(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
                 this.current_poly_index))
             {
                 // do nothing... enemy is still in his current polygon.
@@ -446,7 +446,6 @@ namespace WorldTest
         /// <summary>
         /// Here we use the optimal path returned by FindPath to move the enemy.
         /// </summary>
-        /// <param name="optimal_path"></param>
         Vector3 Navigate(ref Level currentLevel, ref Player player)
         {
             //UpdateLocation(ref player);
@@ -472,6 +471,7 @@ namespace WorldTest
                     else
                     {
                         //this.CurrentPath.GetEnumerator().MoveNext();
+                        // FIXME: CurrentPath.Count = 0
                         this.CurrentPath.RemoveFirst();
 
                         this.FirstPathPoly = this.SecondPathPoly;

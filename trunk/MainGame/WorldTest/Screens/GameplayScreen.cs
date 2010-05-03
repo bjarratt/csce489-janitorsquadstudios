@@ -87,6 +87,8 @@ namespace WorldTest
         public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
         public static bool transitioning = false;
 
+        private static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
+
         /// <summary>
         /// Stores the last keyboard, mouse and gamepad state.
         /// </summary>
@@ -127,6 +129,12 @@ namespace WorldTest
         // Hud
         Reticle fireReticle;
         Reticle banishReticle;
+
+        // Narration
+        //List<Narration> narrations;
+        List<Checkpoint> checkpoints;
+
+        Vector2 narrLocation = Vector2.One * 20.0f;
 
         #endregion
 
@@ -180,6 +188,11 @@ namespace WorldTest
             inputControlState = new ControlState();
             //init damage object
             blood = new Damage(ref this.ScreenManager.game);
+            //narrTest = new Narration("narration1.txt", this.ScreenManager.Font, narrLocation);
+            checkpoints = new List<Checkpoint>();
+            checkpoints.Add(new Checkpoint(8, "narration1.txt", this.ScreenManager.Font));
+            //narrations = new List<Narration>();
+            //narrations.Add(new Narration("narration1.txt", this.ScreenManager.Font, this.narrLocation));
             fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
             banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 80);
         }
@@ -227,23 +240,9 @@ namespace WorldTest
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0,0,0),Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(0, 0, 0),Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1500, 50, 0),Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 0), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 100), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, -100), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, 100), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(1000, 50, -100), Dimension.FIRST));
-            //enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, new Vector3(-1000, 50, 0), Dimension.FIRST));
 
+            // Sets position of player and enemies; must be done after level is loaded
             this.LoadGame(this.loadFilename);
-
-            //foreach (Enemy e in enemies)
-            //{
-            //    e.LoadContent(ref player, ref firstLevel);
-            //}
 
             // Construct our particle system components.
             explosionParticles = new ExplosionParticleSystem(this.ScreenManager.game, content, false);
@@ -287,7 +286,13 @@ namespace WorldTest
             fireReticle.LoadContent(ref content);
             banishReticle.LoadContent(ref content);
 
-            // Start the sound!
+            //narrTest.LoadContent();
+            //narrTest.StartNarration();
+
+            for (int i = 0; i < checkpoints.Count; i++)
+            {
+                checkpoints[i].LoadContent();
+            }
 
             // Register the particle system components.
             this.ScreenManager.game.Components.Add(explosionParticles);
@@ -400,7 +405,7 @@ namespace WorldTest
             {
                 splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
 
-                // Format: Player <dimension> <health> <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
+                // Format: Player <dimension> <health> <spawn_index> <orientation.x> <.y> <.z> <.w>
                 if (splitLine[0] == "Player")
                 {
                     // Dimension
@@ -416,18 +421,16 @@ namespace WorldTest
                     // Health
                     player.health = Convert.ToInt32(splitLine[2]);
 
-                    // Position
-                    player.position.X = (float)Convert.ToDouble(splitLine[3]);
-                    player.position.Y = (float)Convert.ToDouble(splitLine[4]);
-                    player.position.Z = (float)Convert.ToDouble(splitLine[5]);
+                    // Spawn position
+                    player.position = firstLevel.GetCentroid(Convert.ToInt32(splitLine[3])) + NUDGE_UP;
 
                     // Orientation
-                    player.orientation.X = (float)Convert.ToDouble(splitLine[6]);
-                    player.orientation.Y = (float)Convert.ToDouble(splitLine[7]);
-                    player.orientation.Z = (float)Convert.ToDouble(splitLine[8]);
-                    player.orientation.W = (float)Convert.ToDouble(splitLine[9]);
+                    player.orientation.X = (float)Convert.ToDouble(splitLine[4]);
+                    player.orientation.Y = (float)Convert.ToDouble(splitLine[5]);
+                    player.orientation.Z = (float)Convert.ToDouble(splitLine[6]);
+                    player.orientation.W = (float)Convert.ToDouble(splitLine[7]);
                 }
-                // Format: Enemy <dimension> <current_health> <max_health> <position.x> <.y> <.z>
+                // Format: Enemy <dimension> <current_health> <max_health> <spawn_index>
                 else if (splitLine[0] == "Enemy")
                 {
                     // Dimension
@@ -448,11 +451,11 @@ namespace WorldTest
                     // Max health
                     ENEMY_STATS.maxHealth = Convert.ToInt32(splitLine[3]);
 
-                    // Position
-                    Vector3 enemyPosition;
-                    enemyPosition.X = (float)Convert.ToDouble(splitLine[4]);
-                    enemyPosition.Y = (float)Convert.ToDouble(splitLine[5]);
-                    enemyPosition.Z = (float)Convert.ToDouble(splitLine[6]);
+                    // Spawn position
+                    Vector3 enemyPosition = firstLevel.GetCentroid(Convert.ToInt32(splitLine[4])) + NUDGE_UP;
+                    //enemyPosition.X = (float)Convert.ToDouble(splitLine[4]);
+                    //enemyPosition.Y = (float)Convert.ToDouble(splitLine[5]);
+                    //enemyPosition.Z = (float)Convert.ToDouble(splitLine[6]);
 
                     enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension));
                 }
@@ -510,6 +513,12 @@ namespace WorldTest
                     GameplayScreen.transitioning = false;
                 }
 
+                //if (inputControlState.currentGamePadState.Buttons.LeftStick == ButtonState.Pressed &&
+                //    inputControlState.lastGamePadState.Buttons.LeftStick == ButtonState.Released)
+                //{
+                //    narrations[0].StartNarration();
+                //}
+
                 if (inputControlState.currentGamePadState.Buttons.LeftShoulder == ButtonState.Pressed &&
                     inputControlState.lastGamePadState.Buttons.LeftShoulder == ButtonState.Released)
                 {
@@ -554,6 +563,13 @@ namespace WorldTest
 
                 portal.Update(gameTime);
                 tips.Update(gameTime, ref player, ref firstLevel);
+
+                //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+
+                for (int i = 0; i < this.checkpoints.Count; i++)
+                {
+                    this.checkpoints[i].Update((float)gameTime.ElapsedGameTime.TotalSeconds, player.current_poly_index);
+                }
 
                 // Save previous states
                 inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
@@ -882,6 +898,13 @@ namespace WorldTest
                 soundBank.Dispose();
                 soundControl.StopMusic("cave game first area");
                 GameOver.Load(ScreenManager, null, new BackgroundScreen(), new MainMenuScreen(this.ScreenManager));
+            }
+
+            //this.narrTest.Draw(ref spriteBatch);
+
+            for (int i = 0; i < this.checkpoints.Count; i++)
+            {
+                this.checkpoints[i].Draw(ref spriteBatch);
             }
 
             spriteBatch.End();
