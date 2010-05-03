@@ -17,7 +17,7 @@ namespace WorldTest
         {
             settings.TextureName = "smoke";
 
-            settings.MaxParticles = 100000;
+            settings.MaxParticles = 10000;
 
             settings.Duration = TimeSpan.FromSeconds(1.5);
 
