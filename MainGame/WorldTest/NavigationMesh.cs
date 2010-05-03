@@ -22,7 +22,7 @@ namespace WorldTest
     struct NavMeshVertex
     {
         public Vector3 position;
-        public List<int> adjacentFaces;
+        //public List<int> adjacentFaces;
     }
 
     public class NavMeshNode

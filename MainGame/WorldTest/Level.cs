@@ -46,6 +46,48 @@ namespace WorldTest
         }
     }
 
+    public class Edge
+    {
+        private int start;
+        private int end;
+
+        public Edge(int v1, int v2)
+        {
+            if (v1 < v2)
+            {
+                start = v1;
+                end = v2;
+            }
+            else
+            {
+                start = v2;
+                end = v1;
+            }
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+            {
+                return false;
+            }
+
+            if (obj == this)
+            {
+                return true;
+            }
+
+            Edge e = obj as Edge;
+
+            return (e.start == this.start && e.end == this.end);
+        }
+
+        public override int GetHashCode()
+        {
+            return start ^ end;
+        }
+    }
+
     class Level
     {
         #region Properties
@@ -489,6 +531,8 @@ namespace WorldTest
             List<NavMeshVertex> positionList = new List<NavMeshVertex>(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
 
+            Dictionary<Edge, List<int>> edgeAdjacencyList = new Dictionary<Edge,List<int>>();
+
             // OBJ indices start with 1, not 0, so we add a dummy value in the 0 slot
             positionList.Add(new NavMeshVertex());
             normalList.Add(new Vector3());
@@ -528,7 +572,7 @@ namespace WorldTest
                 {
                     Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
                     currentNavVertex.position = Vector3.Transform(position, worldMatrix);
-                    currentNavVertex.adjacentFaces = new List<int>();
+                    //currentNavVertex.adjacentFaces = new List<int>();
                     positionList.Add(currentNavVertex);
                 }
                 else if (splitLine[0] == "vn") // Normal
@@ -540,6 +584,8 @@ namespace WorldTest
                 {
                     NavMeshNode currentFace = new NavMeshNode();
                     currentFace.adjacent_polygons = new List<int>();
+
+                    List<int> vertexIndices = new List<int>(4);
 
                     for (int i = 1; i < NavMeshNode.NUM_VERTICES + 1; i++) // Read each of the three vertices
                     {
@@ -554,12 +600,13 @@ namespace WorldTest
                         if (splitVertex[0] != "")
                         {
                             currentVertexIndex = Convert.ToInt32(splitVertex[0]);
+                            vertexIndices.Add(currentVertexIndex);
                             currentVertex.Position = positionList[currentVertexIndex].position;
                             currentVertex.Position += meshOffset;
                         }
                         else
                         {
-                            currentVertex.Position = new Vector3(0.0f);
+                            throw new Exception("Invalid Navigation Mesh");
                         }
 
                         if (splitVertex[2] != "")
@@ -577,16 +624,37 @@ namespace WorldTest
                         // Set the NavMeshNode for the mesh
                         //
 
-                        if (currentVertexIndex > 0)
-                        {
-                            // Add face to vertex's list
-                            positionList[currentVertexIndex].adjacentFaces.Add(navigationMesh.Count);
-                        }
+                        //if (currentVertexIndex > 0)
+                        //{
+                        //    // Add face to vertex's list
+                        //    positionList[currentVertexIndex].adjacentFaces.Add(navigationMesh.Count);
+                        //}
 
                         currentFace.SetVertex(i - 1, currentVertex.Position);
 
                         if (i == NavMeshNode.NUM_VERTICES) // On last vertex
                         {
+                            // Add face's edge data
+                            Edge edge;
+
+                            Edge e1 = new Edge(0, 1);
+                            Edge e2 = new Edge(1, 0);
+
+                            for (int j = 1; j <= NavMeshNode.NUM_VERTICES; j++)
+                            {
+                                edge = new Edge(vertexIndices[j - 1], vertexIndices[j % NavMeshNode.NUM_VERTICES]);
+
+                                if (!edgeAdjacencyList.ContainsKey(edge)) // If edge does not exist, make one
+                                {
+                                    edgeAdjacencyList[edge] = new List<int>();
+                                }
+
+                                // Add edge
+                                edgeAdjacencyList[edge].Add(navigationMesh.Count);
+                            }
+
+                            //edgeAdjacencyList.Add(new Edge(vertexIndices[0], vertexIndices[1]),
+
                             VertexPositionNormalTexture vertex = new VertexPositionNormalTexture();
                             vertex.Normal = Vector3.Zero;
                             vertex.TextureCoordinate = Vector2.Zero;
@@ -622,23 +690,44 @@ namespace WorldTest
                 line = objFileReader.ReadLine();
             }
 
-            // Set face adjacency info from vertices
-            for (int i = 1; i < positionList.Count; i++)
+            foreach (KeyValuePair<Edge, List<int>> pair in edgeAdjacencyList)
             {
-                for (int j = 0; j < positionList[i].adjacentFaces.Count; j++)
+                if (pair.Value.Count == 2)
                 {
-                    this.navigationMesh[positionList[i].adjacentFaces[j]].adjacent_polygons.AddRange(positionList[i].adjacentFaces);
+                    this.navigationMesh[pair.Value[0]].adjacent_polygons.Add(pair.Value[1]);
+                    this.navigationMesh[pair.Value[1]].adjacent_polygons.Add(pair.Value[0]);
                 }
             }
 
-            // Remove duplicate face adjacency entries
-            for (int i = 0; i < this.navigationMesh.Count; i++)
-            {
-                this.navigationMesh[i].adjacent_polygons = new List<int>(this.navigationMesh[i].adjacent_polygons.Distinct<int>());
-            }
+            //// Set face adjacency info from vertices
+            //for (int i = 1; i < positionList.Count; i++)
+            //{
+            //    for (int j = 0; j < positionList[i].adjacentFaces.Count; j++)
+            //    {
+            //        this.navigationMesh[positionList[i].adjacentFaces[j]].adjacent_polygons.AddRange(positionList[i].adjacentFaces);
+            //    }
+            //}
+
+            //// Remove duplicate face adjacency entries and entries adjacent to themselves
+            //for (int i = 0; i < this.navigationMesh.Count; i++)
+            //{
+            //    // Remove all instances of polygons adjacent to themselves
+            //    Level.currentAdjacency = i;
+            //    this.navigationMesh[i].adjacent_polygons.RemoveAll(adjacentToSelf);
+
+            //    this.navigationMesh[i].adjacent_polygons = new List<int>(this.navigationMesh[i].adjacent_polygons.Distinct<int>());
+            //}
 
             return triangleList;
         }
+
+        //private static int currentAdjacency;
+
+        //private static bool adjacentToSelf(int index)
+        //{
+        //    return (index == currentAdjacency);
+        //}
+        
         #endregion
 
         #region CollisionDetection
@@ -959,6 +1048,11 @@ namespace WorldTest
 
         #region Pathfinding
 
+        public Vector3 GetCentroid(int navMeshIndex)
+        {
+            return navigationMesh[navMeshIndex].Centroid;
+        }
+
         public Path<NavMeshNode> FindPath(int startIndex, int destinationIndex)
         {
             if (startIndex < 0 || destinationIndex < 0)
@@ -1002,26 +1096,26 @@ namespace WorldTest
 
         public int NavigationIndex(Vector3 position, int currentLocation)
         {
-            if (currentLocation < 0)
-            {
+            //if (currentLocation < 0)
+            //{
                 for (int i = 0; i < navigationMesh.Count; i++)
                 {
-                    if (IntersectsNavTriangle(new Ray(position + new Vector3(0,5,0), Vector3.Down), i))
+                    if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
                     {
                         return i;
                     }
                 }
-            }
-            else
-            {
-                for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
-                {
-                    if (IntersectsNavTriangle(new Ray(position + new Vector3(0,5,0), Vector3.Down), i))
-                    {
-                        return navigationMesh[currentLocation].adjacent_polygons[i];
-                    }
-                }
-            }
+            //}
+            //else
+            //{
+            //    for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
+            //    {
+            //        if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
+            //        {
+            //            return navigationMesh[currentLocation].adjacent_polygons[i];
+            //        }
+            //    }
+            //}
 
             return -1;
         }
@@ -1030,6 +1124,24 @@ namespace WorldTest
         public bool IntersectsNavQuad(Ray R, int nodeIndex)
         {
             return (IntersectsNavTriangle(R, nodeIndex, 0, 1, 2) || IntersectsNavTriangle(R, nodeIndex, 2, 3, 0));
+            //CollisionPolygon poly;
+            //poly.normal = Vector3.Up;
+            //if (nodeIndex < 0)
+            //{
+            //    return false;
+            //}
+            //R.Position.Y = navigationMesh[nodeIndex].V0.Y;
+            //poly.v1 = navigationMesh[nodeIndex].V0;
+            //poly.v2 = navigationMesh[nodeIndex].V1;
+            //poly.v3 = navigationMesh[nodeIndex].V2;
+            //bool intersectsFirst = pointInsidePolygon(R.Position, poly);
+            //R.Position.Y = navigationMesh[nodeIndex].V2.Y;
+            //poly.v1 = navigationMesh[nodeIndex].V2;
+            //poly.v2 = navigationMesh[nodeIndex].V3;
+            //poly.v3 = navigationMesh[nodeIndex].V0;
+            //bool intersectsSecond = pointInsidePolygon(R.Position, poly);
+
+            //return (intersectsFirst || intersectsSecond);
         }
 
         public bool IntersectsNavTriangle(Ray R, int nodeIndex, int firstVertexIndex, int secondVertexIndex, int thirdVertexIndex)
