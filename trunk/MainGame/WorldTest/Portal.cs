@@ -118,6 +118,12 @@ namespace WorldTest
             return new Vector3(radius * (float)Math.Cos(angle), origin.Y, radius * (float)Math.Sin(angle));
         }
 
+        public Vector3 RandomPointInCircle(Vector3 origin, float radius)
+        {
+            double angle = (double)RandomBetween(0.0f, MathHelper.TwoPi);
+            return new Vector3(RandomBetween(0.0f, radius) * (float)Math.Cos(angle), origin.Y, RandomBetween(0.0f, radius) * (float)Math.Sin(angle));
+        }
+
         public static float RandomBetween(float min, float max)
         {
             return min + (float)random.NextDouble() * (max - min);

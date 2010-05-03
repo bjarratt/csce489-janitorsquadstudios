@@ -56,6 +56,8 @@
     <XnaCompressContent>true</XnaCompressContent>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.TeamSystem.Data.UnitTesting, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Xna.Framework, Version=3.1.0.0, Culture=neutral, PublicKeyToken=6d5c3888ef60e27d, processorArchitecture=x86">
       <Private>False</Private>
       <SpecificVersion>True</SpecificVersion>
@@ -70,6 +72,7 @@
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml">
       <Private>False</Private>
@@ -91,12 +94,14 @@
     <Compile Include="Checkpoint.cs" />
     <Compile Include="Damage.cs" />
     <Compile Include="Game.cs" />
+    <Compile Include="IceAttack.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Light.cs" />
     <Compile Include="Narration.cs" />
     <Compile Include="NavigationMesh.cs" />
     <Compile Include="ParticleClasses1\Attack.cs" />
     <Compile Include="ParticleClasses1\ParticleEmitter.cs" />
+    <Compile Include="ParticleClasses1\ParticleProjectiles.cs" />
     <Compile Include="ParticleClasses1\ParticleSettings.cs" />
     <Compile Include="ParticleClasses1\ParticleSystem.cs" />
     <Compile Include="ParticleClasses1\ParticleVertex.cs" />
@@ -107,6 +112,7 @@
     <Compile Include="ParticleSystems1\ExplosionParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ExplosionSmokeParticleSystem.cs" />
     <Compile Include="ParticleSystems1\FireParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\Lavaball.cs" />
     <Compile Include="ParticleSystems1\PortalMystParticleSystem.cs" />
     <Compile Include="ParticleSystems1\PortalParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ProjectileTrailParticleSystem.cs" />

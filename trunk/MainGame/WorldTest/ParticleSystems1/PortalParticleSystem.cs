@@ -17,7 +17,7 @@ namespace WorldTest
         {
             settings.TextureName = "GenericParticle";
 
-            settings.MaxParticles = 100000;
+            settings.MaxParticles = 1000000;
 
             settings.Duration = TimeSpan.FromSeconds(3);
 
