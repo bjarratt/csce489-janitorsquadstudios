@@ -90,7 +90,7 @@ namespace WorldTest
             {
                 theSpriteBatch.Draw(blood, new Rectangle(0, 0, pres.BackBufferWidth, pres.BackBufferHeight), new Color(255, 255, 255, (byte)MathHelper.Clamp(mAlphaValue, 0, 255)));
             }
-            theSpriteBatch.Draw(border, new Rectangle(-40, -40, pres.BackBufferWidth + 40, pres.BackBufferHeight + 40), new Color(255, 255, 255, (byte)MathHelper.Clamp(healthAlpha, 0, 255)));
+            theSpriteBatch.Draw(border, new Rectangle(-20, -40, pres.BackBufferWidth + 60, pres.BackBufferHeight + 40), new Color(255, 255, 255, (byte)MathHelper.Clamp(healthAlpha, 0, 255)));
         }
     }
 }
