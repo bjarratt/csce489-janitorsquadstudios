@@ -52,8 +52,8 @@ namespace WorldTest
             settings.MinStartSize = 10;
             settings.MaxStartSize = 10;
 
-            settings.MinEndSize = 100;
-            settings.MaxEndSize = 200;
+            settings.MinEndSize = 200;
+            settings.MaxEndSize = 300;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;
