@@ -237,7 +237,7 @@ namespace WorldTest
             blood.LoadContent(content);
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
-            firstLevel = new Level(graphics.GraphicsDevice, ref content, "second_level.txt");
+            firstLevel = new Level(graphics.GraphicsDevice, ref content, "main_level.txt");
             firstLevel.Load(graphics.GraphicsDevice, ref content);
 
             // has to be done after level load because data structure isn't filled yet
@@ -860,6 +860,9 @@ namespace WorldTest
             SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
 
             List<Light> projLightList = new List<Light>();
+
+            lights[0].position = player.position;
+
             projLightList.AddRange(lights);
             if (this.relicLightOn)
             {

@@ -1,2 +1,1 @@
-Player 1 100 index 3 0 0 0 0
-Enemy 1 100 100 0
+Player 1 100 index 0 0 0 0 0
