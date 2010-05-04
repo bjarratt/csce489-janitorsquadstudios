@@ -154,7 +154,7 @@ namespace WorldTest
 
         public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
         {
-            drawWater = true;
+            drawWater = false;
 
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
@@ -437,7 +437,7 @@ namespace WorldTest
                     //{
                     //    smallestValues = position;
                     //}
- 
+
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
                 else if (splitLine[0] == "vn") // Normal
@@ -817,12 +817,22 @@ namespace WorldTest
             this.newVelocityVector = velocityVector;
             this.newVelocityVector.Normalize();
 
+            float distToPolySquared;
+            const float MIN_DIST_SQUARED = 9000000f;
+
             int i;
             //
             // Check collision with each polygon in collision mesh
             //
             for (i = 0; i < this.collisionMesh.Count; i++)
             {
+                // Ignore any polygons further away than a given value
+                distToPolySquared = Vector3.DistanceSquared(this.collisionMesh[i].v1, newPosition);
+                if (distToPolySquared > MIN_DIST_SQUARED)
+                {
+                    continue;
+                }
+
                 this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
 
                 // Parametric value for when the current polygon will be hit (0 to 1 means it will be hit this frame)
@@ -873,11 +883,23 @@ namespace WorldTest
             }
             if (firstTimeThrough)
             {
+                if (this.newPosition.Y < -1)
+                {
+                    this.newPosition.Y = -1;
+                }
+
                 return this.newPosition; // No collisions, just apply velocity vector
             }
             else
             {
-                return CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1); // Recursively collide
+                Vector3 resultingPosition = CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1); // Recursively collide
+                
+                if (resultingPosition.Y < -1)
+                {
+                    resultingPosition.Y = -1;
+                }
+
+                return resultingPosition;
             }
         }
 
