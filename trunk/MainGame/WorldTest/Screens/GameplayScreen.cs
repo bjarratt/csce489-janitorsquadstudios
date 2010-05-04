@@ -392,8 +392,12 @@ namespace WorldTest
             writer.Write(player.orientation.Y.ToString() + " ");
             writer.Write(player.orientation.Z.ToString() + " ");
             writer.WriteLine(player.orientation.W.ToString());
-            
-            // Format: Enemy <dimension> <current_health> <max_health> <position.x> <.y> <.z>
+
+            // Format 1 is used only if enemy position on the navigation mesh cannot be determined
+            //
+            // Format 1: Enemy <dimension> <current_health> <max_health> xyz <position.x> <.y> <.z>
+            // Format 2: Enemy <dimension> <current_health> <max_health> index <position_index>
+
             for (int i = 0; i < enemies.Count; i++)
             {
                 writer.Write("Enemy ");
@@ -407,9 +411,23 @@ namespace WorldTest
                 }
                 writer.Write(enemies[i].health.ToString() + " ");
                 writer.Write(enemies[i].MaxHealth.ToString() + " ");
-                writer.Write(enemies[i].position.X.ToString() + " ");
-                writer.Write(enemies[i].position.Y.ToString() + " ");
-                writer.WriteLine(enemies[i].position.Z.ToString());
+
+                if (enemies[i].current_poly_index < 0)
+                {
+                    writer.Write("xyz ");
+                    writer.Write(enemies[i].position.X.ToString() + " ");
+                    writer.Write(enemies[i].position.Y.ToString() + " ");
+                    writer.Write(enemies[i].position.Z.ToString() + " ");
+                }
+                else
+                {
+                    writer.Write("index ");
+                    writer.Write(enemies[i].current_poly_index.ToString() + " ");
+                }
+
+                //writer.Write(enemies[i].position.X.ToString() + " ");
+                //writer.Write(enemies[i].position.Y.ToString() + " ");
+                //writer.WriteLine(enemies[i].position.Z.ToString());
             }
 
             writer.Close();
@@ -429,7 +447,8 @@ namespace WorldTest
             {
                 splitLine = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
 
-                // Format: Player <dimension> <health> <spawn_index> <orientation.x> <.y> <.z> <.w>
+                // Format 1: Player <dimension> <health> xyz <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
+                // Format 2: Player <dimension> <health> index <position_index> <orientation.x> <.y> <.z> <.w>
                 if (splitLine[0] == "Player")
                 {
                     // Dimension
@@ -477,7 +496,8 @@ namespace WorldTest
                     splitLineIndex++;
                     player.orientation.W = (float)Convert.ToDouble(splitLine[splitLineIndex]);
                 }
-                // Format: Enemy <dimension> <current_health> <max_health> <spawn_index>
+                // Format 1: Enemy <dimension> <current_health> <max_health> xyz <position.x> <.y> <.z>
+                // Format 2: Enemy <dimension> <current_health> <max_health> index <position_index>
                 else if (splitLine[0] == "Enemy")
                 {
                     // Dimension
@@ -499,7 +519,31 @@ namespace WorldTest
                     ENEMY_STATS.maxHealth = Convert.ToInt32(splitLine[3]);
 
                     // Spawn position
-                    Vector3 enemyPosition = firstLevel.GetCentroid(Convert.ToInt32(splitLine[4])) + NUDGE_UP;
+                    Vector3 enemyPosition;// = firstLevel.GetCentroid(Convert.ToInt32(splitLine[4])) + NUDGE_UP;
+
+                    int splitLineIndex = 4;
+
+                    // Spawn position
+                    if (splitLine[splitLineIndex] == "xyz")
+                    {
+                        // Position is absolute xyz
+                        splitLineIndex++;
+                        enemyPosition.X = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        enemyPosition.Y = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        enemyPosition.Z = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        enemyPosition += NUDGE_UP;
+                    }
+                    else
+                    {
+                        // Position is an index into the navigation mesh
+                        splitLineIndex++;
+                        enemyPosition = firstLevel.GetCentroid(Convert.ToInt32(splitLine[splitLineIndex])) + NUDGE_UP;
+                        splitLineIndex++;
+
+                    }
                     //enemyPosition.X = (float)Convert.ToDouble(splitLine[4]);
                     //enemyPosition.Y = (float)Convert.ToDouble(splitLine[5]);
                     //enemyPosition.Z = (float)Convert.ToDouble(splitLine[6]);
@@ -593,6 +637,8 @@ namespace WorldTest
                 //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
                 blood.Update(gameTime, ref player);
 
+                UpdatePlayerLocation();
+
                 foreach (Enemy e in enemies)
                 {
                     e.Update(gameTime, ref this.firstLevel, ref player);
@@ -631,6 +677,22 @@ namespace WorldTest
         private static bool explosionLightHasExpired(Light light)
         {
             return (light.currentExplosionTick > GameplayScreen.EXPLOSION_INCR * 20f);
+        }
+
+        private void UpdatePlayerLocation()
+        {
+            //player... first check current current_poly
+            if (firstLevel.IntersectsNavQuad(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
+                player.current_poly_index))
+            {
+                player.prev_poly_index = player.current_poly_index;
+            }
+            else
+            {
+                player.prev_poly_index = player.current_poly_index;
+                player.current_poly_index = firstLevel.NavigationIndex(player.position, player.current_poly_index);
+            }
+
         }
 
         /// <summary>
