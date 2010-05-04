@@ -227,7 +227,7 @@ namespace WorldTest
             pointLightMeshEffect = content.Load<Effect>("PointLightMesh");
             pointLightMesh = content.Load<Model>("SphereLowPoly");
             enemySphereMesh = content.Load<Model>("SphereLowPoly");
-            hand = content.Load<Model>("player_hand");
+            //hand = content.Load<Model>("player_hand");
             handEffect = content.Load<Effect>("Render2D");
             handDiffuse = content.Load<Texture2D>("ColorMap");
             handCel = content.Load<Texture2D>("Toon2");
@@ -779,41 +779,47 @@ namespace WorldTest
                 if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
                      (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
                 {
-                    GameplayScreen.soundControl.Play("banish activated");
-                    relicLight.attenuationRadius = 3000.0f;
-                    relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
-                    relicLight.currentExplosionTick = 0.0f;
-                    Vector3 pos = player.position + new Vector3(0, 105, 0);
-                    pos += camera.right * 5;
-                    pos += camera.lookAt * 20;
-                    relicLight.position = pos;
-                    this.relicLightOn = true;
+                    if (!this.banishReticle.AnimationRunning)
+                    {
+                        GameplayScreen.soundControl.Play("banish activated");
+                        relicLight.attenuationRadius = 3000.0f;
+                        relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
+                        relicLight.currentExplosionTick = 0.0f;
+                        Vector3 pos = player.position + new Vector3(0, 105, 0);
+                        pos += camera.right * 5;
+                        pos += camera.lookAt * 20;
+                        relicLight.position = pos;
+                        this.relicLightOn = true;
+                    }
                 }
                 else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
                           (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
                 {
-                    Vector3 pos = player.position + new Vector3(0, 105, 0);
-                    if (player.velocity.X != 0 || player.velocity.Z != 0)
+                    if (!this.banishReticle.AnimationRunning)
                     {
-                        pos += camera.right * 5;
-                        pos += camera.lookAt * 22;
-                        relicLight.position = pos;
-                        // set the world matrix for the particles
-                        //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
-                        //fireParticles.SetWorldMatrix(world);
-                        for (int i = 0; i < 3; i++)
+                        Vector3 pos = player.position + new Vector3(0, 105, 0);
+                        if (player.velocity.X != 0 || player.velocity.Z != 0)
                         {
-                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                            pos += camera.right * 5;
+                            pos += camera.lookAt * 22;
+                            relicLight.position = pos;
+                            // set the world matrix for the particles
+                            //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
+                            //fireParticles.SetWorldMatrix(world);
+                            for (int i = 0; i < 3; i++)
+                            {
+                                banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                            }
                         }
-                    }
-                    else
-                    {
-                        pos += camera.right * 5;
-                        pos += camera.lookAt * 20;
-                        relicLight.position = pos;
-                        for (int i = 0; i < 1; i++)
+                        else
                         {
-                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                            pos += camera.right * 5;
+                            pos += camera.lookAt * 20;
+                            relicLight.position = pos;
+                            for (int i = 0; i < 1; i++)
+                            {
+                                banishingHandParticles.AddParticle(pos, Vector3.Zero);
+                            }
                         }
                     }
                 }
