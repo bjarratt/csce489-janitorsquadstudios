@@ -662,7 +662,7 @@ namespace WorldTest
                 UpdateProjectiles(gameTime);
 
                 portal.Update(gameTime);
-                iceAttack.Update(gameTime, inputControlState, ref player);
+                iceAttack.Update(gameTime, inputControlState, ref player, ref enemies);
                 tips.Update(gameTime, ref player, ref firstLevel, inputControlState);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);

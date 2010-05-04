@@ -84,7 +84,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ControlState state, ref Player player)
+        public void Update(GameTime gameTime, ControlState state, ref Player player, ref List<Enemy> enemies)
         {
             //time += (float)gameTime.ElapsedGameTime.TotalSeconds;
             //for (int i = 0; i < 4; i++)
@@ -98,9 +98,28 @@ namespace WorldTest
                 if (state.currentGamePadState.Buttons.X == ButtonState.Pressed && state.lastGamePadState.Buttons.X == ButtonState.Released)
                 {
                     GameplayScreen.soundControl.Play("ice_crack");
-                    for (int i = 0; i < 1000; i++)
+
+                    for (int i = 0; i < 500; i++)
                     {
                         iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 5, 0));
+                    }
+                    for (int i = 0; i < 500; i++)
+                    {
+                        iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius * 0.6f), new Vector3(0, 5, 0));
+                    }
+
+                    for (int e = 0; e < enemies.Count; e++)
+                    {
+                        if ((enemies[e].position - this.origin).Length() <= this.radius)
+                        {
+                            GameplayScreen.soundControl.Play("enemy damaged");
+                            enemies[e].health -= 100;
+                            if (enemies[e].health <= 0)
+                            {
+                                enemies[e].state = Enemy.EnemyAiState.Weakened;
+                                enemies[e].ResetRecoveryTime();
+                            }
+                        }
                     }
                 }
             //}
