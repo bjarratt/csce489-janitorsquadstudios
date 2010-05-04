@@ -139,10 +139,12 @@ namespace WorldTest
                                 enemies[i].state = Enemy.EnemyAiState.Idle;
                                 enemies[i].IncreaseMaxHealth();
                                 enemies[i].health = enemies[i].MaxHealth;
+                                GameplayScreen.soundControl.Play("enemy damaged");
                             }
                         }
                         else
                         {
+                            GameplayScreen.soundControl.Play("enemy damaged");
                             enemies[i].health -= 50;
                             if (enemies[i].health <= 0)
                             {

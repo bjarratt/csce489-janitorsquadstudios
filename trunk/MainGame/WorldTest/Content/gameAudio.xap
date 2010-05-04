@@ -871,7 +871,7 @@ Sound Bank
     Sound
     {
         Name = enemy damaged;
-        Volume = -1200;
+        Volume = -1000;
         Pitch = 0;
         Priority = 0;
 
@@ -1484,7 +1484,7 @@ Sound Bank
     Sound
     {
         Name = cave game first area;
-        Volume = -1200;
+        Volume = -1400;
         Pitch = 0;
         Priority = 0;
 
@@ -1720,7 +1720,7 @@ Sound Bank
     Sound
     {
         Name = banish hit;
-        Volume = -1200;
+        Volume = -1400;
         Pitch = 0;
         Priority = 0;
 
