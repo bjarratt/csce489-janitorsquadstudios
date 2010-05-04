@@ -358,7 +358,11 @@ namespace WorldTest
             writer.Write(camera.up.Y.ToString() + " ");
             writer.WriteLine(camera.up.Z.ToString());
 
-            // Format: Player <dimension> <health> <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
+            // Format 1 is used only if player position on the navigation mesh cannot be determined
+            //
+            // Format 1: Player <dimension> <health> xyz <position.x> <.y> <.z> <orientation.x> <.y> <.z> <.w>
+            // Format 2: Player <dimension> <health> index <position_index> <orientation.x> <.y> <.z> <.w>
+
             writer.Write("Player ");
             if (player.CurrentDimension == Dimension.FIRST)
             {
@@ -368,10 +372,22 @@ namespace WorldTest
             {
                 writer.Write("2 ");
             }
+
             writer.Write(player.health.ToString() + " ");
-            writer.Write(player.position.X.ToString() + " ");
-            writer.Write(player.position.Y.ToString() + " ");
-            writer.Write(player.position.Z.ToString() + " ");
+
+            if (player.current_poly_index < 0)
+            {
+                writer.Write("xyz ");
+                writer.Write(player.position.X.ToString() + " ");
+                writer.Write(player.position.Y.ToString() + " ");
+                writer.Write(player.position.Z.ToString() + " ");
+            }
+            else
+            {
+                writer.Write("index ");
+                writer.Write(player.current_poly_index.ToString() + " ");
+            }
+
             writer.Write(player.orientation.X.ToString() + " ");
             writer.Write(player.orientation.Y.ToString() + " ");
             writer.Write(player.orientation.Z.ToString() + " ");
@@ -429,14 +445,37 @@ namespace WorldTest
                     // Health
                     player.health = Convert.ToInt32(splitLine[2]);
 
-                    // Spawn position
-                    player.position = firstLevel.GetCentroid(Convert.ToInt32(splitLine[3])) + NUDGE_UP;
+                    int splitLineIndex = 3;
 
+                    // Spawn position
+                    if (splitLine[splitLineIndex] == "xyz")
+                    {
+                        // Position is absolute xyz
+                        splitLineIndex++;
+                        player.position.X = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        player.position.Y = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        player.position.Z = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                        splitLineIndex++;
+                        player.position += NUDGE_UP;
+                    }
+                    else
+                    {
+                        // Position is an index into the navigation mesh
+                        splitLineIndex++;
+                        player.position = firstLevel.GetCentroid(Convert.ToInt32(splitLine[splitLineIndex])) + NUDGE_UP;
+                        splitLineIndex++;
+
+                    }
                     // Orientation
-                    player.orientation.X = (float)Convert.ToDouble(splitLine[4]);
-                    player.orientation.Y = (float)Convert.ToDouble(splitLine[5]);
-                    player.orientation.Z = (float)Convert.ToDouble(splitLine[6]);
-                    player.orientation.W = (float)Convert.ToDouble(splitLine[7]);
+                    player.orientation.X = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                    splitLineIndex++;
+                    player.orientation.Y = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                    splitLineIndex++;
+                    player.orientation.Z = (float)Convert.ToDouble(splitLine[splitLineIndex]);
+                    splitLineIndex++;
+                    player.orientation.W = (float)Convert.ToDouble(splitLine[splitLineIndex]);
                 }
                 // Format: Enemy <dimension> <current_health> <max_health> <spawn_index>
                 else if (splitLine[0] == "Enemy")
