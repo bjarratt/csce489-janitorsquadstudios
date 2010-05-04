@@ -71,10 +71,11 @@ namespace WorldTest
             // Start the sound!
             if (soundBank.IsInUse)
             {
-                //don't play anything
+                //play nothing
             }
-            else
+            else if(!GameplayScreen.soundControl.Equals(null))
             {
+                GameplayScreen.soundControl.StopMusic("cave game first area");
                 soundBank.PlayCue("cave game_main");
             }
         }

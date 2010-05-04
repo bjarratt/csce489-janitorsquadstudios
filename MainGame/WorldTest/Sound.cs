@@ -75,7 +75,10 @@ namespace WorldTest
 
         public virtual void StopMusic(String sound)
         {
-            cue2.Stop(AudioStopOptions.AsAuthored);
+            if (cue2 != null)
+            {
+                cue2.Stop(AudioStopOptions.AsAuthored);
+            }
         }
 
         public virtual void Stop(String sound)

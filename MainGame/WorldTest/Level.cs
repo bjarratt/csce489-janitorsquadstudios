@@ -1110,7 +1110,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
                 {
-                    if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
+                    if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), navigationMesh[currentLocation].adjacent_polygons[i]))
                     {
                         return navigationMesh[currentLocation].adjacent_polygons[i];
                     }
