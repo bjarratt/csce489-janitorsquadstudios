@@ -99,7 +99,6 @@ namespace WorldTest
             device.RenderState.AlphaDestinationBlend = Blend.InverseSourceAlpha;
             device.RenderState.AlphaTestEnable = true;
 
-            //this.numToDraw = (this.numToDraw + 1) % (this.numTriangles - 1);
             if (this.numToDraw < this.numTriangles)
             {
                 this.numToDraw += 1;
@@ -108,8 +107,6 @@ namespace WorldTest
             {
                 this.animationRunning = false;
             }
-
-            //this.color.W = ((float)this.numToDraw / (float)this.numTriangles);
 
             Vector3 screenCenter = new Vector3( (float)device.Viewport.Width / 2.0f, (float)device.Viewport.Height / 2.0f, -1.0f );
             Matrix projectionMatrix = Matrix.CreateOrthographicOffCenter(0,
@@ -138,7 +135,7 @@ namespace WorldTest
 
                 device.VertexDeclaration = this.vertexDeclaration;
                 device.Vertices[0].SetSource(this.vBuffer, 0, VertexPositionColor.SizeInBytes);
-                device.DrawPrimitives(PrimitiveType.TriangleFan, 0, this.numToDraw + 1);
+                device.DrawPrimitives(PrimitiveType.TriangleFan, 0, this.numToDraw);
 
                 pass.End();
             }
