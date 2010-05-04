@@ -97,6 +97,7 @@ namespace WorldTest
             //{
                 if (state.currentGamePadState.Buttons.X == ButtonState.Pressed && state.lastGamePadState.Buttons.X == ButtonState.Released)
                 {
+                    GameplayScreen.soundControl.Play("ice_crack");
                     for (int i = 0; i < 1000; i++)
                     {
                         iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 5, 0));
