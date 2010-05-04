@@ -111,7 +111,10 @@
     <Compile Include="ParticleSystems1\BanishingParticleProjectile.cs" />
     <Compile Include="ParticleSystems1\ExplosionParticleSystem.cs" />
     <Compile Include="ParticleSystems1\ExplosionSmokeParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\FireballTrailSystem.cs" />
     <Compile Include="ParticleSystems1\FireParticleSystem.cs" />
+    <Compile Include="ParticleSystems1\IceAttackParticles.cs" />
+    <Compile Include="ParticleSystems1\Lava.cs" />
     <Compile Include="ParticleSystems1\Lavaball.cs" />
     <Compile Include="ParticleSystems1\PortalMystParticleSystem.cs" />
     <Compile Include="ParticleSystems1\PortalParticleSystem.cs" />

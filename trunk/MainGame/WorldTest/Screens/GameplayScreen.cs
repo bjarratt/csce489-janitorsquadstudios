@@ -89,6 +89,8 @@ namespace WorldTest
 
         private static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
 
+        private static Random randomGenerator = new Random();
+
         /// <summary>
         /// Stores the last keyboard, mouse and gamepad state.
         /// </summary>
@@ -105,12 +107,14 @@ namespace WorldTest
         ParticleSystem banishingParticleProj;
         ParticleSystem banishingHandParticles;
         ParticleSystem banisherExplosions;
-        ParticleSystem lavaBalls;
+        ParticleSystem lavaParticles;
+        ParticleSystem fireballTrail;
 
         /// <summary>
         /// List of attacks
         /// </summary>
         List<Projectile> projectiles = new List<Projectile>();
+        List<LavaBall> fireballProjectiles = new List<LavaBall>();
 
         // Random number generator for the fire effect.
         Random random = new Random();
@@ -255,24 +259,26 @@ namespace WorldTest
             banishingParticleProj = new BanishingParticleSystem(this.ScreenManager.game, content, false);
             banishingHandParticles = new BanishingHandSystem(this.ScreenManager.game, content, false);
             banisherExplosions = new BanisherExplosion(this.ScreenManager.game, content, false);
-            lavaBalls = new LavaBall(this.ScreenManager.game, content, false);
+            lavaParticles = new Lava(this.ScreenManager.game, content, false);
+            fireballTrail = new FireballTrailSystem(this.ScreenManager.game, content, false);
 
             // Set the draw order so the explosions and fire
             // will appear over the top of the smoke.
             smokePlumeParticles.DrawOrder = 100;
             explosionSmokeParticles.DrawOrder = 200;
             projectileTrailParticles.DrawOrder = 300;
+            fireballTrail.DrawOrder = 310;
             banishingParticleProj.DrawOrder = 350;
             banishingHandParticles.DrawOrder = 375;
             banisherExplosions.DrawOrder = 380;
-            lavaBalls.DrawOrder = 390;
+            lavaParticles.DrawOrder = 510;
             explosionParticles.DrawOrder = 400;
             fireParticles.DrawOrder = 500;
 
             portal = new Portal(new Vector3(0,-330,0), 50f);
             portal.Load(this.ScreenManager.game, content);
 
-            iceAttack = new IceAttack(player.position, 200f);
+            iceAttack = new IceAttack(player.position, 400f);
             iceAttack.Load(this.ScreenManager.game, content);
 
             tips = new ToolTips();
@@ -310,7 +316,8 @@ namespace WorldTest
             this.ScreenManager.game.Components.Add(banishingParticleProj);
             this.ScreenManager.game.Components.Add(banishingHandParticles);
             this.ScreenManager.game.Components.Add(banisherExplosions);
-            this.ScreenManager.game.Components.Add(lavaBalls);
+            this.ScreenManager.game.Components.Add(lavaParticles);
+            this.ScreenManager.game.Components.Add(fireballTrail);
 
             // initialize enemy and player... figure out what polygons in the navigatin mesh they're in
             player.current_poly_index = this.firstLevel.NavigationIndex(player.position);
@@ -700,8 +707,8 @@ namespace WorldTest
         /// </summary>
         void UpdateAttacks(GameTime gameTime, ControlState inputState)
         {
-            if (inputControlState.currentGamePadState.Triggers.Right != 0)
-            {
+            //if (inputControlState.currentGamePadState.Triggers.Right != 0)
+            //{
                 if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
                      (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released))
                 {
@@ -756,19 +763,19 @@ namespace WorldTest
                         Vector3 pos = player.position + new Vector3(0, 105, 0);
                         pos += camera.right * 5;
                         pos += camera.lookAt * 20;
-                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 6, 5f, 0, explosionParticles,
-                                                       lavaBalls,
+                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 80, 30, 6, 5f, 0, explosionParticles,
+                                                       explosionSmokeParticles,
                                                        projectileTrailParticles, ref enemies, false, true));
                         projectiles[projectiles.Count - 1].is_released = true;
                     }
                 }
-            }
-            else relicLightOn = false;
+            //}
+            //else relicLightOn = false;
 
 
             // Y BUTTON
-            if (inputControlState.currentGamePadState.Triggers.Right != 0)
-            {
+            //if (inputControlState.currentGamePadState.Triggers.Right != 0)
+            //{
                 if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
                      (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
                 {
@@ -827,8 +834,8 @@ namespace WorldTest
                         projectiles[projectiles.Count - 1].is_released = true;
                     }
                 }
-            }
-            else relicLightOn = false;
+            //}
+            //else relicLightOn = false;
         }
 
         void UpdateFire()
@@ -854,6 +861,11 @@ namespace WorldTest
                     else
                     {
                         explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
+                        for (int j = 0; j < 5; j++)
+                        {
+                            fireballProjectiles.Add(new LavaBall(projectiles[i].Position, new Vector3(RandomBetween(-10f, 10f) * 25f, RandomBetween(5f, 10f) * 25f, RandomBetween(-10f, 10f) * 25f),
+                                100, 1, 0, 1f, 500, lavaParticles, fireParticles, fireballTrail, false));
+                        }
                     }
 
                     projectiles.RemoveAt(i);
@@ -863,6 +875,16 @@ namespace WorldTest
                     // Advance to the next projectile.
                     i++;
                 }
+            }
+
+            i = 0;
+            while (i < fireballProjectiles.Count)
+            {
+                if (!fireballProjectiles[i].Update(gameTime))
+                {
+                    fireballProjectiles.RemoveAt(i);
+                }
+                i++;
             }
         }
 
@@ -983,7 +1005,8 @@ namespace WorldTest
             iceAttack.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingHandParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banisherExplosions.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
-            lavaBalls.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            lavaParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            fireballTrail.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
 
             base.Draw(gameTime);
 
@@ -1171,6 +1194,15 @@ namespace WorldTest
             }
             
             handEffect.End();
+        }
+
+        #endregion
+
+        #region Random Helpers
+
+        public static float RandomBetween(float min, float max)
+        {
+            return min + (float)randomGenerator.NextDouble() * (max - min);
         }
 
         #endregion

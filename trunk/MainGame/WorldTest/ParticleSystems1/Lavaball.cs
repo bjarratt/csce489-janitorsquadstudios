@@ -10,44 +10,64 @@ namespace WorldTest
     /// <summary>
     /// Custom particle system for creating the smokey part of the explosions.
     /// </summary>
-    class LavaBall : ParticleSystem
+    class LavaBall : Projectile
     {
-        public LavaBall(Game game, ContentManager content, bool attached)
-            : base(game, content, attached)
-        { }
+        #region Fields
 
+        public bool firstTime = true;
 
-        protected override void InitializeSettings(ParticleSettings settings)
+        #endregion
+
+        public LavaBall(Vector3 position, Vector3 velocity, float trail_particles_per_s,
+                            int num_contact_parts, int num_ext_contact_parts,
+                            float lifespan, float gravity,
+                            ParticleSystem contactParticles,
+                            ParticleSystem extraContactParticles,
+                            ParticleSystem projectileTrailParticles,
+                            bool needLight)
+            : base()
         {
-            settings.TextureName = "lava_ball";
+            this.position = position;
+            this.velocity = velocity;
+            this.trailParticlesPerSecond = trail_particles_per_s;
+            this.numContactParticles = num_contact_parts;
+            this.numExtraContactParticles = num_ext_contact_parts;
+            this.projectileLifespan = lifespan;
+            this.gravity = gravity;
+            this.needLight = needLight;
+            this.contactParticles = contactParticles;
+            this.extraContactParticles = extraContactParticles;
+            trailEmitter = new ParticleEmitter(projectileTrailParticles,
+                                               trailParticlesPerSecond, position);
+            
+            //collisionSphere = new BoundingSphere(position, 20);
+            is_released = false;
+            firstTime = true;
+        }
 
-            settings.MaxParticles = 200;
+        public bool Update(GameTime gameTime)
+        {
+            float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            settings.Duration = TimeSpan.FromSeconds(1.0f);
+            position += velocity * elapsedTime;
+            velocity.Y -= elapsedTime * gravity;
+            age += elapsedTime;
 
-            settings.MinHorizontalVelocity = -250;
-            settings.MaxHorizontalVelocity = 250;
+            trailEmitter.Update(gameTime, position);
 
-            settings.MinVerticalVelocity = 0;
-            settings.MaxVerticalVelocity = 200;
+            // If enough time has passed or it collides with something, explode! Note how we pass 
+            // our velocity in to the AddParticle method: this lets the explosion be influenced
+            // by the speed and direction of the projectile which created it.
+            if (age > projectileLifespan)
+            {
 
-            settings.Gravity = new Vector3(0, -290, 0);
+                for (int i = 0; i < numExtraContactParticles; i++)
+                    extraContactParticles.AddParticle(position, velocity);
 
-            settings.EndVelocity = 2;
+                return false;
+            }
 
-            settings.MinColor = Color.White;
-            settings.MaxColor = Color.White;
-
-            settings.MinRotateSpeed = -20;
-            settings.MaxRotateSpeed = 20;
-
-            settings.MinStartSize = 30;
-            settings.MaxStartSize = 40;
-
-            settings.MinEndSize = 30;
-            settings.MaxEndSize = 40;
-
-            settings.EmitterVelocitySensitivity = 0;
+            return true; 
         }
     }
 }
