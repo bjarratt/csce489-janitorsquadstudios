@@ -1096,8 +1096,8 @@ namespace WorldTest
 
         public int NavigationIndex(Vector3 position, int currentLocation)
         {
-            //if (currentLocation < 0)
-            //{
+            if (currentLocation < 0)
+            {
                 for (int i = 0; i < navigationMesh.Count; i++)
                 {
                     if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
@@ -1105,17 +1105,17 @@ namespace WorldTest
                         return i;
                     }
                 }
-            //}
-            //else
-            //{
-            //    for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
-            //    {
-            //        if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
-            //        {
-            //            return navigationMesh[currentLocation].adjacent_polygons[i];
-            //        }
-            //    }
-            //}
+            }
+            else
+            {
+                for (int i = 0; i < navigationMesh[currentLocation].adjacent_polygons.Count; i++)
+                {
+                    if (IntersectsNavQuad(new Ray(position + new Vector3(0, 5, 0), Vector3.Down), i))
+                    {
+                        return navigationMesh[currentLocation].adjacent_polygons[i];
+                    }
+                }
+            }
 
             return -1;
         }
@@ -1124,24 +1124,6 @@ namespace WorldTest
         public bool IntersectsNavQuad(Ray R, int nodeIndex)
         {
             return (IntersectsNavTriangle(R, nodeIndex, 0, 1, 2) || IntersectsNavTriangle(R, nodeIndex, 2, 3, 0));
-            //CollisionPolygon poly;
-            //poly.normal = Vector3.Up;
-            //if (nodeIndex < 0)
-            //{
-            //    return false;
-            //}
-            //R.Position.Y = navigationMesh[nodeIndex].V0.Y;
-            //poly.v1 = navigationMesh[nodeIndex].V0;
-            //poly.v2 = navigationMesh[nodeIndex].V1;
-            //poly.v3 = navigationMesh[nodeIndex].V2;
-            //bool intersectsFirst = pointInsidePolygon(R.Position, poly);
-            //R.Position.Y = navigationMesh[nodeIndex].V2.Y;
-            //poly.v1 = navigationMesh[nodeIndex].V2;
-            //poly.v2 = navigationMesh[nodeIndex].V3;
-            //poly.v3 = navigationMesh[nodeIndex].V0;
-            //bool intersectsSecond = pointInsidePolygon(R.Position, poly);
-
-            //return (intersectsFirst || intersectsSecond);
         }
 
         public bool IntersectsNavTriangle(Ray R, int nodeIndex, int firstVertexIndex, int secondVertexIndex, int thirdVertexIndex)
