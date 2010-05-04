@@ -128,7 +128,7 @@ namespace WorldTest
         /// <summary>
         /// Helper overload makes it easy to use OnCancel as a MenuEntry event handler.
         /// </summary>
-        protected void OnCancel(object sender, PlayerIndexEventArgs e)
+        protected virtual void OnCancel(object sender, PlayerIndexEventArgs e)
         {
             OnCancel(e.PlayerIndex);
         }
@@ -165,7 +165,10 @@ namespace WorldTest
             SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
             SpriteFont font = ScreenManager.Font;
 
-            Vector2 position = new Vector2(100, 300);
+            Vector2 position = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth -
+                                           12*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/13,
+                                            screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight -
+                                            screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight/2);
 
             spriteBatch.Begin();
 
@@ -182,7 +185,9 @@ namespace WorldTest
             }
 
             // Draw the menu title.
-            Vector2 titlePosition = new Vector2(240, 200);
+            Vector2 titlePosition = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth -
+                                                5*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/6, 
+                                                 200);
             Vector2 titleOrigin = font.MeasureString(menuTitle) * 0.5f;
             Color titleColor = new Color(192, 192, 192, TransitionAlpha);
             float titleScale = 1.25f;
@@ -192,6 +197,10 @@ namespace WorldTest
             spriteBatch.End();
         }
 
+        public Vector2 setPosition(float x, float y)
+        {
+            return new Vector2(x, y);
+        }
 
         #endregion
     }
