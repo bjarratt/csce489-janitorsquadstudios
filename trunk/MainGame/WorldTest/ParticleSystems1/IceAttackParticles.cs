@@ -27,7 +27,7 @@ namespace WorldTest
             settings.MinHorizontalVelocity = 150;
             settings.MaxHorizontalVelocity = 200;
 
-            settings.MinVerticalVelocity = 100;
+            settings.MinVerticalVelocity = 180;
             settings.MaxVerticalVelocity = 200;
 
             // Set gravity upside down, so the flames will 'fall' upward.
@@ -36,11 +36,11 @@ namespace WorldTest
             settings.MinColor = new Color(0, 0, 150, 255); //10
             settings.MaxColor = new Color(0, 80, 255, 255); //40
             
-            settings.MinStartSize = 40;
-            settings.MaxStartSize = 50;
+            settings.MinStartSize = 60;
+            settings.MaxStartSize = 70;
 
-            settings.MinEndSize = 60;
-            settings.MaxEndSize = 80;
+            settings.MinEndSize = 20;
+            settings.MaxEndSize = 20;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;

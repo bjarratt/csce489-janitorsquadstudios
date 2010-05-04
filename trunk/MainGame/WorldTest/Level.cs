@@ -919,9 +919,17 @@ namespace WorldTest
         /// <returns>This returns either true or false in one pass with no recursion.</returns>
         public bool EmitterCollideWithGeometry(Ray ray)
         {
+            float distToPolySquared;
+            const float MIN_DIST_SQUARED = 9000000f;
 
             for (int i = 0; i < collisionMesh.Count; i++)
             {
+                // Ignore any polygons further away than a given value
+                distToPolySquared = Vector3.DistanceSquared(this.collisionMesh[i].v1, newPosition);
+                if (distToPolySquared > MIN_DIST_SQUARED)
+                {
+                    continue;
+                }
                 if (IntersectTriangle(ray, collisionMesh[i]))
                 {
                     float? dist = ray.Intersects(new Plane(collisionMesh[i].v1, collisionMesh[i].v2, collisionMesh[i].v3));
