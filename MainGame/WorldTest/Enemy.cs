@@ -186,7 +186,7 @@ namespace WorldTest
         {
             //reset rotation
             //rotation = 0.0f;
-            UpdatePlayerLocation(ref currentLevel, ref player);
+            //UpdatePlayerLocation(ref currentLevel, ref player);
 
             if (this.CurrentDimension == player.CurrentDimension)
             {
@@ -475,22 +475,6 @@ namespace WorldTest
                 position = currentLevel.CollideWith(position, velocity, 0.1, Level.MAX_COLLISIONS);
             }
             collisionSphere.Center = position + lookAt * 10 + new Vector3(0,25,0);
-        }
-
-        private void UpdatePlayerLocation(ref Level currentLevel, ref Player player)
-        {
-            //player... first check current current_poly
-            if (currentLevel.IntersectsNavQuad(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
-                player.current_poly_index))
-            {
-                player.prev_poly_index = player.current_poly_index;
-            }
-            else
-            {
-                player.prev_poly_index = player.current_poly_index;
-                player.current_poly_index = currentLevel.NavigationIndex(player.position, player.current_poly_index);
-            }
-
         }
 
         private void UpdateEnemyLocation(ref Level currentLevel)
