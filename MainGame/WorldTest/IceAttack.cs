@@ -112,7 +112,6 @@ namespace WorldTest
                     {
                         if ((enemies[e].position - this.origin).Length() <= this.radius)
                         {
-                            GameplayScreen.soundControl.Play("enemy damaged");
                             enemies[e].health -= 100;
                             if (enemies[e].health <= 0)
                             {
