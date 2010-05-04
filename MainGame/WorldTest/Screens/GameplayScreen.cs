@@ -945,7 +945,9 @@ namespace WorldTest
 
             List<Light> projLightList = new List<Light>();
 
-            lights[0].position = player.position;
+            lights[0].position = player.position + new Vector3(0, 200, 0);
+
+            lights[0].attenuationRadius = 3000f;
 
             projLightList.AddRange(lights);
             if (this.relicLightOn)
@@ -1014,7 +1016,7 @@ namespace WorldTest
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, true, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)

@@ -21,6 +21,10 @@ namespace WorldTest
     {
         #region Fields
 
+        List<MenuEntry> optionsMenuEntries = new List<MenuEntry>();
+        int selectedEntry = 0;
+        string menuTitle = "Options";
+
         public struct Resolution
         {
             public int width;
@@ -52,6 +56,15 @@ namespace WorldTest
                                                       };
 
         public static MultiSampleType CURRENT_AA_SETTING = MultiSampleType.None;
+
+        /// <summary>
+        /// Gets the list of menu entries, so derived classes can add
+        /// or change the menu contents.
+        /// </summary>
+        protected IList<MenuEntry> OptionsMenuEntries
+        {
+            get { return optionsMenuEntries; }
+        }
 
         #endregion
 
@@ -123,12 +136,12 @@ namespace WorldTest
             backMenuEntry.Selected += OnCancel;
             
             // Add entries to the menu.
-            MenuEntries.Add(MenuEntry1);
-            MenuEntries.Add(MenuEntry2);
-            MenuEntries.Add(MenuEntry3);
-            MenuEntries.Add(MenuEntry4);
-            MenuEntries.Add(MenuEntry5);
-            MenuEntries.Add(backMenuEntry);
+            OptionsMenuEntries.Add(MenuEntry1);
+            OptionsMenuEntries.Add(MenuEntry2);
+            OptionsMenuEntries.Add(MenuEntry3);
+            OptionsMenuEntries.Add(MenuEntry4);
+            OptionsMenuEntries.Add(MenuEntry5);
+            OptionsMenuEntries.Add(backMenuEntry);
         }
 
         /// <summary>
@@ -182,9 +195,76 @@ namespace WorldTest
 
         #region Handle Input
 
+        /// <summary>
+        /// Responds to user input, changing the selected entry and accepting
+        /// or cancelling the menu.
+        /// </summary>
+        public override void HandleInput(InputState input)
+        {
+            // Move to the previous menu entry?
+            if (input.IsMenuUp(ControllingPlayer))
+            {
+                selectedEntry--;
+
+                if (selectedEntry < 0)
+                    selectedEntry = optionsMenuEntries.Count - 1;
+            }
+
+            // Move to the next menu entry?
+            if (input.IsMenuDown(ControllingPlayer))
+            {
+                selectedEntry++;
+
+                if (selectedEntry >= optionsMenuEntries.Count)
+                    selectedEntry = 0;
+            }
+
+            // Accept or cancel the menu? We pass in our ControllingPlayer, which may
+            // either be null (to accept input from any player) or a specific index.
+            // If we pass a null controlling player, the InputState helper returns to
+            // us which player actually provided the input. We pass that through to
+            // OnSelectEntry and OnCancel, so they can tell which player triggered them.
+            PlayerIndex playerIndex;
+
+            if (input.IsMenuSelect(ControllingPlayer, out playerIndex))
+            {
+                OnSelectEntry(selectedEntry, playerIndex);
+            }
+            else if (input.IsMenuCancel(ControllingPlayer, out playerIndex))
+            {
+                OnCancel(playerIndex);
+            }
+        }
+
 
         /// <summary>
-        /// Event handler for when the Ungulate menu entry is selected.
+        /// Handler for when the user has chosen a menu entry.
+        /// </summary>
+        protected override void OnSelectEntry(int entryIndex, PlayerIndex playerIndex)
+        {
+            optionsMenuEntries[selectedEntry].OnSelectEntry(playerIndex);
+        }
+
+
+        /// <summary>
+        /// Handler for when the user has cancelled the menu.
+        /// </summary>
+        protected override void OnCancel(PlayerIndex playerIndex)
+        {
+            ExitScreen();
+        }
+
+
+        /// <summary>
+        /// Helper overload makes it easy to use OnCancel as a MenuEntry event handler.
+        /// </summary>
+        protected override void OnCancel(object sender, PlayerIndexEventArgs e)
+        {
+            OnCancel(e.PlayerIndex);
+        }
+
+        /// <summary>
+        /// Event handler for when the resolution menu entry is selected.
         /// </summary>
         void MenuEntry1Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -201,7 +281,7 @@ namespace WorldTest
 
 
         /// <summary>
-        /// Event handler for when the Language menu entry is selected.
+        /// Event handler for when the fullscreen menu entry is selected.
         /// </summary>
         void MenuEntry2Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -215,7 +295,7 @@ namespace WorldTest
 
 
         /// <summary>
-        /// Event handler for when the Frobnicate menu entry is selected.
+        /// Event handler for when the y-axis inversion menu entry is selected.
         /// </summary>
         void MenuEntry3Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -228,7 +308,7 @@ namespace WorldTest
 
 
         /// <summary>
-        /// Event handler for when the Elf menu entry is selected.
+        /// Event handler for when the antialiasing menu entry is selected.
         /// </summary>
         void MenuEntry4Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -259,7 +339,7 @@ namespace WorldTest
         }
 
         /// <summary>
-        /// Event handler for when the 5th menu entry is selected.
+        /// Event handler for when the apply changes entry is selected.
         /// </summary>
         void MenuEntry5Selected(object sender, PlayerIndexEventArgs e)
         {
@@ -270,6 +350,67 @@ namespace WorldTest
             SetMenuEntryText();
         }
 
+        #endregion
+
+        #region Update and Draw
+
+        /// <summary>
+        /// Updates the menu.
+        /// </summary>
+        public override void Update(GameTime gameTime, bool otherScreenHasFocus,
+                                                       bool coveredByOtherScreen)
+        {
+            base.Update(gameTime, otherScreenHasFocus, coveredByOtherScreen);
+
+            // Update each nested MenuEntry object.
+            for (int i = 0; i < optionsMenuEntries.Count; i++)
+            {
+                bool isSelected = IsActive && (i == selectedEntry);
+
+                optionsMenuEntries[i].Update(this, isSelected, gameTime);
+            }
+        }
+
+        /// <summary>
+        /// Draws the menu.
+        /// </summary>
+        public override void Draw(GameTime gameTime)
+        {
+            SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
+            SpriteFont font = ScreenManager.Font;
+
+            Vector2 position = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth-
+                                           14*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/30,
+                                            screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight-
+                                            10*screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight/12);
+
+            spriteBatch.Begin();
+
+            // Draw each menu entry in turn.
+            for (int i = 0; i < optionsMenuEntries.Count; i++)
+            {
+                MenuEntry menuEntry = optionsMenuEntries[i];
+
+                bool isSelected = IsActive && (i == selectedEntry);
+
+                menuEntry.Draw(this, position, isSelected, gameTime);
+
+                position.Y += menuEntry.GetHeight(this);
+            }
+
+            // Draw the menu title.
+            Vector2 titlePosition = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth-
+                                                screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/3,
+                                                 screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight-
+                                                 11*screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight/12);
+            Vector2 titleOrigin = font.MeasureString(menuTitle) * 0.5f;
+            Color titleColor = new Color(192, 192, 192, TransitionAlpha);
+            float titleScale = 1.25f;
+            
+            spriteBatch.DrawString(font, menuTitle, titlePosition, titleColor, 0,
+                                   titleOrigin, titleScale, SpriteEffects.None, 0);
+            spriteBatch.End();
+        }
 
         #endregion
     }
