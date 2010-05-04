@@ -1266,9 +1266,10 @@ namespace WorldTest
             return true;                      // I is in T
         }
 
-        public Vector3 TravelPoint(int firstPolyIndex, int secondPolyIndex)
+        public Vector3 TravelPoint(int polyIndex)
         {
-            return (navigationMesh[firstPolyIndex].Centroid + navigationMesh[secondPolyIndex].Centroid) * 0.5f;
+            //return (navigationMesh[firstPolyIndex].Centroid + navigationMesh[secondPolyIndex].Centroid) * 0.5f;
+            return navigationMesh[polyIndex].Centroid;
         }
 
         #endregion

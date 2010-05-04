@@ -211,6 +211,8 @@ namespace WorldTest
                     }
                 }
 
+                #region Hysteresis
+
                 // First we have to use the current state to decide what the thresholds are
                 // for changing state
                 float enemySmartChaseThreshold = this.stats.smartChaseDistance;
@@ -244,80 +246,144 @@ namespace WorldTest
                     enemyAttackThreshold += this.stats.hysteresis * 0.5f;
                 }
 
-                // Second, now that we know what the thresholds are, we compare the enemy's 
-                // distance from the player against the thresholds to decide what the enemy's
-                // current state is.
+                #endregion
+
+                #region State Determination
+
+                float distanceFromPlayer = Vector3.Distance(this.position, player.position);
+
                 if (this.state == EnemyAiState.Weakened)
                 {
-                    // do nothing
+                    // Do nothing
                 }
-                else
+                else if (distanceFromPlayer < enemyAttackThreshold)
                 {
-                    float distanceFromPlayer = Vector3.Distance(this.position, player.position);
-                    if (distanceFromPlayer > enemySmartChaseThreshold)
+                    // Enemy is within attack radius
+                    this.state = EnemyAiState.Attack;
+                }
+                else if (this.current_poly_index == player.current_poly_index)
+                {
+                    // Enemy and player are in same polygon
+                    this.state = EnemyAiState.ChasingDumb;
+                }
+                else if (distanceFromPlayer < enemyDumbChaseThreshold)
+                {
+                    // Enemy is within dumb chasing radius
+                    this.state = EnemyAiState.ChasingDumb;
+                }
+                else if (this.current_poly_index < 0 || player.current_poly_index < 0)
+                {
+                    // Player or enemy location unknown, so chase dumb
+                    this.state = EnemyAiState.ChasingDumb;
+                }
+                else if (distanceFromPlayer < enemySmartChaseThreshold)
+                {
+                    if (this.state == EnemyAiState.ChasingSmart)
                     {
-                        // if the enemy is far away from the player, it should idle
-                        this.state = EnemyAiState.Idle;
-                    }
-                    else if (distanceFromPlayer > enemyDumbChaseThreshold)
-                    {
-                        if (player.current_poly_index < 0 || this.current_poly_index < 0)
-                        {
-                            this.state = EnemyAiState.ChasingDumb;
-                        }
-                        else
-                        {
-                            LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-
-                            if (newPath.Count > 1) // If newPath is valid, use it; otherwise, use the original
-                            {
-                                this.currentPath = newPath;
-                                this.FirstPathPoly = currentPath.First.Value.Index;
-                                this.SecondPathPoly = currentPath.First.Next.Value.Index;
-                            }
-
-                            this.state = EnemyAiState.ChasingSmart;
-                        }
-
-
-                    }
-                    else if (distanceFromPlayer > enemyAttackThreshold)
-                    {
-                        this.state = EnemyAiState.ChasingDumb;
+                        // Enemy was already chasing smart, so it already has a path
                     }
                     else
                     {
-                        this.state = EnemyAiState.Attack;
-                    }
+                        // Enemy was not in chasing smart, so make a new path
+                        this.state = EnemyAiState.ChasingSmart;
+                        LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                        if (newPath == null || newPath.Count < 2)
+                        {
+                            throw new Exception("Invalid Path");
+                        }
+                        else
+                        {
+                            this.currentPath = newPath;
+                            this.FirstPathPoly = this.currentPath.First.Value.Index;
+                            this.SecondPathPoly = this.currentPath.First.Next.Value.Index;
+                        }
+                    }                    
                 }
-                
-                //this.state = EnemyAiState.ChasingDumb;
+                else
+                {
+                    this.state = EnemyAiState.Idle;
+                }
+
+                #endregion
+
+                #region Old State Determination
+
+                // Second, now that we know what the thresholds are, we compare the enemy's 
+                // distance from the player against the thresholds to decide what the enemy's
+                // current state is.
+                //if (this.state == EnemyAiState.Weakened)
+                //{
+                //    // do nothing
+                //}
+                //else
+                //{
+                //    float distanceFromPlayer = Vector3.Distance(this.position, player.position);
+                //    if (distanceFromPlayer > enemySmartChaseThreshold)
+                //    {
+                //        // if the enemy is far away from the player, it should idle
+                //        this.state = EnemyAiState.Idle;
+                //    }
+                //    else if (distanceFromPlayer > enemyDumbChaseThreshold)
+                //    {
+                //        if (player.current_poly_index < 0 || this.current_poly_index < 0)
+                //        {
+                //            this.state = EnemyAiState.ChasingDumb;
+                //        }
+                //        else
+                //        {
+                //            LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
+
+                //            if (newPath.Count > 1) // If newPath is valid, use it; otherwise, use the original
+                //            {
+                //                this.currentPath = newPath;
+                //                this.FirstPathPoly = currentPath.First.Value.Index;
+                //                this.SecondPathPoly = currentPath.First.Next.Value.Index;
+                //            }
+
+                //            this.state = EnemyAiState.ChasingSmart;
+                //        }
+
+
+                //    }
+                //    else if (distanceFromPlayer > enemyAttackThreshold)
+                //    {
+                //        this.state = EnemyAiState.ChasingDumb;
+                //    }
+                //    else
+                //    {
+                //        this.state = EnemyAiState.Attack;
+                //    }
+                //}
+
+                #endregion
+
                 // Third, once we know what state we're in, act on that state.
                 float currentEnemySpeed;
                 if (this.state == EnemyAiState.ChasingSmart)
                 {
-                    Vector3 moveTo = Navigate(ref currentLevel, ref player);
-                    //moveTo.Normalize();
-                    // the enemy wants to chase the player, so it will just use the TurnToFace
-                    // function to turn towards the player's position. Then, when the enemy
-                    // moves forward, he will chase the player.
-                    this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
-                    currentEnemySpeed = this.stats.maxSpeed;
+                    try
+                    {
+                        Vector3 moveTo = Navigate(ref currentLevel, ref player);
+                        this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
+                        currentEnemySpeed = this.stats.maxSpeed;
+                    }
+                    catch (Exception e)
+                    {
+                        // If smart navigation fails, revert to dumb
+                        this.state = EnemyAiState.ChasingDumb;
+                        this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
+                        currentEnemySpeed = this.stats.maxSpeed;
+                    }
                 }
                 else if (this.state == EnemyAiState.ChasingDumb)
                 {
-                    //Vector3 turnToward = player.position - this.position;
-                    //turnToward.Normalize();
                     this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
                     currentEnemySpeed = this.stats.maxSpeed;
                 }
                 else if (this.state == EnemyAiState.Idle)
                 {
-                    // call the wander function for the enemy
-                    //Wander(this.position, ref this.velocity, ref this.rotation,
-                    //    this.turn_speed);
-                    //currentEnemySpeed = .25f * this.speed;
-                    //currentEnemySpeed = 0.0f;
+                    // Do nothing
                 }
                 else if (this.state == EnemyAiState.Attack)
                 {
@@ -372,7 +438,6 @@ namespace WorldTest
             this.stats.maxHealth += 50;
         }
 
-        //TODO: update to include results of AI pathfinding
         private void MoveForward(Vector3 heading, ref Level currentLevel)
         {
             worldTransform = Matrix.CreateFromQuaternion(orientation);
@@ -418,7 +483,7 @@ namespace WorldTest
             if (currentLevel.IntersectsNavQuad(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down),
                 player.current_poly_index))
             {
-                // do nothing... player is still in his current polygon.
+                player.prev_poly_index = player.current_poly_index;
             }
             else
             {
@@ -434,7 +499,7 @@ namespace WorldTest
             if (currentLevel.IntersectsNavQuad(new Ray(this.position + new Vector3(0, 5, 0), Vector3.Down),
                 this.current_poly_index))
             {
-                // do nothing... enemy is still in his current polygon.
+                this.prev_poly_index = this.current_poly_index;
             }
             else
             {
@@ -452,6 +517,8 @@ namespace WorldTest
 
             if (this.state == Enemy.EnemyAiState.Idle)
             {
+                // This state should be impossible
+                throw new Exception("Enemy state is idle while in Navigate");
                 return this.position;
             }
             else if (this.state == Enemy.EnemyAiState.ChasingSmart)
@@ -461,39 +528,68 @@ namespace WorldTest
                 {
                     // player has not moved since the last frame... continue following the 
                     // old path.
+
                     if (this.current_poly_index == this.prev_poly_index)
                     {
-                        Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
-                        //Vector3 travel_vector = travel_point - this.position;
-                        //travel_vector.Normalize();
+                        // Enemy also hasn't changed polygons, so keep following the same path
+
+                        if (this.SecondPathPoly == this.current_poly_index)
+                        {
+                            // If enemy is travelling to the polygon it is currently in, move to next (if available)
+                            if (this.CurrentPath.Count > 2)
+                            {
+                                this.CurrentPath.RemoveFirst();
+                                this.FirstPathPoly = this.SecondPathPoly;
+                                this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
+                            }
+                            else
+                            {
+                                throw new Exception("Current path is invalid");
+                            }
+                        }
+                        Vector3 travel_point = currentLevel.TravelPoint(this.SecondPathPoly);
                         return travel_point;
                     }
-                    else
+                    else // Enemy has changed polygons, but player hasn't
                     {
-                        //this.CurrentPath.GetEnumerator().MoveNext();
-                        // FIXME: CurrentPath.Count = 0
+                        if (this.CurrentPath.Count < 2)
+                        {
+                            this.CurrentPath = ConvertToList(currentLevel.FindPath(this.current_poly_index, player.current_poly_index));
+
+                            if (this.CurrentPath.Count < 2)
+                            {
+                                // If the path is still too short, chase dumb
+                                throw new Exception("Current path is too short");
+                            }
+                            //throw new Exception("Current path is too small in Navigate");
+                        }
+
                         this.CurrentPath.RemoveFirst();
 
                         this.FirstPathPoly = this.SecondPathPoly;
-                        if (currentPath.Count < 2)
+                        //if (currentPath.Count < 2)
+                        //{
+                        //    //this.SecondPathPoly = this.CurrentPath.First.Value.Index;
+                        //    this.state = EnemyAiState.ChasingDumb;
+                        //    Vector3 direction = player.position - this.position;
+                        //    direction.Normalize();
+                        //    return direction;
+                        //}
+                        //else
+                        //{
+                        if (this.CurrentPath.Count > 2)
                         {
-                            //this.SecondPathPoly = this.CurrentPath.First.Value.Index;
-                            this.state = EnemyAiState.ChasingDumb;
-                            Vector3 direction = player.position - this.position;
-                            direction.Normalize();
-                            return direction;
-                        }
-                        else
-                        {
+                            // Only advance the SecondPathPoly if there is one after it
                             this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
                         }
-                        Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
+                        //}
+                        Vector3 travel_point = currentLevel.TravelPoint(this.SecondPathPoly);
                         //Vector3 travel_vector = travel_point - this.position;
                         //travel_vector.Normalize();
                         return travel_point;
                     }
                 }
-                else
+                else // Player position has changed
                 {
                     //if (player.current_poly_index < 0 || this.current_poly_index < 0)
                     //{
@@ -509,13 +605,16 @@ namespace WorldTest
 
                     if (player.current_poly_index < 0 || this.current_poly_index < 0)
                     {
-
+                        throw new Exception("Player or enemy polygon index invalid while chasing smart");
                     }
-                    else
+                    else // Player position has changed
                     {
                         LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
-
-                        if (newPath.Count > 1) // If newPath is valid, use it
+                        if (newPath.Count < 2)
+                        {
+                            throw new Exception("Invalid new path in Navigate");
+                        }
+                        else
                         {
                             this.currentPath = newPath;
                             this.FirstPathPoly = currentPath.First.Value.Index;
@@ -526,28 +625,32 @@ namespace WorldTest
                     //this.currentPath = ConvertToList(RunAStar(ref player, ref currentLevel));
                     //this.FirstPathPoly = this.CurrentPath.First.Value.Index;
                     //this.SecondPathPoly = this.CurrentPath.First.Next.Value.Index;
-                    Vector3 travel_point = currentLevel.TravelPoint(this.FirstPathPoly, this.SecondPathPoly);
+                    Vector3 travel_point = currentLevel.TravelPoint(this.SecondPathPoly);
                     //Vector3 travel_vector = travel_point - this.position;
                     //travel_vector.Normalize();
                     return travel_point;
                 }
             }
-            else if (this.state == Enemy.EnemyAiState.ChasingDumb)
+            else
             {
-                Vector3 direction = player.position - this.position;
-                direction.Normalize();
-                return direction;
+                throw new Exception("Enemy state not chasing smart while in Navigate");
             }
-            else if (this.state == Enemy.EnemyAiState.Attack)
-            {
-                Vector3 direction = player.position - this.position;
-                direction.Normalize();
-                return direction;
-            }
-            else if (this.state == Enemy.EnemyAiState.Weakened)
-            {
-                return this.position;
-            }
+            //else if (this.state == Enemy.EnemyAiState.ChasingDumb)
+            //{
+            //    Vector3 direction = player.position - this.position;
+            //    direction.Normalize();
+            //    return direction;
+            //}
+            //else if (this.state == Enemy.EnemyAiState.Attack)
+            //{
+            //    Vector3 direction = player.position - this.position;
+            //    direction.Normalize();
+            //    return direction;
+            //}
+            //else if (this.state == Enemy.EnemyAiState.Weakened)
+            //{
+            //    return this.position;
+            //}
 
             return this.position;
         }
