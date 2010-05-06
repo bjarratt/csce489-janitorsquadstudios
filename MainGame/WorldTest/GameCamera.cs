@@ -306,6 +306,10 @@ namespace WorldTest
                 lookAt = Vector3.Normalize(Vector3.Transform(lookAt, combine));
                 right = Vector3.Normalize(Vector3.Transform(right, combine));
                 up = Vector3.Normalize(Vector3.Transform(up, combine));
+
+                // Correct for occasional accidental camera roll
+                right.Y = 0.0f;
+                up = Vector3.Cross(right, lookAt);
                  
                 Vector3 target = position + lookAt;
                 view = Matrix.CreateLookAt(position, target, up);

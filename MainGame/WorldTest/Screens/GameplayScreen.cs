@@ -87,7 +87,7 @@ namespace WorldTest
         public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
         public static bool transitioning = false;
 
-        private static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
+        public static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
         //public const float MIN_Y_VAL = -0.01f;
 
         private static Random randomGenerator = new Random();
@@ -166,6 +166,7 @@ namespace WorldTest
             this.ENEMY_STATS.hysteresis = 15f;
             this.ENEMY_STATS.recoveryTime = 7f;
             this.ENEMY_STATS.maxHealth = 100;
+            this.ENEMY_STATS.useLineOfSight = true;
 
             TransitionOnTime = TimeSpan.FromSeconds(1.5);
             TransitionOffTime = TimeSpan.FromSeconds(0.5);

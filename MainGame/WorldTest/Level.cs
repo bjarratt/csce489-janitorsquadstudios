@@ -942,6 +942,108 @@ namespace WorldTest
             }
         }
 
+        public bool PolygonExistsBetween(Vector3 startPosition, Vector3 endPosition)
+        {
+            if (startPosition == endPosition)
+            {
+                return false;
+            }
+
+            bool firstTimeThrough = true;
+            //this.closestT = -1;
+            //this.newPosition = originalPosition + velocityVector;
+            //this.newVelocityVector = velocityVector;
+            //this.newVelocityVector.Normalize();
+
+            //float distToPolySquared;
+            //const float MIN_DIST_SQUARED = 9000000f;
+
+            float distBetweenPositions = Vector3.Distance(startPosition, endPosition);
+            Vector3 toEndPosition = endPosition - startPosition;
+
+            int i;
+            //
+            // Check collision with each polygon in collision mesh
+            //
+            for (i = 0; i < this.collisionMesh.Count; i++)
+            {
+                // Parametric value for when the current polygon will be hit (0 to 1 means it will be hit this frame)
+                float tValue = (Vector3.Dot(-this.collisionMesh[i].normal, this.collisionMesh[i].v1 - startPosition)) / Vector3.Dot(toEndPosition, -this.collisionMesh[i].normal);
+                
+                // Skip degenerate triangles
+                if (!(tValue < 0 || tValue >= 0))
+                {
+                    continue;
+                }
+
+                if (tValue < 0 || tValue > 1) // If polygon is not hit
+                {
+                    continue;
+
+                    //if (/*this.distToPlane > 0 && this.distToPlane < radius &&*/ pointInsidePolygon(startPosition + (toEndPosition * tValue), this.collisionMesh[i]))
+                    //{
+                    //    tValue = 0; // Sphere is embedded, so don't proceed
+                    //}
+                    //else
+                    //{
+                    //    continue;
+                    //}
+                }
+
+                this.collisionPoint = startPosition + (toEndPosition * tValue);
+
+                //float scaleFactor = Vector3.Dot(this.newPosition - this.collisionPoint, this.collisionMesh[i].normal);
+
+                //Vector3 tempPoint = collisionPoint + (this.collisionMesh[i].normal * scaleFactor);
+
+                //if (this.newPosition == tempPoint)
+                //{
+                //    this.newVelocityVector = Vector3.Zero;
+                //}
+                //else
+                //{
+                //    this.newVelocityVector = this.newPosition - tempPoint;
+                //    this.newVelocityVector.Normalize();
+                //    this.newVelocityVector *= (tValue * velocityVector.Length());
+                //}
+
+                if (firstTimeThrough || tValue < this.closestT)
+                {
+                    if (pointInsidePolygon(this.collisionPoint, this.collisionMesh[i]))
+                    {
+                        return true;
+                        // If the collision point is inside the current polygon and it has the smallest tValue so far,
+                        // record the collision info.
+                        //this.closestT = tValue;
+                        //this.closestVelocityVector = this.newVelocityVector;
+                        //this.closestCollisionPoint = this.collisionPoint + (-this.collisionMesh[i].normal * 0.1f);
+                        //closestCollisionIndex = i;
+                        //firstTimeThrough = false;
+                    }
+                }
+            }
+
+            return false;
+
+            //if (firstTimeThrough)
+            //{
+            //    //if (this.newPosition.Y < -1)
+            //    //{
+            //    //    this.newPosition.Y = -0.8f;
+            //    //}
+            //    return this.newPosition; // No collisions, just apply velocity vector
+            //}
+            //else
+            //{
+            //    Vector3 resultingPosition = CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1); // Recursively collide
+            //    //if (resultingPosition.Y < -1)
+            //    //{
+            //    //    resultingPosition.Y = -0.8f;
+            //    //}
+            //    return resultingPosition;
+            //}
+        }
+
         public bool EmitterCollideWith(Vector3 originalPosition, Vector3 velocityVector, double radius)
         {
             bool collide = this.EmitterCollideWithGeometry(new Ray(originalPosition,velocityVector));
