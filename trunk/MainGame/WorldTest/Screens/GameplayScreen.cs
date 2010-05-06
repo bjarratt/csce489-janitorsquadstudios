@@ -88,6 +88,7 @@ namespace WorldTest
         public static bool transitioning = false;
 
         private static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
+        //public const float MIN_Y_VAL = -0.01f;
 
         private static Random randomGenerator = new Random();
 
@@ -127,7 +128,8 @@ namespace WorldTest
         RenderTarget2D sceneRenderTarget;
         RenderTarget2D shadowRenderTarget;
 
-        Portal portal;
+        //Portal portal;
+        List<Portal> dimensionPortals;
         IceAttack iceAttack;
 
         ToolTips tips;
@@ -247,6 +249,9 @@ namespace WorldTest
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
 
+            // Must be done before LoadGame
+            dimensionPortals = new List<Portal>();
+
             // Sets position of player and enemies; must be done after level is loaded
             this.LoadGame(this.loadFilename);
 
@@ -275,8 +280,14 @@ namespace WorldTest
             explosionParticles.DrawOrder = 400;
             fireParticles.DrawOrder = 500;
 
-            portal = new Portal(new Vector3(0,-330,0), 50f);
-            portal.Load(this.ScreenManager.game, content);
+            // Load portals
+            for (int i = 0; i < dimensionPortals.Count; i++)
+            {
+                dimensionPortals[i].Load(this.ScreenManager.game, content);
+            }
+
+            //portal = new Portal(new Vector3(0,-330,0), 50f);
+            //portal.Load(this.ScreenManager.game, content);
 
             iceAttack = new IceAttack(player.position, 400f);
             iceAttack.Load(this.ScreenManager.game, content);
@@ -424,17 +435,24 @@ namespace WorldTest
                     writer.Write("xyz ");
                     writer.Write(enemies[i].position.X.ToString() + " ");
                     writer.Write(enemies[i].position.Y.ToString() + " ");
-                    writer.Write(enemies[i].position.Z.ToString() + " ");
+                    writer.WriteLine(enemies[i].position.Z.ToString() + " ");
                 }
                 else
                 {
                     writer.Write("index ");
-                    writer.Write(enemies[i].current_poly_index.ToString() + " ");
+                    writer.WriteLine(enemies[i].current_poly_index.ToString() + " ");
                 }
 
                 //writer.Write(enemies[i].position.X.ToString() + " ");
                 //writer.Write(enemies[i].position.Y.ToString() + " ");
                 //writer.WriteLine(enemies[i].position.Z.ToString());
+            }
+
+            for (int i = 0; i < dimensionPortals.Count; i++)
+            {
+                writer.Write("Portal ");
+                writer.Write(dimensionPortals[i].NavMeshIndex.ToString() + " ");
+                writer.WriteLine(dimensionPortals[i].Radius.ToString());
             }
 
             writer.Close();
@@ -449,6 +467,7 @@ namespace WorldTest
             char[] splitChars = { ' ' };
 
             enemies.Clear();
+            dimensionPortals.Clear();
 
             while (line != null)
             {
@@ -570,6 +589,14 @@ namespace WorldTest
                     camera.up.Y = (float)Convert.ToDouble(splitLine[8]);
                     camera.up.Z = (float)Convert.ToDouble(splitLine[9]);
                 }
+                // Format: Portal <position_index> <radius>
+                else if (splitLine[0] == "Portal")
+                {
+                    int navMeshIndex = Convert.ToInt32(splitLine[1]);
+                    float radius = (float)Convert.ToDouble(splitLine[2]);
+
+                    dimensionPortals.Add(new Portal(firstLevel.GetCentroid(navMeshIndex), radius, navMeshIndex));
+                }
 
                 line = reader.ReadLine();
             }
@@ -638,7 +665,7 @@ namespace WorldTest
                 //    invertYAxis = !invertYAxis;
                 //}
 
-                player.Update(gameTime, inputControlState, ref this.firstLevel);
+                player.Update(gameTime, inputControlState, ref this.firstLevel, ref dimensionPortals);
                 //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
                 camera.UpdateCamera(gameTime, inputControlState, invertYAxis);
                 //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
@@ -661,9 +688,14 @@ namespace WorldTest
                 UpdateAttacks(gameTime, inputControlState);
                 UpdateProjectiles(gameTime);
 
-                portal.Update(gameTime);
+                //portal.Update(gameTime);
+                for (int i = 0; i < dimensionPortals.Count; i++)
+                {
+                    dimensionPortals[i].Update(gameTime);
+                }
+
                 iceAttack.Update(gameTime, inputControlState, ref player, ref enemies);
-                tips.Update(gameTime, ref player, ref firstLevel, inputControlState);
+                tips.Update(gameTime, ref player, ref firstLevel, inputControlState, ref dimensionPortals);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
@@ -1009,7 +1041,13 @@ namespace WorldTest
             smokePlumeParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             fireParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingParticleProj.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
-            portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            //portal.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
+
+            for (int i = 0; i < dimensionPortals.Count; i++)
+            {
+                dimensionPortals[i].Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
+            }
+
             iceAttack.Draw(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banishingHandParticles.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
             banisherExplosions.SetCamera(camera.GetViewMatrix(), camera.GetProjectionMatrix());
@@ -1022,7 +1060,7 @@ namespace WorldTest
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, true, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)

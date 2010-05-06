@@ -128,7 +128,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ControlState inputState, ref Level currentLevel)
+        public void Update(GameTime gameTime, ControlState inputState, ref Level currentLevel, ref List<Portal> dimensionPortals)
         {
             //reset rotation
             rotation = 0.0f;
@@ -155,17 +155,20 @@ namespace WorldTest
                     TimeSpan.FromMilliseconds(300));
             }
 
-            if ((inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released) ||
+            if ((inputState.currentGamePadState.Buttons.A == ButtonState.Pressed && inputState.lastGamePadState.Buttons.A == ButtonState.Released) ||
                 (inputState.currentKeyboardState.IsKeyDown(Keys.E) && inputState.lastKeyboardState.IsKeyUp(Keys.E)))
             {
-                // BIG HACK FOR TESTING... WE KNOW PORTAL IS AT VECTOR3.ZERO SO WE PASS IT IN DIRECTLY RATHER THAN
-                // GETTING IT FROM LEVELS LIST OF PORTALS
-                if (RayCircleIntersect(new Ray(position + new Vector3(0,50,0), Vector3.Down), Vector3.Zero, 50f))
+                for (int i = 0; i < dimensionPortals.Count; i++)
                 {
-                    this.ChangeDimension();
-                    GameplayScreen.soundControl.Play("change dimensions");
-                    GameplayScreen.transitionRadius = 0;
-                    GameplayScreen.transitioning = true;
+                    if (RayCircleIntersect(new Ray(this.position + new Vector3(0, 50, 0), Vector3.Down), dimensionPortals[i].Origin, dimensionPortals[i].Radius))
+                    {
+                        this.ChangeDimension();
+                        GameplayScreen.soundControl.Play("change dimensions");
+                        GameplayScreen.transitionRadius = 0;
+                        GameplayScreen.transitioning = true;
+
+                        break;
+                    }
                 }
             }
 
@@ -258,7 +261,7 @@ namespace WorldTest
                     float elapsedTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
                     velocity.Y -= elapsedTime * 9.8f; // gravity = 9.8 m/s^2
                 }
-                else 
+                else
                 {
                     this.Status = State.idle;
                 }
@@ -284,6 +287,11 @@ namespace WorldTest
                 position = currentLevel.CollideWith(position, velocity, 0.8, Level.MAX_COLLISIONS);
                 Vector3 outPos_dummy; 
                 bool isFloor = currentLevel.PlayerCollideWithWalls(position, oldvel, 0.8, out outPos_dummy);
+                //if (position.Y <= GameplayScreen.MIN_Y_VAL)
+                //{
+                //    // Fix for collision mesh clipping
+                //    Status = State.running;
+                //}
                 if ((oldpos + velocity) == position && !isFloor)    //no collisions
                 {
                     Status = State.jumping;

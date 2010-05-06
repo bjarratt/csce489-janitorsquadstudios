@@ -26,12 +26,14 @@ namespace WorldTest
         public Vector3 p3;
     }
 
-    struct CollisionPolygon
+    class CollisionPolygon
     {
         public Vector3 v1;
         public Vector3 v2;
         public Vector3 v3;
         public Vector3 normal;
+
+        public bool isSafetyPlane = false;
     }
 
     public class CollisionResult
@@ -386,15 +388,7 @@ namespace WorldTest
 
             VertexPositionNormalTexture currentVertex;
 
-            //Vector3 largestValues = new Vector3(-10000);
-            //Vector3 smallestValues = new Vector3(10000);
-
             // Variables used for collision meshes
-            CollisionPolygon currentPolygon;
-            currentPolygon.v1 = Vector3.Zero;
-            currentPolygon.v2 = Vector3.Zero;
-            currentPolygon.v3 = Vector3.Zero;
-            currentPolygon.normal = Vector3.Zero;
             Vector3 polygonVector1;
             Vector3 polygonVector2;
 
@@ -428,15 +422,6 @@ namespace WorldTest
                 if (splitLine[0] == "v") // Position
                 {
                     Vector3 position = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
-                    //if (position.X > largestValues.X)
-                    //{
-                    //    largestValues = position;
-                    //}
-
-                    //if (position.X < smallestValues.X)
-                    //{
-                    //    smallestValues = position;
-                    //}
 
                     positionList.Add(Vector3.Transform(position, worldMatrix));
                 }
@@ -451,6 +436,13 @@ namespace WorldTest
                 }
                 else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
                 {
+                    CollisionPolygon currentPolygon = new CollisionPolygon();
+                    currentPolygon.v1 = Vector3.Zero;
+                    currentPolygon.v2 = Vector3.Zero;
+                    currentPolygon.v3 = Vector3.Zero;
+                    currentPolygon.normal = Vector3.Zero;
+                    currentPolygon.isSafetyPlane = false;
+
                     for (int i = 1; i < 4; i++) // Read each of the three vertices
                     {
                         splitVertex = splitLine[i].Split('/');
@@ -522,6 +514,29 @@ namespace WorldTest
 
                 line = objFileReader.ReadLine();
             }
+
+            //
+            // Safety plane to prevent falling through collision floor
+            //
+
+            CollisionPolygon safetyPlane1 = new CollisionPolygon();
+
+            safetyPlane1.normal = Vector3.Down;
+            safetyPlane1.v1 = new Vector3(25810.981f, 1f, 229650.844f);
+            safetyPlane1.v2 = new Vector3(25810.981f, 1f, -39580.374f);
+            safetyPlane1.v3 = new Vector3(-190850.44f, 1f, -39580.374f);
+            safetyPlane1.isSafetyPlane = true;
+
+            CollisionPolygon safetyPlane2 = new CollisionPolygon();
+
+            safetyPlane2.normal = Vector3.Down;
+            safetyPlane2.v1 = new Vector3(-190850.44f, 1f, -39580.374f);
+            safetyPlane2.v2 = new Vector3(-190850.44f, 1f, 229650.844f);
+            safetyPlane2.v3 = new Vector3(25810.981f, 1f, 229650.844f);
+            safetyPlane2.isSafetyPlane = true;
+
+            collisionPolygons.Add(safetyPlane1);
+            collisionPolygons.Add(safetyPlane2);
 
             return triangleList;
         }
@@ -826,11 +841,19 @@ namespace WorldTest
             //
             for (i = 0; i < this.collisionMesh.Count; i++)
             {
-                // Ignore any polygons further away than a given value
-                distToPolySquared = Vector3.DistanceSquared(this.collisionMesh[i].v1, newPosition);
-                if (distToPolySquared > MIN_DIST_SQUARED)
+                // Don't cull the safety planes, even though its vertices are far away
+                if (!this.collisionMesh[i].isSafetyPlane)
                 {
-                    continue;
+                    // Ignore any polygons further away than a given value
+                    distToPolySquared = Vector3.DistanceSquared(this.collisionMesh[i].v1, newPosition);
+                    if (distToPolySquared > MIN_DIST_SQUARED)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    double d = 0;
                 }
 
                 this.distToPlane = Vector3.Dot(originalPosition - this.collisionMesh[i].v1, -this.collisionMesh[i].normal);
@@ -883,22 +906,19 @@ namespace WorldTest
             }
             if (firstTimeThrough)
             {
-                if (this.newPosition.Y < -1)
-                {
-                    this.newPosition.Y = -1;
-                }
-
+                //if (this.newPosition.Y < -1)
+                //{
+                //    this.newPosition.Y = -0.8f;
+                //}
                 return this.newPosition; // No collisions, just apply velocity vector
             }
             else
             {
                 Vector3 resultingPosition = CollideWith(this.closestCollisionPoint, this.closestVelocityVector, radius, remainingRecursions - 1); // Recursively collide
-                
-                if (resultingPosition.Y < -1)
-                {
-                    resultingPosition.Y = -1;
-                }
-
+                //if (resultingPosition.Y < -1)
+                //{
+                //    resultingPosition.Y = -0.8f;
+                //}
                 return resultingPosition;
             }
         }
@@ -1078,11 +1098,17 @@ namespace WorldTest
 
         #region Pathfinding
 
+        /// <summary>
+        /// Retrieve the centroid of the given navigation mesh piece
+        /// </summary>
         public Vector3 GetCentroid(int navMeshIndex)
         {
             return navigationMesh[navMeshIndex].Centroid;
         }
 
+        /// <summary>
+        /// Find a path between startIndex and destinationIndex in the navigation mesh
+        /// </summary>
         public Path<NavMeshNode> FindPath(int startIndex, int destinationIndex)
         {
             if (startIndex < 0 || destinationIndex < 0)
@@ -1150,7 +1176,9 @@ namespace WorldTest
             return -1;
         }
 
-        // Splits quad into two triangles to perform intersection test
+        /// <summary>
+        /// Calculates if a ray intersects a given navigation mesh piece
+        /// </summary>
         public bool IntersectsNavQuad(Ray R, int nodeIndex)
         {
             return (IntersectsNavTriangle(R, nodeIndex, 0, 1, 2) || IntersectsNavTriangle(R, nodeIndex, 2, 3, 0));
@@ -1280,7 +1308,6 @@ namespace WorldTest
 
         public Vector3 TravelPoint(int polyIndex)
         {
-            //return (navigationMesh[firstPolyIndex].Centroid + navigationMesh[secondPolyIndex].Centroid) * 0.5f;
             return navigationMesh[polyIndex].Centroid;
         }
 
@@ -1415,7 +1442,10 @@ namespace WorldTest
             device.RenderState.CullMode = previousCullMode;
         }
 
-        public void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc)
+        /// <summary>
+        /// Draw the visible static geometry
+        /// </summary>
+        private void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc)
         {
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)

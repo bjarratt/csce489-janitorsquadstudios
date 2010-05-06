@@ -295,9 +295,9 @@ namespace WorldTest
             if (first)
             {
                 PlayerCameraMovement(cam_movementup, cam_movementside, Target.Status);
-                Matrix rollMatrix = Matrix.CreateFromAxisAngle(lookAt, MathHelper.ToRadians(cameraRoll));
-                up = Vector3.Transform(up, rollMatrix);
-                right = Vector3.Transform(right, rollMatrix);
+                //Matrix rollMatrix = Matrix.CreateFromAxisAngle(lookAt, MathHelper.ToRadians(cameraRoll));
+                //up = Vector3.Transform(up, rollMatrix);
+                //right = Vector3.Transform(right, rollMatrix);
                 Matrix yawMatrix = Matrix.CreateFromAxisAngle(Vector3.Up, MathHelper.ToRadians(cameraRot));
                 //lookAt = Vector3.Transform(lookAt, yawMatrix);
                 //right = Vector3.Transform(right, yawMatrix);
