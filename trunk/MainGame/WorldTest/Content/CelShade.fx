@@ -280,7 +280,6 @@ VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input, out float3 outPosition : TE
 	//My model is very tiny so my outine is very tiny.
 	//You may need to increase this or better yet, caluclate it based on the distance
 	//between your camera and your model.
-	float offset = 1.0;
 	
 	// Calculate the final bone transformation matrix
     float4x3 matSmoothSkin = 0;
