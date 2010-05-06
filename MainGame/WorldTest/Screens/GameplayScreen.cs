@@ -730,7 +730,10 @@ namespace WorldTest
 
             if (IsActive)
             {
-                firstLevel.monolith.Update(gameTime);
+                for (int i = 0; i < firstLevel.monoliths.Count; i++)
+                {
+                    firstLevel.monoliths[i].Update(gameTime);
+                }
 
                 // Get states for keys and pad
                 inputControlState.currentKeyboardState = Keyboard.GetState();
@@ -790,7 +793,7 @@ namespace WorldTest
                 {
                     firstLevel.drawWater = false;
                 }
-                else firstLevel.drawWater = true;
+                else firstLevel.drawWater = false;
 
                 foreach (Enemy e in enemies)
                 {
