@@ -218,7 +218,7 @@ BPixelToFrame BarrierPS(BVertexToPixel PSIn)
     float3 normalVector = (bumpColor.rbg-0.5f)*2.0f;
     float fresnelTerm = dot(eyeVector, normalVector);
 	
-    float4 combinedColor = lerp(barrierColor, barrierColor + float4(0.1,0.1,0.1,0.5), fresnelTerm);
+    float4 combinedColor = lerp(barrierColor, barrierColor + float4(0.1,0.1,0.1,0.0), fresnelTerm);
     
     //for(int i=0; i<lightCount; i++){
 	//	float3 lightVector1 = lights[i].position - PSIn.Position3D;
@@ -228,7 +228,7 @@ BPixelToFrame BarrierPS(BVertexToPixel PSIn)
 	//	Output.Color.rgb += specular1 * lights[i].color;
     //}
 	Output.Color.rgb = combinedColor.rgb;
-	Output.Color.a = 0.5;
+	Output.Color.a = 0.7;
     return Output;
 }
 
