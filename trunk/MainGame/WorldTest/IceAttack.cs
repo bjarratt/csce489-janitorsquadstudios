@@ -45,7 +45,8 @@ namespace WorldTest
         /// Particle System for drawing the circular portal.
         /// </summary>
         public IceAttackParticles iceParticles;
-        //public PortalMystParticleSystem PortalMyst;
+        public IceAttackGround groundParticles;
+        public IceAttackEnergy energyParticles;
 
         /// <summary>
         /// Random number generator.
@@ -76,6 +77,12 @@ namespace WorldTest
             iceParticles = new IceAttackParticles(game, content, false);
             game.Components.Add(iceParticles);
 
+            groundParticles = new IceAttackGround(game, content, false);
+            game.Components.Add(groundParticles);
+
+            energyParticles = new IceAttackEnergy(game, content, false);
+            game.Components.Add(energyParticles);
+
             //PortalMyst = new PortalMystParticleSystem(game, content, false);
             //game.Components.Add(PortalMyst);
         }
@@ -95,17 +102,18 @@ namespace WorldTest
             this.origin = player.position;
             //if (state.currentGamePadState.Triggers.Right != 0)
             //{
-                if (state.currentGamePadState.Buttons.X == ButtonState.Pressed && state.lastGamePadState.Buttons.X == ButtonState.Released)
+                if (state.currentGamePadState.Buttons.X == ButtonState.Pressed && state.lastGamePadState.Buttons.X == ButtonState.Released && player.Status != Player.State.jumping)
                 {
                     GameplayScreen.soundControl.Play("ice_crack");
 
                     for (int i = 0; i < 500; i++)
                     {
+                        //iceParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 5, 0));
                         iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 5, 0));
-                    }
-                    for (int i = 0; i < 500; i++)
-                    {
-                        iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius * 0.6f), new Vector3(0, 5, 0));
+                        iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 0, 0));
+                        energyParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 15, 0));
+                        groundParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), Vector3.Zero);
+                        groundParticles.AddParticle(RandomPointInCircle(player.position, this.radius), Vector3.Zero);
                     }
 
                     for (int e = 0; e < enemies.Count; e++)
@@ -132,8 +140,10 @@ namespace WorldTest
         {
             iceParticles.SetCamera(view, proj);
             iceParticles.Draw(gameTime);
-            //PortalMyst.SetCamera(view, proj);
-            //PortalMyst.Draw(gameTime);
+            groundParticles.SetCamera(view, proj);
+            groundParticles.Draw(gameTime);
+            energyParticles.SetCamera(view, proj);
+            energyParticles.Draw(gameTime);
         }
 
         #endregion

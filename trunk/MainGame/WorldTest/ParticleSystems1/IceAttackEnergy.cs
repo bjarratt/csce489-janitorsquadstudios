@@ -7,16 +7,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace WorldTest
 {
-    class IceAttackParticles : ParticleSystem
+    class IceAttackEnergy : ParticleSystem
     {
-        public IceAttackParticles(Game game, ContentManager content, bool attached)
+        public IceAttackEnergy(Game game, ContentManager content, bool attached)
             : base(game, content, attached)
         { }
 
 
         protected override void InitializeSettings(ParticleSettings settings)
         {
-            settings.TextureName = "GenericParticle";
+            settings.TextureName = "generic_particle2";
 
             settings.MaxParticles = 240000;
 
@@ -24,23 +24,23 @@ namespace WorldTest
 
             settings.DurationRandomness = 0;
 
-            settings.MinHorizontalVelocity = 150;
-            settings.MaxHorizontalVelocity = 200;
+            settings.MinHorizontalVelocity = 0;
+            settings.MaxHorizontalVelocity = 0;
 
             settings.MinVerticalVelocity = 0;
-            settings.MaxVerticalVelocity = 300;
+            settings.MaxVerticalVelocity = 800;
 
             // Set gravity upside down, so the flames will 'fall' upward.
-            settings.Gravity = new Vector3(0, 50, 0);
+            settings.Gravity = new Vector3(0, 150, 0);
 
-            settings.MinColor = new Color(0, 200, 255, 255); //10
+            settings.MinColor = new Color(0, 150, 255, 255); //10
             settings.MaxColor = new Color(0, 255, 255, 255); //40
             
-            settings.MinStartSize = 20;
-            settings.MaxStartSize = 20;
+            settings.MinStartSize = 40;
+            settings.MaxStartSize = 50;
 
-            settings.MinEndSize = 10;
-            settings.MaxEndSize = 10;
+            settings.MinEndSize = 20;
+            settings.MaxEndSize = 20;
 
             // Use additive blending.
             settings.SourceBlend = Blend.SourceAlpha;

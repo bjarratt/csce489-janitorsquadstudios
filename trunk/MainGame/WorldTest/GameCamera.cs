@@ -357,7 +357,7 @@ namespace WorldTest
             }
             else if (state == Player.State.idle)
             {
-                cameraMovementUp += 0.04f;
+                cameraMovementUp += 0.05f;
                 cameraMovementSide = MathHelper.PiOver2;
 
                 if (cameraMovementUp > MathHelper.TwoPi)

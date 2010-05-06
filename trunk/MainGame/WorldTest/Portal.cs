@@ -104,8 +104,8 @@ namespace WorldTest
         {
             PortalMagic.SetCamera(view, proj);
             PortalMagic.Draw(gameTime);
-            PortalMyst.SetCamera(view, proj);
-            PortalMyst.Draw(gameTime);
+            //PortalMyst.SetCamera(view, proj);
+            //PortalMyst.Draw(gameTime);
         }
 
         #endregion

@@ -280,7 +280,7 @@ VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input, out float3 outPosition : TE
 	//My model is very tiny so my outine is very tiny.
 	//You may need to increase this or better yet, caluclate it based on the distance
 	//between your camera and your model.
-	float offset = 0.5;
+	float offset = 1.0;
 	
 	// Calculate the final bone transformation matrix
     float4x3 matSmoothSkin = 0;
@@ -295,7 +295,11 @@ VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input, out float3 outPosition : TE
     matSmoothSkinWorld[1] = float4(matSmoothSkin[1], 0);
     matSmoothSkinWorld[2] = float4(matSmoothSkin[2], 0);
     matSmoothSkinWorld[3] = float4(matSmoothSkin[3], 1);
-    matSmoothSkinWorld = mul(matSmoothSkinWorld, matW);    
+    matSmoothSkinWorld = mul(matSmoothSkinWorld, matW);   
+    
+    float3 pos = mul(Input.Position, matW);
+	float dist = distance(pos, playerPosition);
+	float offset = 1.0 + (dist * 0.005); 
 	
 	float4x4 WorldViewProjection = mul(matSmoothSkinWorld, matVP);
 	VS_OUTPUT2 Output;
@@ -311,10 +315,13 @@ VS_OUTPUT2 Outline_Static(VS_INPUT_STATIC Input)
 {
 	//Here's the important value. It determins the thickness of the outline.
 	//The value is completely dependent on the size of the model.
-	//My model is very tiny so my outine is very tiny.
+	//My model is very tiny so my outline is very tiny.
 	//You may need to increase this or better yet, caluclat it based on the distance
 	//between your camera and your model.
-	float offset = 0.4;
+	
+	float3 pos = mul(Input.Position, matW);
+	float dist = distance(pos, playerPosition);
+	float offset = 2.8 + (dist * 0.005);
 	
 	float4x4 WorldViewProjection = mul(matW, matVP);
 	
