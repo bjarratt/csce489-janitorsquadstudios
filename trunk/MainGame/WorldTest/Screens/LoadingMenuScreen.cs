@@ -6,6 +6,7 @@
 
 #region Using Statements
 using Microsoft.Xna.Framework;
+using System.IO;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 #endregion
@@ -163,9 +164,17 @@ namespace WorldTest
         /// </summary>
         void MenuEntry1Selected(object sender, PlayerIndexEventArgs e)
         {
-            LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
-                               new GameplayScreen(this.ScreenManager, "save1.txt"));
-
+            try
+            {
+                StreamReader reader = new StreamReader("save1.txt");
+                LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
+                                   new GameplayScreen(this.ScreenManager, "save1.txt"));
+            }
+            catch (FileNotFoundException ex)
+            {
+                System.Windows.Forms.MessageBox.Show("This file does not exist!", "Load Error",
+                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+            }
             SetMenuEntryText();
         }
 
@@ -175,9 +184,17 @@ namespace WorldTest
         /// </summary>
         void MenuEntry2Selected(object sender, PlayerIndexEventArgs e)
         {
-            LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
-                               new GameplayScreen(this.ScreenManager, "save2.txt"));
-
+            try
+            {
+                StreamReader reader = new StreamReader("save2.txt");
+                LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
+                                   new GameplayScreen(this.ScreenManager, "save2.txt"));
+            }
+            catch (FileNotFoundException ex) 
+            {
+                System.Windows.Forms.MessageBox.Show("This file does not exist!", "Load Error",
+                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+            }
             SetMenuEntryText();
         }
 
@@ -187,9 +204,17 @@ namespace WorldTest
         /// </summary>
         void MenuEntry3Selected(object sender, PlayerIndexEventArgs e)
         {
-            LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
-                               new GameplayScreen(this.ScreenManager, "save3.txt"));
-
+            try
+            {
+                StreamReader reader = new StreamReader("save3.txt");
+                LoadingScreen.Load(ScreenManager, true, e.PlayerIndex,
+                                   new GameplayScreen(this.ScreenManager, "save3.txt"));
+            }
+            catch (FileNotFoundException ex)
+            {
+                System.Windows.Forms.MessageBox.Show("This file does not exist!", "Load Error",
+                    System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Exclamation);
+            }
             SetMenuEntryText();
         }
 
@@ -243,7 +268,7 @@ namespace WorldTest
 
             // Draw the menu title.
             Vector2 titlePosition = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth -
-                                                5 * screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth / 6,
+                                                7 * screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth / 9,
                                                  screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight -
                                                  11 * screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight / 12);
 

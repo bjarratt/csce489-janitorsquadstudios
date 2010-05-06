@@ -366,6 +366,25 @@ namespace WorldTest
             LoadVertices(ref device);
         }
 
+        public void UnloadContent()
+        {
+            cel_effect.Dispose();
+            m_celMap.Dispose();
+            terrainTexture.Dispose();
+            // Load water stuff
+            refractionRenderTarget.Dispose();
+            refractionRenderTarget2X.Dispose();
+            refractionRenderTarget4X.Dispose();
+            reflectionRenderTarget.Dispose();
+            reflectionRenderTarget2X.Dispose();
+            reflectionRenderTarget4X.Dispose();
+            stencilNone.Dispose();
+            stencil2X.Dispose();
+            stencil4X.Dispose();
+            waterEffect.Dispose();
+            waterBumpMap.Dispose();
+        }
+
         /// <summary>
         /// Read a collision mesh in from an OBJ file
         /// </summary>

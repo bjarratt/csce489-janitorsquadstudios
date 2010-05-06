@@ -353,6 +353,33 @@ namespace WorldTest
         public override void UnloadContent()
         {
             content.Unload();
+
+            firstLevel.UnloadContent();
+
+            // has to be done after level load because data structure isn't filled yet
+            enemies.Clear();
+
+            // Must be done before LoadGame
+            dimensionPortals.Clear();
+
+            // Construct our particle system components.
+            explosionParticles.Dispose();
+            explosionSmokeParticles.Dispose();
+            projectileTrailParticles.Dispose();
+            smokePlumeParticles.Dispose();
+            fireParticles.Dispose();
+            banishingParticleProj.Dispose();
+            banishingHandParticles.Dispose();
+            banisherExplosions.Dispose();
+            lavaParticles.Dispose();
+            fireballTrail.Dispose();
+
+            sceneRenderTarget.Dispose();
+
+            shadowRenderTarget.Dispose();
+
+            checkpoints.Clear();
+
         }
 
 
