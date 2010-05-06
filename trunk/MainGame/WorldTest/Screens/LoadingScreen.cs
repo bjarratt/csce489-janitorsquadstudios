@@ -154,7 +154,7 @@ namespace WorldTest
                 SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
                 SpriteFont font = ScreenManager.Font;
    
-                const string message = "Press A to continue";
+                const string message = "Press A to start";
 
                 // Center the text in the viewport.
                 Viewport viewport = ScreenManager.GraphicsDevice.Viewport;

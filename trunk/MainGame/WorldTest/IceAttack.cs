@@ -91,7 +91,7 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ControlState state, ref Player player, ref List<Enemy> enemies)
+        public void Update(GameTime gameTime, ControlState state, ref Player player, ref List<Enemy> enemies, ref Reticle iceReticle)
         {
             //time += (float)gameTime.ElapsedGameTime.TotalSeconds;
             //for (int i = 0; i < 4; i++)
@@ -104,16 +104,20 @@ namespace WorldTest
             //{
                 if (state.currentGamePadState.Buttons.X == ButtonState.Pressed && state.lastGamePadState.Buttons.X == ButtonState.Released && player.Status != Player.State.jumping)
                 {
-                    GameplayScreen.soundControl.Play("ice_crack");
-
-                    for (int i = 0; i < 500; i++)
+                    if (!iceReticle.AnimationRunning)
                     {
-                        //iceParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 5, 0));
-                        iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 5, 0));
-                        iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 0, 0));
-                        energyParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 15, 0));
-                        groundParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), Vector3.Zero);
-                        groundParticles.AddParticle(RandomPointInCircle(player.position, this.radius), Vector3.Zero);
+                        iceReticle.StartAnimation();
+                        GameplayScreen.soundControl.Play("ice_crack");
+
+                        for (int i = 0; i < 500; i++)
+                        {
+                            //iceParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 5, 0));
+                            iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 5, 0));
+                            iceParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), new Vector3(0, 0, 0));
+                            energyParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 15, 0));
+                            groundParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), Vector3.Zero);
+                            groundParticles.AddParticle(RandomPointInCircle(player.position, this.radius), Vector3.Zero);
+                        }
                     }
 
                     for (int e = 0; e < enemies.Count; e++)
