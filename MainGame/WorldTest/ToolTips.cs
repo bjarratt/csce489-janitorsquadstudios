@@ -83,15 +83,18 @@ namespace WorldTest
             drawAttackHud = false;
         }
 
-        public void Update(GameTime theGameTime, ref Player player, ref Level theLevel, ControlState state)
+        public void Update(GameTime theGameTime, ref Player player, ref Level theLevel, ControlState state, ref List<Portal> dimensionPortals)
         {
-           // HACKED UP CODE STILL USES VECTOR3.ZERO AS THE POSITION OF THE PORTAL
-            if (player.RayCircleIntersect(new Ray(player.position + new Vector3(0, 5, 0), Vector3.Down), Vector3.Zero, 50f))
+            boolList[4] = false;
+            
+            for (int i = 0; i < dimensionPortals.Count; i++)
             {
-                //if (displayList[3] != null) displayList.Insert(3, XButton);
-                boolList[3] = true;
+                if (player.RayCircleIntersect(new Ray(player.position + new Vector3(0, 50, 0), Vector3.Down), dimensionPortals[i].Origin, dimensionPortals[i].Radius))
+                {
+                    boolList[4] = true;
+                    break;
+                }
             }
-            else boolList[3] = false;
 
             if (state.currentGamePadState.Triggers.Right != 0) drawAttackHud = true;
             else drawAttackHud = false;

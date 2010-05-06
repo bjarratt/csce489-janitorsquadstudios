@@ -41,6 +41,13 @@ namespace WorldTest
 
         private float time = 0;
 
+        private int navMeshIndex;
+
+        public int NavMeshIndex
+        {
+            get { return navMeshIndex; }
+        }
+
         /// <summary>
         /// Particle System for drawing the circular portal.
         /// </summary>
@@ -61,10 +68,11 @@ namespace WorldTest
 
         #region Constructor
 
-        public Portal(Vector3 origin, float radius)
+        public Portal(Vector3 origin, float radius, int navMeshIndex)
         {
             this.origin = origin;
             this.radius = radius;
+            this.navMeshIndex = navMeshIndex;
         }
 
         #endregion
@@ -115,13 +123,13 @@ namespace WorldTest
         public Vector3 RandomPointOnCircle(Vector3 origin, float radius)
         {
             double angle = (double)RandomBetween(0.0f, MathHelper.TwoPi);
-            return new Vector3(radius * (float)Math.Cos(angle), origin.Y, radius * (float)Math.Sin(angle));
+            return new Vector3(origin.X + radius * (float)Math.Cos(angle), origin.Y, origin.Z + radius * (float)Math.Sin(angle));
         }
 
         public Vector3 RandomPointInCircle(Vector3 origin, float radius)
         {
             double angle = (double)RandomBetween(0.0f, MathHelper.TwoPi);
-            return new Vector3(RandomBetween(0.0f, radius) * (float)Math.Cos(angle), origin.Y, RandomBetween(0.0f, radius) * (float)Math.Sin(angle));
+            return new Vector3(origin.X + RandomBetween(0.0f, radius) * (float)Math.Cos(angle), origin.Y, origin.Z + RandomBetween(0.0f, radius) * (float)Math.Sin(angle));
         }
 
         public static float RandomBetween(float min, float max)
