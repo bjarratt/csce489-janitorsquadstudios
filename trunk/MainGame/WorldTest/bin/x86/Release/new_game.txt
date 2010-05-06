@@ -2,4 +2,8 @@ Player 1 100 index 0 0 0 0 0
 Enemy 1 100 100 index 14
 Enemy 1 100 100 index 21
 Enemy 1 100 100 index 34
-Portal 64 50
+Enemy 2 100 100 index 69
+Enemy 1 100 100 index 90
+Enemy 2 100 100 index 109
+Portal 68 50
+Portal 101 50

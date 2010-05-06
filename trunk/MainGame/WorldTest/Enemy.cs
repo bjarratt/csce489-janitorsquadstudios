@@ -30,6 +30,7 @@ namespace WorldTest
         public float maxSpeed;
         public float recoveryTime;
         public int maxHealth;
+        public bool useLineOfSight;
     }
 
     #endregion
@@ -367,18 +368,25 @@ namespace WorldTest
                 float currentEnemySpeed;
                 if (this.state == EnemyAiState.ChasingSmart)
                 {
-                    try
+                    if (!this.stats.useLineOfSight || (this.stats.useLineOfSight && !currentLevel.PolygonExistsBetween(this.position + GameplayScreen.NUDGE_UP, player.position + GameplayScreen.NUDGE_UP)))
                     {
-                        Vector3 moveTo = Navigate(ref currentLevel, ref player);
-                        this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
-                        currentEnemySpeed = this.stats.maxSpeed;
+                        try
+                        {
+                            Vector3 moveTo = Navigate(ref currentLevel, ref player);
+                            this.rotation = TurnToFace(this.position, moveTo, this.rotation, this.turn_speed);
+                            currentEnemySpeed = this.stats.maxSpeed;
+                        }
+                        catch (Exception e)
+                        {
+                            // If smart navigation fails, revert to dumb
+                            this.state = EnemyAiState.ChasingDumb;
+                            this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
+                            currentEnemySpeed = this.stats.maxSpeed;
+                        }
                     }
-                    catch (Exception e)
+                    else
                     {
-                        // If smart navigation fails, revert to dumb
-                        this.state = EnemyAiState.ChasingDumb;
-                        this.rotation = TurnToFace(this.position, player.position, this.rotation, this.turn_speed);
-                        currentEnemySpeed = this.stats.maxSpeed;
+                        this.state = EnemyAiState.Idle;
                     }
                 }
                 else if (this.state == EnemyAiState.ChasingDumb)
