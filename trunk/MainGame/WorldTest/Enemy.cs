@@ -52,6 +52,7 @@ namespace WorldTest
         private EnemyStats stats;
         public EnemyAiState state;
         public EnemyAiState prevState;
+        public bool beginChase = false;
 
         private float timeUntilRecovery = -1.0f;
 
@@ -191,6 +192,8 @@ namespace WorldTest
 
             if (this.CurrentDimension == player.CurrentDimension)
             {
+                this.prevState = state;
+
                 UpdateEnemyLocation(ref currentLevel);
 
                 //turn speed is same even if machine running slow
@@ -287,7 +290,6 @@ namespace WorldTest
                     {
                         // Enemy was not in chasing smart, so make a new path
                         this.state = EnemyAiState.ChasingSmart;
-                        this.prevState = EnemyAiState.Idle;
                         LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
 
                         if (newPath == null || newPath.Count < 2)
@@ -296,9 +298,10 @@ namespace WorldTest
                         }
                         else
                         {
-                            if (this.prevState == EnemyAiState.Idle && this.state == EnemyAiState.ChasingSmart)
+                            if (beginChase)
                             {
-                                GameplayScreen.soundControl.Play("enemy alerted");
+                                    //GameplayScreen.soundControl.Play("enemy alerted");
+                                    beginChase = false;
                             }
                             this.currentPath = newPath;
                             this.FirstPathPoly = this.currentPath.First.Value.Index;
@@ -370,6 +373,11 @@ namespace WorldTest
                 {
                     if (!this.stats.useLineOfSight || (this.stats.useLineOfSight && !currentLevel.PolygonExistsBetween(this.position + GameplayScreen.NUDGE_UP, player.position + GameplayScreen.NUDGE_UP)))
                     {
+                        if (prevState != EnemyAiState.ChasingSmart)
+                        {
+                            beginChase = true;
+                            GameplayScreen.soundControl.Play("enemy alerted");
+                        }
                         try
                         {
                             Vector3 moveTo = Navigate(ref currentLevel, ref player);
