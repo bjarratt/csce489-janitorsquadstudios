@@ -277,7 +277,7 @@ namespace WorldTest
                 {
                     this.Status = State.jumping;
                     Vector3 normalVelocity = Vector3.Normalize(velocity);
-                    velocity.Y += 8;
+                    velocity.Y += 50;
                     velocity.X = normalVelocity.X * 7;
                     velocity.Z = normalVelocity.Z * 7;
                 }

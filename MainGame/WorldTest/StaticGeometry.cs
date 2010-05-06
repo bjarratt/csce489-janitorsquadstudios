@@ -23,10 +23,10 @@ namespace WorldTest
     {
         #region Properties
 
-        private string visibleMeshFilename;
-        private VertexBuffer terrainVertexBuffer;
-        private VertexDeclaration vertexDeclaration;
-        private int vertexCount;
+        protected string visibleMeshFilename;
+        protected VertexBuffer terrainVertexBuffer;
+        protected VertexDeclaration vertexDeclaration;
+        protected int vertexCount;
 
         public string CollisionMeshFilename { get; private set; }
         public string NavigationMeshFilename { get; private set; }
@@ -60,7 +60,7 @@ namespace WorldTest
             // Initialize terrain vertex buffer
             //
 
-            VertexPositionNormalTexture[] terrainVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, worldMatrix).ToArray(typeof(VertexPositionNormalTexture));
+            VertexPositionNormalTexture[] terrainVertices = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, worldMatrix, false).ToArray(typeof(VertexPositionNormalTexture));
             this.terrainVertexBuffer = new VertexBuffer(device, terrainVertices.Length * VertexPositionNormalTexture.SizeInBytes, BufferUsage.WriteOnly);
             this.terrainVertexBuffer.SetData(terrainVertices);
 
@@ -69,7 +69,7 @@ namespace WorldTest
             this.vertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
         }
         
-        private ArrayList LoadFromOBJ(string filename, Matrix worldMatrix)
+        protected ArrayList LoadFromOBJ(string filename, Matrix worldMatrix, bool invertNormals)
         {
             ArrayList positionList = new ArrayList(); // List of vertices in order of OBJ file
             ArrayList normalList = new ArrayList();
@@ -120,11 +120,18 @@ namespace WorldTest
                 else if (splitLine[0] == "vn") // Normal
                 {
                     Vector3 normal = new Vector3((float)Convert.ToDouble(splitLine[1]), (float)Convert.ToDouble(splitLine[2]), (float)Convert.ToDouble(splitLine[3]));
-                    normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
+                    if (invertNormals)
+                    {
+                        normalList.Add(Vector3.TransformNormal(-normal, worldMatrix));
+                    }
+                    else
+                    {
+                        normalList.Add(Vector3.TransformNormal(normal, worldMatrix));
+                    }
                 }
                 else if (splitLine[0] == "vt") // Texture Coordinate
                 {
-                    textureCoordList.Add(new Vector3((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[3])));
+                    textureCoordList.Add(new Vector2((float)Convert.ToDouble(splitLine[1]) * textureScaleFactor, (float)Convert.ToDouble(splitLine[2]) * textureScaleFactor));
                 }
                 else if (splitLine[0] == "f") // Face (each vertex is Position/Texture/Normal)
                 {
@@ -151,7 +158,7 @@ namespace WorldTest
 
                         if (splitVertex[1] != "")
                         {
-                            currentVertex.TextureCoordinate = new Vector2(((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector3)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
+                            currentVertex.TextureCoordinate = new Vector2(((Vector2)textureCoordList[Convert.ToInt32(splitVertex[1])]).X, ((Vector2)textureCoordList[Convert.ToInt32(splitVertex[1])]).Y);
                         }
                         else
                         {

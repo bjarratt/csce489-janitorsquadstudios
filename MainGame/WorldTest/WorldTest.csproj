@@ -98,6 +98,7 @@
     <Compile Include="IceAttack.cs" />
     <Compile Include="Level.cs" />
     <Compile Include="Light.cs" />
+    <Compile Include="Monolith.cs" />
     <Compile Include="Narration.cs" />
     <Compile Include="NavigationMesh.cs" />
     <Compile Include="ParticleClasses1\Attack.cs" />

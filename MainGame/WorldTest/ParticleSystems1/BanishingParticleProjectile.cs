@@ -37,8 +37,8 @@ namespace WorldTest
 
             settings.EndVelocity = 0;
 
-            settings.MinColor = new Color(0, 200, 200, 200);
-            settings.MaxColor = new Color(0, 255, 255, 255);
+            settings.MinColor = new Color(80, 43, 226, 250);
+            settings.MaxColor = new Color(80, 43, 226, 250);
 
             settings.MinRotateSpeed = 0;
             settings.MaxRotateSpeed = 0;

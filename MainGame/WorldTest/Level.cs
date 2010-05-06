@@ -143,6 +143,9 @@ namespace WorldTest
         // Portals
         private List<Portal> portalList;
 
+        // Monoliths
+        public Monolith monolith;
+
         // Lights
         private List<Light> lightList;
 
@@ -225,6 +228,8 @@ namespace WorldTest
                 }
             }
 
+            monolith = new Monolith("Monolith.obj", this.navigationMesh[0].Centroid, this.navigationMesh[this.navigationMesh[0].adjacent_polygons[0]].Centroid, Dimension.FIRST);
+
             //
             // Initialize collision vertex buffer and collision mesh
             //
@@ -262,6 +267,7 @@ namespace WorldTest
         {
             this.adjacencyList = new List<List<GeometryConnector>>();
             this.levelPieces = new List<StaticGeometry>();
+           
 
             // Open the Level file
             FileStream levelFile = new FileStream(levelFilename, FileMode.Open, FileAccess.Read);
@@ -364,6 +370,8 @@ namespace WorldTest
             waterEffect = content.Load<Effect>("Water");
             waterBumpMap = content.Load<Texture2D>("waterbump");
             LoadVertices(ref device);
+
+            monolith.Load(device, ref content);
         }
 
         public void UnloadContent()
@@ -1526,7 +1534,7 @@ namespace WorldTest
                 DrawWater(time, ref camera, ref device, ref lights);
             }
             
-            DrawScene(device, ref camera, currentLocationIndex);
+            DrawScene(device, ref camera, currentLocationIndex, ref lights);
 
             if (drawCollisionMesh || drawNavigationMesh)
             {
@@ -1566,7 +1574,7 @@ namespace WorldTest
         /// <summary>
         /// Draw the visible static geometry
         /// </summary>
-        private void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc)
+        private void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc, ref List<Light> lights)
         {
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
@@ -1589,8 +1597,20 @@ namespace WorldTest
                     pass.End();
                 }
             }
-            
+
+            foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
+            {
+                pass.Begin();
+
+                monolith.Draw(device, ref camera, cel_effect);
+
+                pass.End();
+            }
             this.cel_effect.End();
+            if (lights != null)
+            {
+                monolith.DrawBarrier(device, ref camera, ref lights);
+            }
         }
 
         #region Water Rendering Helpers
@@ -1634,7 +1654,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, refractionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(viewMatrix);
-            DrawScene(device, ref camera, currentLoc);
+            DrawScene(device, ref camera, currentLoc, ref lightList);
             device.ClipPlanes[0].IsEnabled = false;
           
             device.SetRenderTarget(0, null);
@@ -1688,7 +1708,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, reflectionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(reflectionViewMatrix);
-            DrawScene(device, ref camera, currentLoc);
+            DrawScene(device, ref camera, currentLoc, ref lightList);
             //DrawSkyDome(reflectionViewMatrix);
             device.ClipPlanes[0].IsEnabled = false;
 

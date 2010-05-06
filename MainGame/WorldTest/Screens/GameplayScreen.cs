@@ -77,6 +77,7 @@ namespace WorldTest
         public static Vector3 FIRE_COLOR = new Vector3(0.87f, 0.2f, 0.0f);
         public static Vector3 ACID_FIRE = new Vector3(0, 0.7f, 0);
         public static Vector3 ICE_COLOR = new Vector3(0.0f, 0.6f, 0.6f);
+        public static Vector3 BANISH_COLOR = new Vector3(0.3137f * 0.7f, 0.1686f * 0.7f, 0.88627f * 0.3f);
 
         private static float EXPLOSION_INCR = 1.0f / 40.0f;
 
@@ -90,6 +91,8 @@ namespace WorldTest
         //public const float MIN_Y_VAL = -0.01f;
 
         private static Random randomGenerator = new Random();
+
+        private static float vibrateTime = 0f;
 
         /// <summary>
         /// Stores the last keyboard, mouse and gamepad state.
@@ -203,7 +206,7 @@ namespace WorldTest
             //narrations = new List<Narration>();
             //narrations.Add(new Narration("narration1.txt", this.ScreenManager.Font, this.narrLocation));
             fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
-            banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 80);
+            banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.BANISH_COLOR, 1.0f), 80);
             iceReticle = new Reticle(this.graphics.GraphicsDevice, 24.0f, 32.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 600);
         }
 
@@ -669,6 +672,8 @@ namespace WorldTest
 
             if (IsActive)
             {
+                firstLevel.monolith.Update(gameTime);
+
                 // Get states for keys and pad
                 inputControlState.currentKeyboardState = Keyboard.GetState();
                 inputControlState.currentGamePadState = GamePad.GetState(PlayerIndex.One);
@@ -739,7 +744,7 @@ namespace WorldTest
                     dimensionPortals[i].Update(gameTime);
                 }
 
-                iceAttack.Update(gameTime, inputControlState, ref player, ref enemies, ref iceReticle);
+                iceAttack.Update(gameTime, inputControlState, ref player, ref enemies, ref explosionLights, ref iceReticle);
                 tips.Update(gameTime, ref player, ref firstLevel, inputControlState, ref dimensionPortals);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -786,10 +791,16 @@ namespace WorldTest
         {
             //if (inputControlState.currentGamePadState.Triggers.Right != 0)
             //{
+            if (vibrateTime > 5)
+            {
+
+            }
+            else vibrateTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
                 if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
                      (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released))
                 {
-                    relicLight.attenuationRadius = 3000.0f;
+                    relicLight.attenuationRadius = 1000.0f;
                     relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
                     relicLight.currentExplosionTick = 0.0f;
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
@@ -837,6 +848,8 @@ namespace WorldTest
                         this.relicLightOn = false;
                         this.fireReticle.StartAnimation();
                         GameplayScreen.soundControl.Play("fireball_deploy");
+                        GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
+                        vibrateTime = 0;
                         Vector3 pos = player.position + new Vector3(0, 105, 0);
                         pos += camera.right * 5;
                         pos += camera.lookAt * 20;
@@ -859,8 +872,8 @@ namespace WorldTest
                     if (!this.banishReticle.AnimationRunning)
                     {
                         GameplayScreen.soundControl.Play("banish activated");
-                        relicLight.attenuationRadius = 3000.0f;
-                        relicLight.color = GameplayScreen.ICE_COLOR * 2.0f;
+                        relicLight.attenuationRadius = 1000.0f;
+                        relicLight.color = GameplayScreen.BANISH_COLOR * 2.0f;
                         relicLight.currentExplosionTick = 0.0f;
                         Vector3 pos = player.position + new Vector3(0, 105, 0);
                         pos += camera.right * 5;
@@ -908,6 +921,8 @@ namespace WorldTest
                         this.relicLightOn = false;
                         this.banishReticle.StartAnimation();
                         GameplayScreen.soundControl.Play("banish deployed");
+                        GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
+                        vibrateTime = 0;
                         Vector3 pos = player.position + new Vector3(0, 105, 0);
                         pos += camera.right * 5;
                         pos += camera.lookAt * 20;
@@ -916,6 +931,20 @@ namespace WorldTest
                                                        banishingParticleProj, ref enemies, true, true));
                         projectiles[projectiles.Count - 1].is_released = true;
                     }
+                }
+
+                if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released && player.Status != Player.State.jumping)
+                {
+                    if (!this.iceReticle.AnimationRunning)
+                    {
+                        GamePad.SetVibration(PlayerIndex.One, 1, 1);
+                        vibrateTime = 0;
+                    }
+                }
+
+                if (vibrateTime > 0.2f)
+                {
+                    GamePad.SetVibration(PlayerIndex.One, 0, 0);
                 }
             //}
             //else relicLightOn = false;
@@ -939,11 +968,11 @@ namespace WorldTest
                     // Remove projectiles at the end of their life.
                     if (projectiles[i].is_banisher)
                     {
-                        explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.ICE_COLOR * 5.5f, 3000.0f, 0.0f));
+                        explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.BANISH_COLOR * 4f, 3000.0f, 0.0f));
                     }
                     else
                     {
-                        explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 5.5f, 3000.0f, 0.0f));
+                        explosionLights.Add(new Light(projectiles[i].Position, GameplayScreen.FIRE_COLOR * 4f, 3000.0f, 0.0f));
                         for (int j = 0; j < 5; j++)
                         {
                             fireballProjectiles.Add(new LavaBall(projectiles[i].Position, new Vector3(RandomBetween(-10f, 10f) * 25f, RandomBetween(5f, 10f) * 25f, RandomBetween(-10f, 10f) * 25f),
@@ -1106,7 +1135,7 @@ namespace WorldTest
             graphics.GraphicsDevice.Clear(Color.Black);
 
             //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
-            firstLevel.Draw(graphics.GraphicsDevice, ref camera, true, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
+            firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
