@@ -54,6 +54,8 @@ namespace WorldTest
         public EnemyAiState prevState;
         public bool beginChase = false;
 
+        private List<KeyValuePair<EnemyAiState, string>> narrationCues;
+
         private float timeUntilRecovery = -1.0f;
 
         private int first_path_poly;
@@ -64,6 +66,8 @@ namespace WorldTest
         private Vector3 lookAt = new Vector3(0, 0, 1);
 
         private LinkedList<NavMeshNode> currentPath;
+
+        private Narration currentNarration = null;
 
         public float TimeUntilRecovery
         {
@@ -102,12 +106,14 @@ namespace WorldTest
         #region Constructor
 
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name,
-                     EnemyStats stats, Vector3 position, Dimension currentDimension) : base(Graphics, Content, enemy_name)
+                     EnemyStats stats, Vector3 position, Dimension currentDimension,
+                     List<KeyValuePair<EnemyAiState, string>> narrationCues, bool useLineOfSight) : base(Graphics, Content, enemy_name)
         {
             this.position = position;
             speed = 10.0f;
 
             this.stats = stats;
+            this.stats.useLineOfSight = useLineOfSight;
             this.state = EnemyAiState.Idle;
 
             rotation = 0.0f;
@@ -121,6 +127,8 @@ namespace WorldTest
             worldTransform = Matrix.Identity;
 
             this.currentDimension = currentDimension;
+
+            this.narrationCues = narrationCues;
         }
 
         #endregion
@@ -186,8 +194,36 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ref Level currentLevel, ref Player player)
+        public void Update(GameTime gameTime, ref Level currentLevel, ref Player player, SpriteFont gameFont)
         {
+            // If there are any narration cues
+            if (narrationCues.Count > 0)
+            {
+                // If the enemy is in the right state for the cue
+                if (narrationCues[0].Key == this.state)
+                {
+                    // Check the current narration cues to see if it's already playing
+                    if (currentNarration == null)
+                    {
+                        currentNarration = new Narration(narrationCues[0].Value, gameFont, Vector2.One * 20.0f);
+                        currentNarration.LoadContent();
+                        currentNarration.StartNarration();
+                    }
+                }
+
+                if (currentNarration != null && currentNarration.NarrationFinished)
+                {
+                    // If it's done playing, remove it
+                    currentNarration = null;
+                    narrationCues.RemoveAt(0);
+                }
+            }
+
+            if (currentNarration != null)
+            {
+                currentNarration.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+            }
+
             if (this.CurrentDimension == player.CurrentDimension)
             {
                 this.prevState = state;
@@ -683,10 +719,17 @@ namespace WorldTest
 
         public void DrawCel(GameTime gameTime, Matrix view, Matrix projection,
             ref RenderTarget2D scene, ref RenderTarget2D shadow, ref List<Light> Lights,
-            Vector3 playerPosition, Dimension playerDimension)
+            Vector3 playerPosition, Dimension playerDimension, ref SpriteBatch spriteBatch)
         {
             
             #region Cel Shading
+
+            if (currentNarration != null)
+            {
+                spriteBatch.Begin();
+                currentNarration.Draw(ref spriteBatch);
+                spriteBatch.End();
+            }
 
             if (playerDimension == this.currentDimension || GameplayScreen.transitioning)
             {

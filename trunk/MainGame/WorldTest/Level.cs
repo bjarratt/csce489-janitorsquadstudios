@@ -230,7 +230,7 @@ namespace WorldTest
                 }
             }
 
-            monolith = new Monolith("Monolith.obj", this.navigationMesh[0].Centroid, this.navigationMesh[this.navigationMesh[0].adjacent_polygons[0]].Centroid, Dimension.FIRST);
+            monolith = new Monolith("Monolith.obj", this.navigationMesh[74].V1, this.navigationMesh[74].V2, Dimension.FIRST);
 
             //
             // Initialize collision vertex buffer and collision mesh
@@ -1529,14 +1529,14 @@ namespace WorldTest
             if (drawWater)
             {
                 
-                DrawRefractionMap(ref device, ref camera, currentLocationIndex, ref lights);
+                DrawRefractionMap(ref device, ref camera, currentLocationIndex, ref lights, currentDimension);
                 MakeReflectionMatrix(ref camera);
-                DrawReflectionMap(ref device, ref camera, currentLocationIndex, ref lights);
+                DrawReflectionMap(ref device, ref camera, currentLocationIndex, ref lights, currentDimension);
                 float time = (float)gameTime.TotalGameTime.TotalMilliseconds / 100.0f;
                 DrawWater(time, ref camera, ref device, ref lights);
             }
             
-            DrawScene(device, ref camera, currentLocationIndex, ref lights);
+            DrawScene(device, ref camera, currentLocationIndex, ref lights, currentDimension);
 
             if (drawCollisionMesh || drawNavigationMesh)
             {
@@ -1576,7 +1576,7 @@ namespace WorldTest
         /// <summary>
         /// Draw the visible static geometry
         /// </summary>
-        private void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc, ref List<Light> lights)
+        private void DrawScene(GraphicsDevice device, ref GameCamera camera, int Loc, ref List<Light> lights, Dimension playerDimension)
         {
             this.cel_effect.Begin();
             foreach (EffectPass pass in cel_effect.CurrentTechnique.Passes)
@@ -1610,7 +1610,7 @@ namespace WorldTest
             }
             this.cel_effect.End();
 
-            if (lights != null)
+            if (lights != null && playerDimension == monolith.CurrentDimension)
             {
                 monolith.DrawBarrier(device, ref camera, ref lights);
             }
@@ -1634,7 +1634,7 @@ namespace WorldTest
             return finalPlane;
         }
 
-        private void DrawRefractionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights)
+        private void DrawRefractionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights, Dimension currentDimension)
         {
             Plane refractionPlane = CreatePlane(waterHeight + 1.5f, new Vector3(0, -1, 0), ref camera, false, false, Matrix.Identity);
             device.ClipPlanes[0].Plane = refractionPlane;
@@ -1657,7 +1657,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, refractionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(viewMatrix);
-            DrawScene(device, ref camera, currentLoc, ref lights);
+            DrawScene(device, ref camera, currentLoc, ref lights, currentDimension);
             device.ClipPlanes[0].IsEnabled = false;
           
             device.SetRenderTarget(0, null);
@@ -1689,7 +1689,7 @@ namespace WorldTest
             reflectionViewMatrix = Matrix.CreateLookAt(reflCameraPosition, reflTargetPos, invUpVector);
         }
 
-        private void DrawReflectionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights)
+        private void DrawReflectionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights, Dimension currentDimension)
         {
             Plane reflectionPlane = CreatePlane(waterHeight - 0.5f, new Vector3(0, -1, 0), ref camera, true, true, reflectionViewMatrix);
             device.ClipPlanes[0].Plane = reflectionPlane;
@@ -1714,7 +1714,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, reflectionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(reflectionViewMatrix);
-            DrawScene(device, ref camera, currentLoc, ref lights);
+            DrawScene(device, ref camera, currentLoc, ref lights, currentDimension);
             //DrawSkyDome(reflectionViewMatrix);
             device.ClipPlanes[0].IsEnabled = false;
 

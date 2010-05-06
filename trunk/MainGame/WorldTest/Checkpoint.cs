@@ -19,16 +19,38 @@ namespace WorldTest
         private int navMeshIndex;
         private Narration narration;
 
+        private bool freezeWhileNarrating = true;
+        private bool saveWhenReached = false;
+        private bool saveNeeded = false;
+
         private bool checkpointReached = false;
+
+        // The dimension the checkpoint is available in (0 means both)
+        private int dimension = 0;
+
+        public bool FreezeControls
+        {
+            get { return freezeWhileNarrating && checkpointReached && !narration.NarrationFinished; }
+        }
+
+        public bool SaveNeeded
+        {
+            get { return saveNeeded; }
+            set { saveNeeded = value; }
+        }
 
         public int NavMeshIndex
         {
             get { return navMeshIndex; }
         }
 
-        public Checkpoint(int navMeshIndex, string narrationFilename, SpriteFont narrationFont)
+        public Checkpoint(int navMeshIndex, string narrationFilename, int dimension, SpriteFont narrationFont, bool freezeWhileNarrating, bool saveWhenReached)
         {
             this.navMeshIndex = navMeshIndex;
+            this.freezeWhileNarrating = freezeWhileNarrating;
+            this.saveWhenReached = saveWhenReached;
+
+            this.dimension = dimension;
 
             narration = new Narration(narrationFilename, narrationFont, Vector2.One * 20.0f);
         }
@@ -38,10 +60,15 @@ namespace WorldTest
             narration.LoadContent();
         }
 
-        public bool Update(float elapsedSeconds, int playerNavIndex)
+        public bool Update(float elapsedSeconds, int playerNavIndex, Dimension playerDimension)
         {
-            if (playerNavIndex == this.navMeshIndex && !this.checkpointReached)
+            if (playerNavIndex == this.navMeshIndex && !this.checkpointReached && InCorrectDimension(playerDimension))
             {
+                if (saveWhenReached)
+                {
+                    saveNeeded = true;
+                }
+
                 this.checkpointReached = true;
                 narration.StartNarration();
                 narration.Update(elapsedSeconds);
@@ -50,6 +77,20 @@ namespace WorldTest
             else
             {
                 narration.Update(elapsedSeconds);
+                return false;
+            }
+        }
+
+        private bool InCorrectDimension(Dimension playerDimension)
+        {
+            if (this.dimension == 0 ||
+                playerDimension == Dimension.FIRST && this.dimension == 1 ||
+                playerDimension == Dimension.SECOND && this.dimension == 2)
+            {
+                return true;
+            }
+            else
+            {
                 return false;
             }
         }

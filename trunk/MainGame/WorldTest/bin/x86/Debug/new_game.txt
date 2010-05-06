@@ -1,9 +1,37 @@
-Player 1 100 index 203 0 0 0 0
-Enemy 1 100 100 index 14
-Enemy 1 100 100 index 21
-Enemy 1 100 100 index 34
-Enemy 2 100 100 index 69
-Enemy 1 100 100 index 90
-Enemy 2 100 100 index 109
+Player 1 100 index 68 0 0 0 0
+#Enemy 1 100 100 index 14 line_of_sight on_weakened narration2.txt on_recover narration3.txt on_weakened narration4.txt on_banish narration5.txt
+#Enemy 1 100 100 index 21 line_of_sight
+#Enemy 1 100 100 index 34 line_of_sight
+#Enemy 2 100 100 index 69 automatic
+#Enemy 1 100 100 index 90 automatic
+#Enemy 2 100 100 index 109 automatic
+#Enemy 1 100 100 index 109 automatic
+#Enemy 1 100 100 index 118 line_of_sight
+#Enemy 1 100 100 index 122 line_of_sight
+#Enemy 2 100 100 index 118 line_of_sight
+#Enemy 2 100 100 index 122 line_of_sight
+#Enemy 1 100 100 index 134 line_of_sight
+#Enemy 2 100 100 index 147 line_of_sight
+#Enemy 1 100 100 index 154 line_of_sight
+#Enemy 1 100 100 index 156 automatic
+#Enemy 1 100 100 index 157 line_of_sight
+#Enemy 2 100 100 index 159 line_of_sight
+#Enemy 1 100 100 index 183 line_of_sight
+#Enemy 2 100 100 index 183 line_of_sight
+#Enemy 1 100 100 index 188 line_of_sight
+#Enemy 1 100 100 index 195 automatic
+#Enemy 2 100 100 index 205 automatic
+#Enemy 2 100 100 index 203 line_of_sight
+#Enemy 1 100 100 index 203 automatic
+#Enemy 1 100 100 index 208 line_of_sight
 Portal 68 50
 Portal 101 50
+Portal 141 50
+Portal 165 50
+#Checkpoint 0 0 narration1.txt freeze_on save_off
+Checkpoint 52 0 narration6.txt freeze_off save_off
+Checkpoint 64 0 narration7.txt freeze_off save_off
+Checkpoint 68 2 narration8.txt freeze_off save_off
+Checkpoint 78 0 narration9.txt freeze_off save_on
+Checkpoint 190 0 narration10.txt freeze_off save_off
+Checkpoint 211 0 narration11.txt freeze_off save_off
