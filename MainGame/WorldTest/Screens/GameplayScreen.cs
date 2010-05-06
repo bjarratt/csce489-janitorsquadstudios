@@ -136,6 +136,7 @@ namespace WorldTest
         // Hud
         Reticle fireReticle;
         Reticle banishReticle;
+        Reticle iceReticle;
 
         // Narration
         //List<Narration> narrations;
@@ -203,6 +204,7 @@ namespace WorldTest
             //narrations.Add(new Narration("narration1.txt", this.ScreenManager.Font, this.narrLocation));
             fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
             banishReticle = new Reticle(this.graphics.GraphicsDevice, 18.0f, 26.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 80);
+            iceReticle = new Reticle(this.graphics.GraphicsDevice, 24.0f, 32.0f, new Vector4(GameplayScreen.ICE_COLOR, 1.0f), 600);
         }
 
         #endregion
@@ -309,6 +311,7 @@ namespace WorldTest
 
             fireReticle.LoadContent(ref content);
             banishReticle.LoadContent(ref content);
+            iceReticle.LoadContent(ref content);
 
             //narrTest.LoadContent();
             //narrTest.StartNarration();
@@ -736,7 +739,7 @@ namespace WorldTest
                     dimensionPortals[i].Update(gameTime);
                 }
 
-                iceAttack.Update(gameTime, inputControlState, ref player, ref enemies);
+                iceAttack.Update(gameTime, inputControlState, ref player, ref enemies, ref iceReticle);
                 tips.Update(gameTime, ref player, ref firstLevel, inputControlState, ref dimensionPortals);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -1010,6 +1013,7 @@ namespace WorldTest
         {
             fireReticle.Draw(this.graphics.GraphicsDevice);
             banishReticle.Draw(this.graphics.GraphicsDevice);
+            iceReticle.Draw(this.graphics.GraphicsDevice);
         }
 
         /// <summary>
