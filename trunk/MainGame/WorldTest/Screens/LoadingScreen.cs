@@ -7,6 +7,7 @@
 #region Using Statements
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 #endregion
 
@@ -33,6 +34,9 @@ namespace WorldTest
         bool loadingIsSlow;
         bool otherScreensAreGone;
 
+        ContentManager content;
+        Texture2D controls;
+
         GameScreen[] screensToLoad;
 
         #endregion
@@ -53,6 +57,20 @@ namespace WorldTest
             TransitionOnTime = TimeSpan.FromSeconds(0.5);
         }
 
+        /// <summary>
+        /// Loads graphics content for this screen. The controls texture is quite
+        /// big, so we use our own local ContentManager to load it. This allows us
+        /// to unload before going from the menus into the game itself, wheras if we
+        /// used the shared ContentManager provided by the Game class, the content
+        /// would remain loaded forever.
+        /// </summary>
+        public override void LoadContent()
+        {
+            if (content == null)
+                content = new ContentManager(ScreenManager.Game.Services, "Content");
+
+            controls = content.Load<Texture2D>("Controller_Screen");
+        }
 
         /// <summary>
         /// Activates the loading screen.
@@ -135,19 +153,22 @@ namespace WorldTest
             {
                 SpriteBatch spriteBatch = ScreenManager.SpriteBatch;
                 SpriteFont font = ScreenManager.Font;
-
-                const string message = "Loading...";
+   
+                const string message = "Press A to continue";
 
                 // Center the text in the viewport.
                 Viewport viewport = ScreenManager.GraphicsDevice.Viewport;
                 Vector2 viewportSize = new Vector2(viewport.Width, viewport.Height);
                 Vector2 textSize = font.MeasureString(message);
-                Vector2 textPosition = (viewportSize - textSize) * 0.5f;
+                Vector2 textPosition = new Vector2(viewport.Width-7*viewport.Width/10, viewport.Height-viewport.Height/5);
+                Rectangle fullscreen = new Rectangle(0, 0, viewport.Width, viewport.Height);
+                byte fade = TransitionAlpha;
+                Color color = new Color(new Vector4(GameplayScreen.ACID_FIRE, (float) TransitionAlpha));
 
-                Color color = new Color(255, 255, 255, TransitionAlpha);
-
-                // Draw the text.
+                // Draw the text and controller image.
                 spriteBatch.Begin();
+                spriteBatch.Draw(controls, fullscreen,
+                             new Color(fade, fade, fade));
                 spriteBatch.DrawString(font, message, textPosition, color);
                 spriteBatch.End();
             }

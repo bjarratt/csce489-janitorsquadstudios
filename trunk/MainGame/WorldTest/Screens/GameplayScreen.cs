@@ -57,7 +57,6 @@ namespace WorldTest
         private Effect pointLightMeshEffect;
         private Matrix lightMeshWorld;
 
-
         GameCamera camera;
         static public bool invertYAxis;
 
@@ -341,10 +340,25 @@ namespace WorldTest
                 enemies[i].prev_poly_index = enemies[i].current_poly_index;
             }
 
-            // once the load has finished, we use ResetElapsedTime to tell the game's
-            // timing mechanism that we have just finished a very long frame, and that
-            // it should not try to catch up.
-            ScreenManager.Game.ResetElapsedTime();
+            bool confirmed = false;
+
+            while(!confirmed)
+            {
+                inputControlState.currentKeyboardState = Keyboard.GetState();
+                inputControlState.lastGamePadState = inputControlState.currentGamePadState;
+                inputControlState.currentGamePadState = GamePad.GetState(PlayerIndex.One);
+                inputControlState.lastMouseState = inputControlState.currentMouseState;
+                inputControlState.currentMouseState = Mouse.GetState();
+                // once the load has finished, we use ResetElapsedTime to tell the game's
+                // timing mechanism that we have just finished a very long frame, and that
+                // it should not try to catch up.
+                if ((this.inputControlState.currentGamePadState.Buttons.A == ButtonState.Released && this.inputControlState.lastGamePadState.Buttons.A == ButtonState.Pressed) ||
+                     (this.inputControlState.currentMouseState.LeftButton == ButtonState.Released && this.inputControlState.lastMouseState.LeftButton == ButtonState.Pressed))
+                {
+                    confirmed = true;
+                }
+                ScreenManager.Game.ResetElapsedTime();
+            }
         }
 
 
