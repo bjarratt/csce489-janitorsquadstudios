@@ -44,6 +44,25 @@ namespace WorldTest
             get { return dimension; }
         }
 
+        private Vector3 v1;
+        private Vector3 v2;
+        private Vector3 v3;
+
+        private Vector3 q1;
+        private Vector3 q2;
+        private Vector3 q3;
+
+        private CollisionPolygon v;
+        private CollisionPolygon q;
+        private CollisionPolygon w;
+        private CollisionPolygon z;
+
+        public int index_v;
+        public int index_q;
+        public int index_w;
+        public int index_z;
+
+
         public Monolith(string meshFile, Vector3 position1, Vector3 position2, Dimension dim) : base(meshFile, null, null)
         {
             this.monPosition1 = position1;
@@ -55,7 +74,7 @@ namespace WorldTest
             this.dimension = dim;
         }
 
-        public void Load(GraphicsDevice device, ref ContentManager content)
+        public void Load(GraphicsDevice device, ref ContentManager content, ref Player player, Level currentLevel)
         {
             VertexPositionNormalTexture[] terrainVertices1 = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, worldMatrix1, false).ToArray(typeof(VertexPositionNormalTexture));
             VertexPositionNormalTexture[] terrainVertices2 = (VertexPositionNormalTexture[])this.LoadFromOBJ(visibleMeshFilename, worldMatrix2, false).ToArray(typeof(VertexPositionNormalTexture));
@@ -69,14 +88,14 @@ namespace WorldTest
 
             this.vertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
             this.monolithVertexDeclaration = new VertexDeclaration(device, VertexPositionNormalTexture.VertexElements);
-            SetUpBarrierVertices(ref device);
+            SetUpBarrierVertices(ref device, ref player, currentLevel);
 
             barrierEffect = content.Load<Effect>("Water");
             bumpMap = content.Load<Texture2D>("waterbump");
             barrierMap = content.Load<Texture2D>("barrier");
         }
 
-        private void SetUpBarrierVertices(ref GraphicsDevice device)
+        private void SetUpBarrierVertices(ref GraphicsDevice device, ref Player player, Level currentLevel)
         {
             VertexPositionTexture[] barrierVertices = new VertexPositionTexture[6];
             
@@ -84,18 +103,76 @@ namespace WorldTest
             barrierVertices[2] = new VertexPositionTexture(new Vector3(monPosition1.X, 300, monPosition1.Z), new Vector2(0, 1));
             barrierVertices[1] = new VertexPositionTexture(new Vector3(monPosition2.X, 50, monPosition2.Z), new Vector2(1, 0));
 
+            this.v1 = new Vector3(monPosition1.X, -1, monPosition1.Z);
+            this.v2 = new Vector3(monPosition1.X, 300, monPosition1.Z);
+            this.v3 = new Vector3(monPosition2.X, -1, monPosition2.Z);
+
             barrierVertices[3] = new VertexPositionTexture(new Vector3(monPosition1.X, 300, monPosition1.Z), new Vector2(0, 1));
             barrierVertices[5] = new VertexPositionTexture(new Vector3(monPosition2.X, 300, monPosition2.Z), new Vector2(1, 1));
             barrierVertices[4] = new VertexPositionTexture(new Vector3(monPosition2.X, 50, monPosition2.Z), new Vector2(1, 0));
 
+            this.q1 = new Vector3(monPosition1.X, 300, monPosition1.Z);
+            this.q2 = new Vector3(monPosition2.X, 300, monPosition2.Z);
+            this.q3 = new Vector3(monPosition2.X, -1, monPosition2.Z);
+
             barrierVertexBuffer = new VertexBuffer(device, barrierVertices.Length * VertexPositionTexture.SizeInBytes, BufferUsage.WriteOnly);
             barrierVertexBuffer.SetData(barrierVertices);
             barrierVertexDeclaration = new VertexDeclaration(device, VertexPositionTexture.VertexElements);
+
+            v = new CollisionPolygon();
+            q = new CollisionPolygon();
+            w = new CollisionPolygon();
+            z = new CollisionPolygon();
+            v.v1 = this.v1;
+            v.v2 = this.v2;
+            v.v3 = this.v3;
+            q.v1 = this.q1;
+            q.v2 = this.q2;
+            q.v3 = this.q3;
+            w.v1 = this.v1;
+            w.v2 = this.v2;
+            w.v3 = this.v3;
+            z.v1 = this.q1;
+            z.v2 = this.q2;
+            z.v3 = this.q3;
+
+            v.normal = -Vector3.Cross(v2 - v1, v3 - v1);
+            v.normal.Normalize();
+            q.normal = v.normal;
+            w.normal = -v.normal;
+            z.normal = -v.normal;
+
+            currentLevel.BarrierMeshes.Add(v);
+            currentLevel.barrierOn.Add(true);
+            index_v = currentLevel.barrierOn.Count - 1;
+            currentLevel.BarrierMeshes.Add(q);
+            currentLevel.barrierOn.Add(true);
+            index_q = currentLevel.barrierOn.Count - 1;
+            currentLevel.BarrierMeshes.Add(w);
+            currentLevel.barrierOn.Add(true);
+            index_w = currentLevel.barrierOn.Count - 1;
+            currentLevel.BarrierMeshes.Add(z);
+            currentLevel.barrierOn.Add(true);
+            index_z = currentLevel.barrierOn.Count - 1;
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(GameTime gameTime, ref Player player, ref Level currentLevel)
         {
             time = (float)gameTime.TotalGameTime.TotalMilliseconds / 100.0f;
+            if (this.dimension == player.CurrentDimension)
+            {
+                currentLevel.barrierOn[index_v] = true;
+                currentLevel.barrierOn[index_q] = true;
+                currentLevel.barrierOn[index_w] = true;
+                currentLevel.barrierOn[index_z] = true;
+            }
+            else
+            {
+                currentLevel.barrierOn[index_v] = false;
+                currentLevel.barrierOn[index_q] = false;
+                currentLevel.barrierOn[index_w] = false;
+                currentLevel.barrierOn[index_z] = false;
+            }
         }
 
         public void DrawBarrier(GraphicsDevice device, ref GameCamera camera, ref List<Light> lights)

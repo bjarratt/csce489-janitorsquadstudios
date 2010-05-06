@@ -251,7 +251,7 @@ namespace WorldTest
 
             //terrain = new StaticGeometry(graphics.GraphicsDevice, "Cave1.obj", "cave1_collision.obj", Vector3.Zero, ref content);
             firstLevel = new Level(graphics.GraphicsDevice, ref content, "main_level.txt");
-            firstLevel.Load(graphics.GraphicsDevice, ref content);
+            firstLevel.Load(graphics.GraphicsDevice, ref content, ref player);
 
             // has to be done after level load because data structure isn't filled yet
             enemies = new List<Enemy>();
@@ -732,7 +732,7 @@ namespace WorldTest
             {
                 for (int i = 0; i < firstLevel.monoliths.Count; i++)
                 {
-                    firstLevel.monoliths[i].Update(gameTime);
+                    firstLevel.monoliths[i].Update(gameTime, ref player, ref firstLevel);
                 }
 
                 // Get states for keys and pad

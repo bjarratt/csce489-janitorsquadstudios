@@ -106,7 +106,6 @@ namespace WorldTest
         /// one water per Level.
         /// </summary>
         public bool drawWater;
-        private bool inWater;
         const float waterHeight = 0.0f;
         private RenderTarget2D refractionRenderTarget;
         private RenderTarget2D refractionRenderTarget2X;
@@ -130,6 +129,19 @@ namespace WorldTest
 
         // Collision mesh variables
         private List<CollisionPolygon> collisionMesh;
+        private List<CollisionPolygon> barriers;
+        public List<bool> barrierOn;
+
+        public List<CollisionPolygon> CollisionMesh
+        {
+            get { return collisionMesh; }
+        }
+
+        public List<CollisionPolygon> BarrierMeshes
+        {
+            get { return barriers; }
+        }
+
         private Vector3 collisionMeshOffset;
         private VertexBuffer collisionVertexBuffer;
         private VertexDeclaration collisionVertexDeclaration;
@@ -165,6 +177,9 @@ namespace WorldTest
 
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
+
+            this.barriers = new List<CollisionPolygon>();
+            this.barrierOn = new List<bool>();
 
             List<VertexPositionNormalTexture> collisionVertices = new List<VertexPositionNormalTexture>(); // Stores collision vertices for VertexBuffer creation
 
@@ -361,7 +376,7 @@ namespace WorldTest
 
         #region Load
 
-        public void Load(GraphicsDevice device, ref ContentManager content)
+        public void Load(GraphicsDevice device, ref ContentManager content, ref Player player)
         {
             cel_effect = content.Load<Effect>("CelShade");
             m_celMap = content.Load<Texture2D>("Toon2");
@@ -384,7 +399,7 @@ namespace WorldTest
             //monolith.Load(device, ref content);
             for (int i = 0; i < monoliths.Count; i++)
             {
-                monoliths[i].Load(device, ref content);
+                monoliths[i].Load(device, ref content, ref player, this);
             }
         }
 
@@ -945,6 +960,60 @@ namespace WorldTest
                     }
                 }
             }
+
+            for (i = 0; i < barriers.Count; i++)
+            {
+                if (!barrierOn[i]) continue;
+
+                this.distToPlane = Vector3.Dot(originalPosition - this.barriers[i].v1, -this.barriers[i].normal);
+
+                // Parametric value for when the current polygon will be hit (0 to 1 means it will be hit this frame)
+                float tValue = ((float)radius + Vector3.Dot(-this.barriers[i].normal, this.barriers[i].v1 - originalPosition)) / Vector3.Dot(velocityVector, -this.barriers[i].normal);
+
+                if (tValue < 0 || tValue > 1) // If polygon is not hit this frame
+                {
+                    if (this.distToPlane > 0 && this.distToPlane < radius && pointInsidePolygon(originalPosition + (velocityVector * tValue), this.barriers[i]))
+                    {
+                        tValue = 0; // Sphere is embedded, so don't proceed
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                this.collisionPoint = originalPosition + (velocityVector * tValue);
+
+                float scaleFactor = Vector3.Dot(this.newPosition - this.collisionPoint, this.barriers[i].normal);
+
+                Vector3 tempPoint = collisionPoint + (this.barriers[i].normal * scaleFactor);
+
+                if (this.newPosition == tempPoint)
+                {
+                    this.newVelocityVector = Vector3.Zero;
+                }
+                else
+                {
+                    this.newVelocityVector = this.newPosition - tempPoint;
+                    this.newVelocityVector.Normalize();
+                    this.newVelocityVector *= (tValue * velocityVector.Length());
+                }
+
+                if (firstTimeThrough || tValue < this.closestT)
+                {
+                    if (pointInsidePolygon(this.collisionPoint, this.barriers[i]))
+                    {
+                        // If the collision point is inside the current polygon and it has the smallest tValue so far,
+                        // record the collision info.
+                        this.closestT = tValue;
+                        this.closestVelocityVector = this.newVelocityVector;
+                        this.closestCollisionPoint = this.collisionPoint + (-this.barriers[i].normal * 0.1f);
+                        closestCollisionIndex = i;
+                        firstTimeThrough = false;
+                    }
+                }
+            }
+
             if (firstTimeThrough)
             {
                 //if (this.newPosition.Y < -1)
