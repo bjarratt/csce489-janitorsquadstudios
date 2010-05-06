@@ -1,6 +1,19 @@
-Camera 0.9451061 -0.181439 0.2717618 -0.2763377 0 0.9610606 0.1743739 0.9834023 0.05013844
-Player 1 100 index 78 0 0 0 0
+Camera -0.9102094 -0.07293064 -0.4076763 0.4108585 0 -0.9116991 -0.0664908 0.9973344 -0.02996418
+Player 2 100 index 357 0 0 0 0
+Enemy 1 100 100 index 385 
+Enemy 1 100 100 index 310 
+Enemy 1 100 100 index 224 
+Enemy 1 100 100 index 247 
+Enemy 1 100 100 index 228 
+Enemy 1 100 100 index 218 
+Enemy 2 100 100 index 317 
+Enemy 1 100 100 index 298 
+Enemy 2 100 100 index 298 
+Enemy 1 100 100 index 269 
 Portal 68 50
 Portal 101 50
 Portal 141 50
 Portal 165 50
+Portal 212 50
+Portal 324 50
+Portal 351 50

@@ -146,7 +146,7 @@ namespace WorldTest
         private List<Portal> portalList;
 
         // Monoliths
-        public Monolith monolith;
+        public List<Monolith> monoliths;
 
         // Lights
         private List<Light> lightList;
@@ -230,7 +230,15 @@ namespace WorldTest
                 }
             }
 
-            monolith = new Monolith("Monolith.obj", this.navigationMesh[74].V1, this.navigationMesh[74].V2, Dimension.FIRST);
+            monoliths = new List<Monolith>();
+
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[74].V1, this.navigationMesh[74].V2, Dimension.FIRST));
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[169].V1, this.navigationMesh[169].V2, Dimension.FIRST));
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[218].V1, this.navigationMesh[218].V2, Dimension.SECOND));
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[335].V1, this.navigationMesh[335].V2, Dimension.SECOND));
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[352].V1, this.navigationMesh[352].V2, Dimension.FIRST));
+            monoliths.Add(new Monolith("Monolith.obj", this.navigationMesh[357].V1, this.navigationMesh[357].V2, Dimension.SECOND));
+
 
             //
             // Initialize collision vertex buffer and collision mesh
@@ -373,7 +381,11 @@ namespace WorldTest
             waterBumpMap = content.Load<Texture2D>("waterbump");
             LoadVertices(ref device);
 
-            monolith.Load(device, ref content);
+            //monolith.Load(device, ref content);
+            for (int i = 0; i < monoliths.Count; i++)
+            {
+                monoliths[i].Load(device, ref content);
+            }
         }
 
         public void UnloadContent()
@@ -1604,15 +1616,21 @@ namespace WorldTest
             {
                 pass.Begin();
 
-                monolith.Draw(device, ref camera, cel_effect);
+                for (int i = 0; i < monoliths.Count; i++)
+                {
+                    monoliths[i].Draw(device, ref camera, cel_effect);
+                }
 
                 pass.End();
             }
             this.cel_effect.End();
 
-            if (lights != null && playerDimension == monolith.CurrentDimension)
+            for (int i = 0; i < monoliths.Count; i++)
             {
-                monolith.DrawBarrier(device, ref camera, ref lights);
+                if (lights != null && playerDimension == monoliths[i].CurrentDimension)
+                {
+                    monoliths[i].DrawBarrier(device, ref camera, ref lights);
+                }
             }
         }
 
