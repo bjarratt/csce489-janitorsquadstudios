@@ -39,6 +39,11 @@ namespace WorldTest
 
         private float time;
 
+        public Dimension CurrentDimension
+        {
+            get { return dimension; }
+        }
+
         public Monolith(string meshFile, Vector3 position1, Vector3 position2, Dimension dim) : base(meshFile, null, null)
         {
             this.monPosition1 = position1;

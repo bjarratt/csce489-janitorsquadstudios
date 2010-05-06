@@ -1,5 +1,5 @@
 Player 1 100 index 203 0 0 0 0
-Enemy 1 100 100 index 14
+Enemy 1 100 100 index 14 on_weakened narration2.txt on_recover narration3.txt on_weakened narration4.txt on_banish narration5.txt
 Enemy 1 100 100 index 21
 Enemy 1 100 100 index 34
 Enemy 2 100 100 index 69
@@ -7,3 +7,4 @@ Enemy 1 100 100 index 90
 Enemy 2 100 100 index 109
 Portal 68 50
 Portal 101 50
+Checkpoint 0 narration1.txt freeze_on save_off

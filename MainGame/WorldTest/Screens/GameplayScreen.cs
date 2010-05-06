@@ -87,6 +87,8 @@ namespace WorldTest
         public static float transitionRadius = MAX_TRANSITION_RADIUS + 1.0f;
         public static bool transitioning = false;
 
+        public static bool controlsFrozen = false;
+
         public static Vector3 NUDGE_UP = Vector3.Up * 5.0f;
         //public const float MIN_Y_VAL = -0.01f;
 
@@ -202,7 +204,7 @@ namespace WorldTest
             blood = new Damage(ref this.ScreenManager.game);
             //narrTest = new Narration("narration1.txt", this.ScreenManager.Font, narrLocation);
             checkpoints = new List<Checkpoint>();
-            checkpoints.Add(new Checkpoint(8, "narration1.txt", this.ScreenManager.Font));
+            //checkpoints.Add(new Checkpoint(8, "narration1.txt", this.ScreenManager.Font));
             //narrations = new List<Narration>();
             //narrations.Add(new Narration("narration1.txt", this.ScreenManager.Font, this.narrLocation));
             fireReticle = new Reticle(this.graphics.GraphicsDevice, 12.0f, 20.0f, new Vector4(GameplayScreen.FIRE_COLOR, 1.0f), 50);
@@ -616,13 +618,41 @@ namespace WorldTest
                         splitLineIndex++;
                         enemyPosition = firstLevel.GetCentroid(Convert.ToInt32(splitLine[splitLineIndex])) + NUDGE_UP;
                         splitLineIndex++;
-
                     }
-                    //enemyPosition.X = (float)Convert.ToDouble(splitLine[4]);
-                    //enemyPosition.Y = (float)Convert.ToDouble(splitLine[5]);
-                    //enemyPosition.Z = (float)Convert.ToDouble(splitLine[6]);
 
-                    enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension));
+                    bool useLineOfSight;
+                    if (splitLine[splitLineIndex] == "automatic")
+                    {
+                        useLineOfSight = false;
+                    }
+                    else
+                    {
+                        useLineOfSight = true;
+                    }
+
+                    splitLineIndex++;
+
+                    List<KeyValuePair<Enemy.EnemyAiState, string>> narrationCues = new List<KeyValuePair<Enemy.EnemyAiState, string>>();
+
+                    while (splitLineIndex + 1 < splitLine.Length)
+                    {
+                        if (splitLine[splitLineIndex] == "on_weakened")
+                        {
+                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState,string>(Enemy.EnemyAiState.Weakened, splitLine[splitLineIndex + 1]));
+                        }
+                        else if (splitLine[splitLineIndex] == "on_recover")
+                        {
+                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.ChasingDumb, splitLine[splitLineIndex + 1]));
+                        }
+                        else if (splitLine[splitLineIndex] == "on_banish")
+                        {
+                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.Idle, splitLine[splitLineIndex + 1]));
+                        }
+
+                        splitLineIndex += 2;
+                    }
+
+                    enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension, narrationCues, useLineOfSight));
                 }
                 // Format: Camera <lookAt.x> <.y> <.z> <right.x> <.y> <.z> <up.x> <.y> <.z>
                 else if (splitLine[0] == "Camera")
@@ -644,6 +674,24 @@ namespace WorldTest
                     float radius = (float)Convert.ToDouble(splitLine[2]);
 
                     dimensionPortals.Add(new Portal(firstLevel.GetCentroid(navMeshIndex), radius, navMeshIndex));
+                }
+                else if (splitLine[0] == "Checkpoint")
+                {
+                    int navMeshIndex = Convert.ToInt32(splitLine[1]);
+                    int dimension = Convert.ToInt32(splitLine[2]);
+                    string narrationFilename = splitLine[3];
+                    bool freezeWhenNarrating = splitLine[4] == "freeze_on";
+                    bool saveWhenReached = splitLine[5] == "save_on";
+
+                    checkpoints.Add(new Checkpoint(navMeshIndex, narrationFilename, dimension, gameFont, freezeWhenNarrating, saveWhenReached));
+                }
+                else if (splitLine[0] == "Barrier")
+                {
+                    int navMeshIndex = Convert.ToInt32(splitLine[1]);
+                    int polyIndex1 = Convert.ToInt32(splitLine[2]);
+                    int polyIndex2 = Convert.ToInt32(splitLine[3]);
+
+
                 }
 
                 line = reader.ReadLine();
@@ -669,6 +717,16 @@ namespace WorldTest
         public override void Update(GameTime gameTime, bool otherScreenHasFocus,
                                                  bool coveredByOtherScreen)
         {
+            // Checkpoints may freeze controls during narration
+            GameplayScreen.controlsFrozen = false;
+            for (int i = 0; i < checkpoints.Count; i++)
+            {
+                if (checkpoints[i].FreezeControls)
+                {
+                    GameplayScreen.controlsFrozen = true;
+                    break;
+                }
+            }
 
             if (IsActive)
             {
@@ -715,14 +773,19 @@ namespace WorldTest
                 //    invertYAxis = !invertYAxis;
                 //}
 
-                player.Update(gameTime, inputControlState, ref this.firstLevel, ref dimensionPortals);
-                //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
-                camera.UpdateCamera(gameTime, inputControlState, invertYAxis);
-                //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
-                blood.Update(gameTime, ref player);
+                if (!GameplayScreen.controlsFrozen)
+                {
+                    player.Update(gameTime, inputControlState, ref this.firstLevel, ref dimensionPortals);
+                    //lights[0].setPosition(new Vector3(player.position.X, player.position.Y + 100, player.position.Z));
+                    camera.UpdateCamera(gameTime, inputControlState, invertYAxis);
+
+                    //lights[0] = new Light(player.position + new Vector3(0,50,0), new Vector3(1,1,1));
+                    blood.Update(gameTime, ref player);
+                }
 
                 UpdatePlayerLocation();
 
+                if (!GameplayScreen.controlsFrozen)
                 if ((player.position - firstLevel.GetCentroid(203)).Length() > 6000)
                 {
                     firstLevel.drawWater = false;
@@ -731,7 +794,7 @@ namespace WorldTest
 
                 foreach (Enemy e in enemies)
                 {
-                    e.Update(gameTime, ref this.firstLevel, ref player);
+                    e.Update(gameTime, ref this.firstLevel, ref player, gameFont);
                 }
 
                 for (int i = 0; i < explosionLights.Count; i++)
@@ -744,6 +807,11 @@ namespace WorldTest
                 UpdateAttacks(gameTime, inputControlState);
                 UpdateProjectiles(gameTime);
 
+                for (int i = 0; i < this.checkpoints.Count; i++)
+                {
+                    this.checkpoints[i].Update((float)gameTime.ElapsedGameTime.TotalSeconds, player.current_poly_index, player.CurrentDimension);
+                }
+
                 //portal.Update(gameTime);
                 for (int i = 0; i < dimensionPortals.Count; i++)
                 {
@@ -754,11 +822,6 @@ namespace WorldTest
                 tips.Update(gameTime, ref player, ref firstLevel, inputControlState, ref dimensionPortals);
 
                 //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-
-                for (int i = 0; i < this.checkpoints.Count; i++)
-                {
-                    this.checkpoints[i].Update((float)gameTime.ElapsedGameTime.TotalSeconds, player.current_poly_index);
-                }
 
                 // Save previous states
                 inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
@@ -1146,7 +1209,7 @@ namespace WorldTest
             //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
-                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension);
+                e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension, ref spriteBatch);
                 //DrawEnemySphere(e.collisionSphere.Radius, e.collisionSphere.Center);
             }
 
