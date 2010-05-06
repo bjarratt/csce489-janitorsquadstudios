@@ -723,6 +723,12 @@ namespace WorldTest
 
                 UpdatePlayerLocation();
 
+                if ((player.position - firstLevel.GetCentroid(203)).Length() > 6000)
+                {
+                    firstLevel.drawWater = false;
+                }
+                else firstLevel.drawWater = true;
+
                 foreach (Enemy e in enemies)
                 {
                     e.Update(gameTime, ref this.firstLevel, ref player);

@@ -105,8 +105,9 @@ namespace WorldTest
         /// Water Rendering Stuff... theres only 1 lake in the cave, so only 
         /// one water per Level.
         /// </summary>
-        private bool drawWater;
-        const float waterHeight = -390.0f;
+        public bool drawWater;
+        private bool inWater;
+        const float waterHeight = 0.0f;
         private RenderTarget2D refractionRenderTarget;
         private RenderTarget2D refractionRenderTarget2X;
         private RenderTarget2D refractionRenderTarget4X;
@@ -125,6 +126,7 @@ namespace WorldTest
         private Texture2D waterBumpMap;
         VertexBuffer waterVertexBuffer;
         VertexDeclaration waterVertexDeclaration;
+        public Vector3 waterPosition = new Vector3(-4000 - 6900, -50, 3000 - 11200);
 
         // Collision mesh variables
         private List<CollisionPolygon> collisionMesh;
@@ -159,7 +161,7 @@ namespace WorldTest
 
         public Level(GraphicsDevice device, ref ContentManager content, string levelFilename)
         {
-            drawWater = false;
+            drawWater = true;
 
             this.collisionMesh = new List<CollisionPolygon>();
             this.collisionMeshOffset = Vector3.Zero;
@@ -1527,9 +1529,9 @@ namespace WorldTest
             if (drawWater)
             {
                 
-                DrawRefractionMap(ref device, ref camera, currentLocationIndex);
+                DrawRefractionMap(ref device, ref camera, currentLocationIndex, ref lights);
                 MakeReflectionMatrix(ref camera);
-                DrawReflectionMap(ref device, ref camera, currentLocationIndex);
+                DrawReflectionMap(ref device, ref camera, currentLocationIndex, ref lights);
                 float time = (float)gameTime.TotalGameTime.TotalMilliseconds / 100.0f;
                 DrawWater(time, ref camera, ref device, ref lights);
             }
@@ -1607,6 +1609,7 @@ namespace WorldTest
                 pass.End();
             }
             this.cel_effect.End();
+
             if (lights != null)
             {
                 monolith.DrawBarrier(device, ref camera, ref lights);
@@ -1631,7 +1634,7 @@ namespace WorldTest
             return finalPlane;
         }
 
-        private void DrawRefractionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc)
+        private void DrawRefractionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights)
         {
             Plane refractionPlane = CreatePlane(waterHeight + 1.5f, new Vector3(0, -1, 0), ref camera, false, false, Matrix.Identity);
             device.ClipPlanes[0].Plane = refractionPlane;
@@ -1654,7 +1657,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, refractionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(viewMatrix);
-            DrawScene(device, ref camera, currentLoc, ref lightList);
+            DrawScene(device, ref camera, currentLoc, ref lights);
             device.ClipPlanes[0].IsEnabled = false;
           
             device.SetRenderTarget(0, null);
@@ -1668,13 +1671,16 @@ namespace WorldTest
                     break;
             }
             //refractionMap.Save("refractionmap.jpg", ImageFileFormat.Jpg);
+            device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
         }
 
         private void MakeReflectionMatrix(ref GameCamera camera)
         {
             Vector3 reflCameraPosition = camera.position;
             reflCameraPosition.Y = -camera.position.Y + waterHeight * 2;
-            Vector3 reflTargetPos = camera.position + camera.lookAt * 1f;
+            Vector3 look = camera.lookAt;
+            look.Y = -0.15f;
+            Vector3 reflTargetPos = camera.position + look * 1f;
             reflTargetPos.Y = -reflTargetPos.Y + waterHeight * 2;
 
             Vector3 cameraRight = camera.right;
@@ -1683,7 +1689,7 @@ namespace WorldTest
             reflectionViewMatrix = Matrix.CreateLookAt(reflCameraPosition, reflTargetPos, invUpVector);
         }
 
-        private void DrawReflectionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc)
+        private void DrawReflectionMap(ref GraphicsDevice device, ref GameCamera camera, int currentLoc, ref List<Light> lights)
         {
             Plane reflectionPlane = CreatePlane(waterHeight - 0.5f, new Vector3(0, -1, 0), ref camera, true, true, reflectionViewMatrix);
             device.ClipPlanes[0].Plane = reflectionPlane;
@@ -1708,7 +1714,7 @@ namespace WorldTest
             //device.SetRenderTarget(0, reflectionRenderTarget);
             device.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1.0f, 0);
             //DrawTerrain(reflectionViewMatrix);
-            DrawScene(device, ref camera, currentLoc, ref lightList);
+            DrawScene(device, ref camera, currentLoc, ref lights);
             //DrawSkyDome(reflectionViewMatrix);
             device.ClipPlanes[0].IsEnabled = false;
 
@@ -1735,6 +1741,7 @@ namespace WorldTest
             VertexPositionTexture[] waterVertices = new VertexPositionTexture[6];
             float terrainWidth = 4000;
             float terrainLength = 7500;
+
             waterVertices[0] = new VertexPositionTexture(new Vector3(0, waterHeight, 0), new Vector2(0, 1));
             waterVertices[2] = new VertexPositionTexture(new Vector3(terrainWidth, waterHeight, -terrainLength), new Vector2(1, 0));
             waterVertices[1] = new VertexPositionTexture(new Vector3(0, waterHeight, -terrainLength), new Vector2(0, 0));
@@ -1756,7 +1763,7 @@ namespace WorldTest
         private void DrawWater(float time, ref GameCamera camera, ref GraphicsDevice device, ref List<Light> lights)
         {
             waterEffect.CurrentTechnique = waterEffect.Techniques["Water"];
-            Matrix World = Matrix.CreateTranslation(new Vector3(0, 0, 3500));
+            Matrix World = Matrix.CreateTranslation(new Vector3(-4000 - 6900, -50, 3000 - 11200));
             waterEffect.Parameters["xWorld"].SetValue(World);
             waterEffect.Parameters["xView"].SetValue(camera.GetViewMatrix());
             waterEffect.Parameters["xReflectionView"].SetValue(reflectionViewMatrix);

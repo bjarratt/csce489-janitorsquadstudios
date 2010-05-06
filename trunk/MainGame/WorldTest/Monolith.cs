@@ -68,16 +68,16 @@ namespace WorldTest
 
             barrierEffect = content.Load<Effect>("Water");
             bumpMap = content.Load<Texture2D>("waterbump");
-            barrierMap = content.Load<Texture2D>("ColorMap");
+            barrierMap = content.Load<Texture2D>("barrier");
         }
 
         private void SetUpBarrierVertices(ref GraphicsDevice device)
         {
             VertexPositionTexture[] barrierVertices = new VertexPositionTexture[6];
             
-            barrierVertices[0] = new VertexPositionTexture(new Vector3(monPosition1.X, 50, monPosition1.Z), new Vector2(0, 1));
-            barrierVertices[2] = new VertexPositionTexture(new Vector3(monPosition1.X, 300, monPosition1.Z), new Vector2(1, 0));
-            barrierVertices[1] = new VertexPositionTexture(new Vector3(monPosition2.X, 50, monPosition2.Z), new Vector2(0, 0));
+            barrierVertices[0] = new VertexPositionTexture(new Vector3(monPosition1.X, 50, monPosition1.Z), new Vector2(1, 1));
+            barrierVertices[2] = new VertexPositionTexture(new Vector3(monPosition1.X, 300, monPosition1.Z), new Vector2(0, 1));
+            barrierVertices[1] = new VertexPositionTexture(new Vector3(monPosition2.X, 50, monPosition2.Z), new Vector2(1, 0));
 
             barrierVertices[3] = new VertexPositionTexture(new Vector3(monPosition1.X, 300, monPosition1.Z), new Vector2(0, 1));
             barrierVertices[5] = new VertexPositionTexture(new Vector3(monPosition2.X, 300, monPosition2.Z), new Vector2(1, 1));
@@ -106,7 +106,7 @@ namespace WorldTest
             barrierEffect.Parameters["xCamPos"].SetValue(camera.position);
             barrierEffect.Parameters["xTime"].SetValue(this.time);
             barrierEffect.Parameters["xWindForce"].SetValue(0.001f);
-            barrierEffect.Parameters["xWindDirection"].SetValue(new Vector3(1, 0.3f, 0.3f));
+            barrierEffect.Parameters["xWindDirection"].SetValue(new Vector3(0.3f, 0.3f, 0f));
             for (int i = 0; i < lights.Count; i++)
             {
                 if ((i + 1) > GameplayScreen.MAX_LIGHTS)
@@ -144,6 +144,8 @@ namespace WorldTest
             device.VertexDeclaration = this.monolithVertexDeclaration;
             device.Vertices[0].SetSource(this.monolithVertexBuffer, 0, VertexPositionNormalTexture.SizeInBytes);
             device.DrawPrimitives(PrimitiveType.TriangleList, 0, this.vertexCount / 3);
+
+            effect.Parameters["matW"].SetValue(Matrix.Identity);
         }
 
     }
