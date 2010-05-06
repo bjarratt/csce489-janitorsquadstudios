@@ -298,7 +298,7 @@ VS_OUTPUT2 Outline_Animated(VS_INPUT_ANIMATED Input, out float3 outPosition : TE
     
     float3 pos = mul(Input.Position, matW);
 	float dist = distance(pos, playerPosition);
-	float offset = 1.0 + (dist * 0.005); 
+	float offset = 1.0 + (dist * 0.001); 
 	
 	float4x4 WorldViewProjection = mul(matSmoothSkinWorld, matVP);
 	VS_OUTPUT2 Output;
@@ -320,7 +320,7 @@ VS_OUTPUT2 Outline_Static(VS_INPUT_STATIC Input)
 	
 	float3 pos = mul(Input.Position, matW);
 	float dist = distance(pos, playerPosition);
-	float offset = 2.8 + (dist * 0.005);
+	float offset = 2.8 + (dist * 0.001);
 	
 	float4x4 WorldViewProjection = mul(matW, matVP);
 	

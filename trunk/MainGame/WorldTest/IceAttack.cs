@@ -91,9 +91,8 @@ namespace WorldTest
 
         #region Update
 
-        public void Update(GameTime gameTime, ControlState state, ref Player player, ref List<Enemy> enemies, ref Reticle iceReticle)
+        public void Update(GameTime gameTime, ControlState state, ref Player player, ref List<Enemy> enemies, ref List<Light> explosionLights, ref Reticle iceReticle)
         {
-            //time += (float)gameTime.ElapsedGameTime.TotalSeconds;
             //for (int i = 0; i < 4; i++)
             //{
             //    PortalMagic.AddParticle(RandomPointInCircle(this.origin, this.radius), Vector3.Zero);
@@ -108,7 +107,6 @@ namespace WorldTest
                     {
                         iceReticle.StartAnimation();
                         GameplayScreen.soundControl.Play("ice_crack");
-
                         for (int i = 0; i < 500; i++)
                         {
                             //iceParticles.AddParticle(RandomPointInCircle(player.position, this.radius), new Vector3(0, 5, 0));
@@ -118,6 +116,7 @@ namespace WorldTest
                             groundParticles.AddParticle(RandomPointOnCircle(player.position, this.radius), Vector3.Zero);
                             groundParticles.AddParticle(RandomPointInCircle(player.position, this.radius), Vector3.Zero);
                         }
+                        explosionLights.Add(new Light(player.position, GameplayScreen.ICE_COLOR * 4f, 3000.0f, 0.0f));
                     }
 
                     for (int e = 0; e < enemies.Count; e++)

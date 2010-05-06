@@ -34,11 +34,11 @@ namespace WorldTest
                                                trailParticlesPerSecond, position);
             if (is_banisher)
             {
-                light = new Light(position, GameplayScreen.ICE_COLOR * 2.0f, 3000.0f);
+                light = new Light(position, GameplayScreen.BANISH_COLOR, 1000.0f);
             }
             else
             {
-                light = new Light(position, GameplayScreen.FIRE_COLOR * 2.0f, 3000.0f);
+                light = new Light(position, GameplayScreen.FIRE_COLOR, 1000.0f);
             }
             //collisionSphere = new BoundingSphere(position, 20);
             is_released = false;

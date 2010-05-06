@@ -61,6 +61,17 @@ sampler WaterBumpMapSampler = sampler_state {
 	AddressV = mirror;
 };
 
+Texture xBarrierMap;
+
+sampler BarrierSampler = sampler_state { 
+	texture = <xBarrierMap> ; 
+	magfilter = LINEAR; 
+	minfilter = LINEAR; 
+	mipfilter = LINEAR; 
+	AddressU = mirror; 
+	AddressV = mirror;
+};
+
 
 //------- Technique: Water --------
 struct WVertexToPixel
@@ -156,5 +167,78 @@ technique Water
     {
         VertexShader = compile vs_3_0 WaterVS();
         PixelShader = compile ps_3_0 WaterPS();
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Barrier
+/////////////////////////////////////////////////////////////////////////
+
+struct BVertexToPixel
+{
+    float4 Position                 : POSITION;
+    float2 BarrierMapSamplingPos    : TEXCOORD1;
+    float2 BumpMapSamplingPos        : TEXCOORD2;
+    float4 Position3D                : TEXCOORD3;
+};
+
+struct BPixelToFrame
+{
+    float4 Color : COLOR0;
+};
+
+BVertexToPixel BarrierVS(float4 inPos : POSITION, float2 inTex: TEXCOORD)
+{    
+    BVertexToPixel Output = (BVertexToPixel)0;
+
+    float4x4 preViewProjection = mul (xView, xProjection);
+    float4x4 preWorldViewProjection = mul (xWorld, preViewProjection);
+
+    Output.Position = mul(inPos, preWorldViewProjection);
+    Output.BarrierMapSamplingPos = inTex;
+	float2 moveVector = float2(0, xTime*xWindForce);
+	Output.BumpMapSamplingPos = (inTex + moveVector)/xWaveLength;
+	
+	Output.Position3D = mul(inPos, xWorld);
+
+    return Output;
+}
+
+BPixelToFrame BarrierPS(BVertexToPixel PSIn)
+{
+    WPixelToFrame Output = (WPixelToFrame)0;        
+    
+	float4 bumpColor = tex2D(WaterBumpMapSampler, PSIn.BumpMapSamplingPos);
+    float2 perturbation = xWaveHeight*(bumpColor.rg - 0.5f)*2.0f;
+    float2 perturbatedTexCoords = PSIn.BarrierMapSamplingPos + perturbation; 
+       
+	float4 barrierColor = tex2D(BarrierSampler, perturbatedTexCoords); 
+	
+	float3 eyeVector = normalize(xCamPos - PSIn.Position3D);
+    float3 normalVector = (bumpColor.rbg-0.5f)*2.0f;
+    float fresnelTerm = dot(eyeVector, normalVector);
+	
+    float4 combinedColor = lerp(barrierColor, barrierColor + float4(0.1,0.1,0.1,0.5), fresnelTerm);
+    
+    //for(int i=0; i<lightCount; i++){
+	//	float3 lightVector1 = lights[i].position - PSIn.Position3D;
+	//	float3 reflectionVector1 = -reflect(normalize(lightVector1), normalVector);
+	//	float specular1 = dot(normalize(reflectionVector1), normalize(eyeVector));
+	//	specular1 = pow(specular1, 200);
+	//	Output.Color.rgb += specular1 * lights[i].color;
+    //}
+	Output.Color.rgb = combinedColor.rgb;
+	Output.Color.a = 0.5;
+    return Output;
+}
+
+technique Barrier
+{
+    pass Pass0
+    {
+		AlphaBlendEnable = TRUE;
+        VertexShader = compile vs_3_0 BarrierVS();
+        PixelShader = compile ps_3_0 BarrierPS();
+        Cullmode = none;
     }
 }
