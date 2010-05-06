@@ -286,6 +286,7 @@ namespace WorldTest
                     {
                         // Enemy was not in chasing smart, so make a new path
                         this.state = EnemyAiState.ChasingSmart;
+                        this.prevState = EnemyAiState.Idle;
                         LinkedList<NavMeshNode> newPath = ConvertToList(RunAStar(ref player, ref currentLevel));
 
                         if (newPath == null || newPath.Count < 2)
@@ -294,6 +295,10 @@ namespace WorldTest
                         }
                         else
                         {
+                            if (this.prevState == EnemyAiState.Idle && this.state == EnemyAiState.ChasingSmart)
+                            {
+                                GameplayScreen.soundControl.Play("enemy alerted");
+                            }
                             this.currentPath = newPath;
                             this.FirstPathPoly = this.currentPath.First.Value.Index;
                             this.SecondPathPoly = this.currentPath.First.Next.Value.Index;

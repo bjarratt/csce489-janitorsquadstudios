@@ -52,7 +52,7 @@ namespace WorldTest
             if (content == null)
                 content = new ContentManager(ScreenManager.Game.Services, "Content");
 
-            backgroundTexture = content.Load<Texture2D>("cave");
+            backgroundTexture = content.Load<Texture2D>("Cave_Shadows_Title");
         }
 
 

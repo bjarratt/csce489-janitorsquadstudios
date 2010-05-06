@@ -380,7 +380,7 @@ namespace WorldTest
             SpriteFont font = ScreenManager.Font;
 
             Vector2 position = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth-
-                                           14*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/30,
+                                           15*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/16,
                                             screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight-
                                             10*screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight/12);
 
@@ -400,7 +400,7 @@ namespace WorldTest
 
             // Draw the menu title.
             Vector2 titlePosition = setPosition(screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth-
-                                                screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/3,
+                                                5*screenManager.GraphicsDevice.PresentationParameters.BackBufferWidth/6,
                                                  screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight-
                                                  11*screenManager.GraphicsDevice.PresentationParameters.BackBufferHeight/12);
             Vector2 titleOrigin = font.MeasureString(menuTitle) * 0.5f;

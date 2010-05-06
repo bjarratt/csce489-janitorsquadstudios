@@ -136,6 +136,7 @@
     <Compile Include="Screens\GameOver.cs" />
     <Compile Include="Screens\GameplayScreen.cs" />
     <Compile Include="Screens\InGameOptions.cs" />
+    <Compile Include="Screens\LoadingMenuScreen.cs" />
     <Compile Include="Screens\LoadingScreen.cs" />
     <Compile Include="Screens\MainMenuScreen.cs" />
     <Compile Include="Screens\MenuEntry.cs" />
