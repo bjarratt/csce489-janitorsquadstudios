@@ -25,6 +25,8 @@ namespace WorldTest
 
         private bool checkpointReached = false;
 
+        private bool isFinalCheckpoint = false;
+
         // The dimension the checkpoint is available in (0 means both)
         private int dimension = 0;
 
@@ -44,11 +46,17 @@ namespace WorldTest
             get { return navMeshIndex; }
         }
 
-        public Checkpoint(int navMeshIndex, string narrationFilename, int dimension, SpriteFont narrationFont, bool freezeWhileNarrating, bool saveWhenReached)
+        public bool FinalCheckpointReached
+        {
+            get { return isFinalCheckpoint && checkpointReached; }
+        }
+
+        public Checkpoint(int navMeshIndex, string narrationFilename, int dimension, SpriteFont narrationFont, bool freezeWhileNarrating, bool saveWhenReached, bool isFinalCheckpoint)
         {
             this.navMeshIndex = navMeshIndex;
             this.freezeWhileNarrating = freezeWhileNarrating;
             this.saveWhenReached = saveWhenReached;
+            this.isFinalCheckpoint = isFinalCheckpoint;
 
             this.dimension = dimension;
 

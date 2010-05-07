@@ -28,19 +28,19 @@ namespace WorldTest
         {
             // Create our menu entries.
             MenuEntry playGameMenuEntry = new MenuEntry("New Game");
-            MenuEntry loadGameMenuEntry = new MenuEntry("Load Game");
+            //MenuEntry loadGameMenuEntry = new MenuEntry("Load Game");
             MenuEntry optionsMenuEntry = new MenuEntry("Options");
             MenuEntry exitMenuEntry = new MenuEntry("Quit");
 
             // Hook up menu event handlers.
             playGameMenuEntry.Selected += PlayGameMenuEntrySelected;
-            loadGameMenuEntry.Selected += LoadGameMenuEntrySelected;
+            //loadGameMenuEntry.Selected += LoadGameMenuEntrySelected;
             optionsMenuEntry.Selected += OptionsMenuEntrySelected;
             exitMenuEntry.Selected += OnCancel;
 
             // Add entries to the menu.
             MenuEntries.Add(playGameMenuEntry);
-            MenuEntries.Add(loadGameMenuEntry);
+            //MenuEntries.Add(loadGameMenuEntry);
             MenuEntries.Add(optionsMenuEntry);
             MenuEntries.Add(exitMenuEntry);
         }
