@@ -36,10 +36,10 @@ namespace WorldTest
     public class GameplayScreen : GameScreen
     {
         #region Fields
-        
+
         GraphicsDeviceManager graphics;
         ContentManager content;
-        
+
         SpriteFont gameFont;
 
         private string loadFilename;
@@ -73,6 +73,9 @@ namespace WorldTest
         private Light relicLight;
         private bool relicLightOn = false;
         public static int MAX_LIGHTS = 8;
+
+        public static bool IN_FINAL_AREA = false;
+        public static bool WIN_CONDITION_REACHED = false;
 
         public static Vector3 FIRE_COLOR = new Vector3(0.87f, 0.2f, 0.0f);
         public static Vector3 ACID_FIRE = new Vector3(0, 0.7f, 0);
@@ -134,6 +137,9 @@ namespace WorldTest
 
         //Portal portal;
         List<Portal> dimensionPortals;
+        Portal endPortal;
+        public static bool endPortalAdded = false;
+
         IceAttack iceAttack;
 
         ToolTips tips;
@@ -293,6 +299,9 @@ namespace WorldTest
                 dimensionPortals[i].Load(this.ScreenManager.game, content);
             }
 
+            endPortal = new Portal(firstLevel.GetCentroid(381), 50, 381);
+            endPortal.Load(this.ScreenManager.game, content);
+
             //portal = new Portal(new Vector3(0,-330,0), 50f);
             //portal.Load(this.ScreenManager.game, content);
 
@@ -350,7 +359,7 @@ namespace WorldTest
 
             bool confirmed = false;
 
-            while(!confirmed)
+            while (!confirmed)
             {
                 inputControlState.currentKeyboardState = Keyboard.GetState();
                 inputControlState.lastGamePadState = inputControlState.currentGamePadState;
@@ -634,25 +643,41 @@ namespace WorldTest
 
                     List<KeyValuePair<Enemy.EnemyAiState, string>> narrationCues = new List<KeyValuePair<Enemy.EnemyAiState, string>>();
 
-                    while (splitLineIndex + 1 < splitLine.Length)
-                    {
-                        if (splitLine[splitLineIndex] == "on_weakened")
-                        {
-                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState,string>(Enemy.EnemyAiState.Weakened, splitLine[splitLineIndex + 1]));
-                        }
-                        else if (splitLine[splitLineIndex] == "on_recover")
-                        {
-                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.ChasingDumb, splitLine[splitLineIndex + 1]));
-                        }
-                        else if (splitLine[splitLineIndex] == "on_banish")
-                        {
-                            narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.Idle, splitLine[splitLineIndex + 1]));
-                        }
+                    bool inFinalRoom = false;
 
-                        splitLineIndex += 2;
+                    if (splitLineIndex >= splitLine.Length)
+                    {
+                        line = reader.ReadLine();
+                        enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension, narrationCues, useLineOfSight, inFinalRoom));
+                        continue;
                     }
 
-                    enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension, narrationCues, useLineOfSight));
+                    if (splitLine[splitLineIndex] == "final_room")
+                    {
+                        inFinalRoom = true;
+                    }
+                    else
+                    {
+                        while (splitLineIndex + 1 < splitLine.Length)
+                        {
+                            if (splitLine[splitLineIndex] == "on_weakened")
+                            {
+                                narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.Weakened, splitLine[splitLineIndex + 1]));
+                            }
+                            else if (splitLine[splitLineIndex] == "on_recover")
+                            {
+                                narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.ChasingDumb, splitLine[splitLineIndex + 1]));
+                            }
+                            else if (splitLine[splitLineIndex] == "on_banish")
+                            {
+                                narrationCues.Add(new KeyValuePair<Enemy.EnemyAiState, string>(Enemy.EnemyAiState.Idle, splitLine[splitLineIndex + 1]));
+                            }
+
+                            splitLineIndex += 2;
+                        }
+                    }
+
+                    enemies.Add(new Enemy(graphics, content, "enemy1_all_final", ENEMY_STATS, enemyPosition, enemyDimension, narrationCues, useLineOfSight, inFinalRoom));
                 }
                 // Format: Camera <lookAt.x> <.y> <.z> <right.x> <.y> <.z> <up.x> <.y> <.z>
                 else if (splitLine[0] == "Camera")
@@ -682,8 +707,9 @@ namespace WorldTest
                     string narrationFilename = splitLine[3];
                     bool freezeWhenNarrating = splitLine[4] == "freeze_on";
                     bool saveWhenReached = splitLine[5] == "save_on";
+                    string isFinalCheckpoint = splitLine[6];
 
-                    checkpoints.Add(new Checkpoint(navMeshIndex, narrationFilename, dimension, gameFont, freezeWhenNarrating, saveWhenReached));
+                    checkpoints.Add(new Checkpoint(navMeshIndex, narrationFilename, dimension, gameFont, freezeWhenNarrating, saveWhenReached, isFinalCheckpoint == "yes"));
                 }
                 else if (splitLine[0] == "Barrier")
                 {
@@ -706,8 +732,13 @@ namespace WorldTest
         }
 
         #endregion
-        
+
         #region Update
+
+        private static bool EnemyInFinalRoom(Enemy enemy)
+        {
+            return enemy.InFinalRoom;
+        }
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -721,15 +752,24 @@ namespace WorldTest
             GameplayScreen.controlsFrozen = false;
             for (int i = 0; i < checkpoints.Count; i++)
             {
+                if (checkpoints[i].FinalCheckpointReached && !GameplayScreen.IN_FINAL_AREA)
+                {
+                    // If we just moved into the final area, remove the last portal
+                    // to keep the user from running from the final fight.
+                    GameplayScreen.IN_FINAL_AREA = true;
+                    dimensionPortals.RemoveAt(dimensionPortals.Count - 1);
+                }
+
                 if (checkpoints[i].FreezeControls)
                 {
                     GameplayScreen.controlsFrozen = true;
-                    break;
+                    break; // If one checkpoint freezes controls, there is no need to check the others
                 }
             }
 
             if (IsActive)
             {
+                // Update the barriers
                 for (int i = 0; i < firstLevel.monoliths.Count; i++)
                 {
                     firstLevel.monoliths[i].Update(gameTime, ref player, ref firstLevel);
@@ -749,33 +789,6 @@ namespace WorldTest
                     GameplayScreen.transitioning = false;
                 }
 
-                //if (inputControlState.currentGamePadState.Buttons.LeftStick == ButtonState.Pressed &&
-                //    inputControlState.lastGamePadState.Buttons.LeftStick == ButtonState.Released)
-                //{
-                //    narrations[0].StartNarration();
-                //}
-
-                if (inputControlState.currentGamePadState.Buttons.LeftShoulder == ButtonState.Pressed &&
-                    inputControlState.lastGamePadState.Buttons.LeftShoulder == ButtonState.Released)
-                {
-                    SaveGame();
-                }
-
-                if (inputControlState.currentGamePadState.Buttons.RightShoulder == ButtonState.Pressed &&
-                    inputControlState.lastGamePadState.Buttons.RightShoulder == ButtonState.Released)
-                {
-                    LoadGame("save1.txt");
-                }
-
-                // Allows the game to exit
-                //if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
-                // this.Exit();
-
-                //if (inputControlState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputControlState.lastGamePadState.Buttons.Y == ButtonState.Released)
-                //{
-                //    invertYAxis = !invertYAxis;
-                //}
-
                 if (!GameplayScreen.controlsFrozen)
                 {
                     player.Update(gameTime, inputControlState, ref this.firstLevel, ref dimensionPortals);
@@ -789,15 +802,45 @@ namespace WorldTest
                 UpdatePlayerLocation();
 
                 if (!GameplayScreen.controlsFrozen)
-                if ((player.position - firstLevel.GetCentroid(203)).Length() > 6000)
                 {
-                    firstLevel.drawWater = false;
+                    if ((player.position - firstLevel.GetCentroid(203)).Length() > 6000)
+                    {
+                        firstLevel.drawWater = false;
+                    }
+                    else firstLevel.drawWater = true;
                 }
-                else firstLevel.drawWater = false;
 
-                foreach (Enemy e in enemies)
+                bool winCondition = false;
+
+                if (!GameplayScreen.controlsFrozen)
                 {
-                    e.Update(gameTime, ref this.firstLevel, ref player, gameFont);
+                    foreach (Enemy e in enemies)
+                    {
+                        e.Update(gameTime, ref this.firstLevel, ref player, gameFont);
+
+                        // The win condition is when all enemies in the final room are banished
+
+                        if (e.InFinalRoom)
+                        {
+                            winCondition = true;
+                        }
+
+                        if (e.InFinalRoom && !(e.CurrentDimension == Dimension.SECOND))
+                        {
+                            winCondition = false;
+                            break;
+                        }
+                    }
+                }
+
+                // Add the final portal when the win condition is met (but only add it once)
+                if (winCondition && !endPortalAdded)
+                {
+                    endPortal.Radius = 150;
+                    dimensionPortals.Add(endPortal);
+                    endPortalAdded = true;
+
+                    enemies.RemoveAll(EnemyInFinalRoom);
                 }
 
                 for (int i = 0; i < explosionLights.Count; i++)
@@ -807,7 +850,10 @@ namespace WorldTest
 
                 explosionLights.RemoveAll(explosionLightHasExpired);
 
-                UpdateAttacks(gameTime, inputControlState);
+                if (!GameplayScreen.controlsFrozen)
+                {
+                    UpdateAttacks(gameTime, inputControlState);
+                }
                 UpdateProjectiles(gameTime);
 
                 for (int i = 0; i < this.checkpoints.Count; i++)
@@ -815,7 +861,6 @@ namespace WorldTest
                     this.checkpoints[i].Update((float)gameTime.ElapsedGameTime.TotalSeconds, player.current_poly_index, player.CurrentDimension);
                 }
 
-                //portal.Update(gameTime);
                 for (int i = 0; i < dimensionPortals.Count; i++)
                 {
                     dimensionPortals[i].Update(gameTime);
@@ -823,8 +868,6 @@ namespace WorldTest
 
                 iceAttack.Update(gameTime, inputControlState, ref player, ref enemies, ref explosionLights, ref iceReticle);
                 tips.Update(gameTime, ref player, ref firstLevel, inputControlState, ref dimensionPortals);
-
-                //narrTest.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
                 // Save previous states
                 inputControlState.lastKeyboardState = inputControlState.currentKeyboardState;
@@ -861,31 +904,97 @@ namespace WorldTest
         /// </summary>
         void UpdateAttacks(GameTime gameTime, ControlState inputState)
         {
-            //if (inputControlState.currentGamePadState.Triggers.Right != 0)
-            //{
             if (vibrateTime > 5)
             {
 
             }
             else vibrateTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
-                     (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released))
+            if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Released) ||
+                 (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Released))
+            {
+                relicLight.attenuationRadius = 1000.0f;
+                relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
+                relicLight.currentExplosionTick = 0.0f;
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
+                pos += camera.right * 5;
+                pos += camera.lookAt * 20;
+                relicLight.position = pos;
+                this.relicLightOn = true;
+                GameplayScreen.soundControl.Play("fireball_ignite");
+            }
+            else if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                      (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+            {
+                //GameplayScreen.soundControl.Play("fireball_held");
+                Vector3 pos = player.position + new Vector3(0, 105, 0);
+                if (player.velocity.X != 0 || player.velocity.Z != 0)
                 {
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 22;
+                    relicLight.position = pos;
+                    // set the world matrix for the particles
+                    //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
+                    //fireParticles.SetWorldMatrix(world);
+                    for (int i = 0; i < 3; i++)
+                    {
+                        fireParticles.AddParticle(pos, Vector3.Zero);
+                    }
+                }
+                else
+                {
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 20;
+                    relicLight.position = pos;
+                    fireParticles.SetWorldMatrix(player.worldTransform);
+                    for (int i = 0; i < 1; i++)
+                    {
+                        fireParticles.AddParticle(pos, Vector3.Zero);
+                    }
+                }
+            }
+            if ((inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
+                 (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+            {
+                if (!this.fireReticle.AnimationRunning)
+                {
+                    this.relicLightOn = false;
+                    this.fireReticle.StartAnimation();
+                    GameplayScreen.soundControl.Play("fireball_deploy");
+                    GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
+                    vibrateTime = 0;
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 20;
+                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 80, 30, 6, 5f, 0, explosionParticles,
+                                                   explosionSmokeParticles,
+                                                   projectileTrailParticles, ref enemies, false, true));
+                    projectiles[projectiles.Count - 1].is_released = true;
+                }
+            }
+
+            // Y BUTTON
+            if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
+                 (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
+            {
+                if (!this.banishReticle.AnimationRunning)
+                {
+                    GameplayScreen.soundControl.Play("banish activated");
                     relicLight.attenuationRadius = 1000.0f;
-                    relicLight.color = GameplayScreen.FIRE_COLOR * 2.0f;
+                    relicLight.color = GameplayScreen.BANISH_COLOR * 2.0f;
                     relicLight.currentExplosionTick = 0.0f;
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     pos += camera.right * 5;
                     pos += camera.lookAt * 20;
                     relicLight.position = pos;
                     this.relicLightOn = true;
-                    GameplayScreen.soundControl.Play("fireball_ignite");
                 }
-                else if ((inputState.currentGamePadState.Buttons.B == ButtonState.Pressed && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
-                          (inputState.currentMouseState.LeftButton == ButtonState.Pressed && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+            }
+            else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
+                      (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
+            {
+                if (!this.banishReticle.AnimationRunning)
                 {
-                    //GameplayScreen.soundControl.Play("fireball_held");
                     Vector3 pos = player.position + new Vector3(0, 105, 0);
                     if (player.velocity.X != 0 || player.velocity.Z != 0)
                     {
@@ -897,7 +1006,7 @@ namespace WorldTest
                         //fireParticles.SetWorldMatrix(world);
                         for (int i = 0; i < 3; i++)
                         {
-                            fireParticles.AddParticle(pos, Vector3.Zero);
+                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
                         }
                     }
                     else
@@ -905,121 +1014,46 @@ namespace WorldTest
                         pos += camera.right * 5;
                         pos += camera.lookAt * 20;
                         relicLight.position = pos;
-                        fireParticles.SetWorldMatrix(player.worldTransform);
                         for (int i = 0; i < 1; i++)
                         {
-                            fireParticles.AddParticle(pos, Vector3.Zero);
+                            banishingHandParticles.AddParticle(pos, Vector3.Zero);
                         }
                     }
                 }
-                if ((inputState.currentGamePadState.Buttons.B == ButtonState.Released && inputState.lastGamePadState.Buttons.B == ButtonState.Pressed) ||
-                     (inputState.currentMouseState.LeftButton == ButtonState.Released && inputState.lastMouseState.LeftButton == ButtonState.Pressed))
+            }
+            if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Released && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
+                 (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
+            {
+                if (!this.banishReticle.AnimationRunning)
                 {
-                    if (!this.fireReticle.AnimationRunning)
-                    {
-                        this.relicLightOn = false;
-                        this.fireReticle.StartAnimation();
-                        GameplayScreen.soundControl.Play("fireball_deploy");
-                        GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
-                        vibrateTime = 0;
-                        Vector3 pos = player.position + new Vector3(0, 105, 0);
-                        pos += camera.right * 5;
-                        pos += camera.lookAt * 20;
-                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 80, 30, 6, 5f, 0, explosionParticles,
-                                                       explosionSmokeParticles,
-                                                       projectileTrailParticles, ref enemies, false, true));
-                        projectiles[projectiles.Count - 1].is_released = true;
-                    }
+                    this.relicLightOn = false;
+                    this.banishReticle.StartAnimation();
+                    GameplayScreen.soundControl.Play("banish deployed");
+                    GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
+                    vibrateTime = 0;
+                    Vector3 pos = player.position + new Vector3(0, 105, 0);
+                    pos += camera.right * 5;
+                    pos += camera.lookAt * 20;
+                    projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, banisherExplosions,
+                                                   banisherExplosions,
+                                                   banishingParticleProj, ref enemies, true, true));
+                    projectiles[projectiles.Count - 1].is_released = true;
                 }
-            //}
-            //else relicLightOn = false;
+            }
 
+            if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released && player.Status != Player.State.jumping)
+            {
+                if (!this.iceReticle.AnimationRunning)
+                {
+                    GamePad.SetVibration(PlayerIndex.One, 1, 1);
+                    vibrateTime = 0;
+                }
+            }
 
-            // Y BUTTON
-            //if (inputControlState.currentGamePadState.Triggers.Right != 0)
-            //{
-                if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Released) ||
-                     (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Released))
-                {
-                    if (!this.banishReticle.AnimationRunning)
-                    {
-                        GameplayScreen.soundControl.Play("banish activated");
-                        relicLight.attenuationRadius = 1000.0f;
-                        relicLight.color = GameplayScreen.BANISH_COLOR * 2.0f;
-                        relicLight.currentExplosionTick = 0.0f;
-                        Vector3 pos = player.position + new Vector3(0, 105, 0);
-                        pos += camera.right * 5;
-                        pos += camera.lookAt * 20;
-                        relicLight.position = pos;
-                        this.relicLightOn = true;
-                    }
-                }
-                else if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Pressed && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
-                          (inputState.currentMouseState.RightButton == ButtonState.Pressed && inputState.lastMouseState.RightButton == ButtonState.Pressed))
-                {
-                    if (!this.banishReticle.AnimationRunning)
-                    {
-                        Vector3 pos = player.position + new Vector3(0, 105, 0);
-                        if (player.velocity.X != 0 || player.velocity.Z != 0)
-                        {
-                            pos += camera.right * 5;
-                            pos += camera.lookAt * 22;
-                            relicLight.position = pos;
-                            // set the world matrix for the particles
-                            //Matrix world = Matrix.CreateShadow(camera.lookAt, new Plane(-camera.lookAt.X, -camera.lookAt.Y, -camera.lookAt.Z, Vector3.Distance(player.position, Vector3.Zero)));
-                            //fireParticles.SetWorldMatrix(world);
-                            for (int i = 0; i < 3; i++)
-                            {
-                                banishingHandParticles.AddParticle(pos, Vector3.Zero);
-                            }
-                        }
-                        else
-                        {
-                            pos += camera.right * 5;
-                            pos += camera.lookAt * 20;
-                            relicLight.position = pos;
-                            for (int i = 0; i < 1; i++)
-                            {
-                                banishingHandParticles.AddParticle(pos, Vector3.Zero);
-                            }
-                        }
-                    }
-                }
-                if ((inputState.currentGamePadState.Buttons.Y == ButtonState.Released && inputState.lastGamePadState.Buttons.Y == ButtonState.Pressed) ||
-                     (inputState.currentMouseState.RightButton == ButtonState.Released && inputState.lastMouseState.RightButton == ButtonState.Pressed))
-                {
-                    if (!this.banishReticle.AnimationRunning)
-                    {
-                        this.relicLightOn = false;
-                        this.banishReticle.StartAnimation();
-                        GameplayScreen.soundControl.Play("banish deployed");
-                        GamePad.SetVibration(PlayerIndex.One, 0.0f, 1.0f);
-                        vibrateTime = 0;
-                        Vector3 pos = player.position + new Vector3(0, 105, 0);
-                        pos += camera.right * 5;
-                        pos += camera.lookAt * 20;
-                        projectiles.Add(new Attack(pos, camera.lookAt * 900f, 100, 30, 20, 5f, 0, banisherExplosions,
-                                                       banisherExplosions,
-                                                       banishingParticleProj, ref enemies, true, true));
-                        projectiles[projectiles.Count - 1].is_released = true;
-                    }
-                }
-
-                if (inputState.currentGamePadState.Buttons.X == ButtonState.Pressed && inputState.lastGamePadState.Buttons.X == ButtonState.Released && player.Status != Player.State.jumping)
-                {
-                    if (!this.iceReticle.AnimationRunning)
-                    {
-                        GamePad.SetVibration(PlayerIndex.One, 1, 1);
-                        vibrateTime = 0;
-                    }
-                }
-
-                if (vibrateTime > 0.2f)
-                {
-                    GamePad.SetVibration(PlayerIndex.One, 0, 0);
-                }
-            //}
-            //else relicLightOn = false;
+            if (vibrateTime > 0.2f)
+            {
+                GamePad.SetVibration(PlayerIndex.One, 0, 0);
+            }
         }
 
         void UpdateFire()
@@ -1099,7 +1133,7 @@ namespace WorldTest
 
             if (input.IsPauseGame(ControllingPlayer) || gamePadDisconnected)
             {
-               ScreenManager.AddScreen(new PauseMenuScreen(this.ScreenManager), ControllingPlayer);
+                ScreenManager.AddScreen(new PauseMenuScreen(this.ScreenManager), ControllingPlayer);
             }
             else
             {
@@ -1130,9 +1164,10 @@ namespace WorldTest
 
             List<Light> projLightList = new List<Light>();
 
-            lights[0].position = player.position + new Vector3(0, 200, 0);
+            // The first light follows the player around
+            lights[0].position = player.position + new Vector3(0, 250, 0);
 
-            lights[0].attenuationRadius = 3000f;
+            lights[0].attenuationRadius = 5000f;
 
             projLightList.AddRange(lights);
             if (this.relicLightOn)
@@ -1206,19 +1241,14 @@ namespace WorldTest
             //Cel Shading pass
             graphics.GraphicsDevice.Clear(Color.Black);
 
-            //terrain.Draw(graphics.GraphicsDevice, true, ref camera);
             firstLevel.Draw(graphics.GraphicsDevice, ref camera, false, false, ref projLightList, player.CurrentDimension, player.position, ref spriteBatch, gameTime);
 
-            //player.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList);
             foreach (Enemy e in enemies)
             {
                 e.DrawCel(gameTime, camera.GetViewMatrix(), camera.GetProjectionMatrix(), ref sceneRenderTarget, ref shadowRenderTarget, ref projLightList, player.position, player.CurrentDimension, ref spriteBatch);
-                //DrawEnemySphere(e.collisionSphere.Radius, e.collisionSphere.Center);
             }
 
-            //Draw lights
             DrawLights();
-            //DrawHand();
 
             //draw all on-screen hud or damage indicators
             spriteBatch.Begin();
@@ -1228,14 +1258,11 @@ namespace WorldTest
 
             if (player.health <= 0)
             {
-                //ScreenManager.RemoveScreen(this);
                 this.ScreenState = ScreenState.Hidden;
                 soundBank.Dispose();
                 soundControl.StopMusic("cave game first area");
                 GameOver.Load(ScreenManager, null, new BackgroundScreen(), new MainMenuScreen(this.ScreenManager));
             }
-
-            //this.narrTest.Draw(ref spriteBatch);
 
             for (int i = 0; i < this.checkpoints.Count; i++)
             {
@@ -1245,8 +1272,6 @@ namespace WorldTest
             spriteBatch.End();
 
             this.DrawHud();
-
-            //base.Draw(gameTime);
 
             // If the game is transitioning on or off, fade it out to black.
             if (TransitionPosition > 0)
@@ -1307,25 +1332,19 @@ namespace WorldTest
             pointLightMeshEffect.Begin(SaveStateMode.None);
             pointLightMeshEffect.CurrentTechnique.Passes[0].Begin();
 
-            //for (int i = 0; i < lights.Count; i++)
-            //{
-                //lightMeshWorld.M41 = lights[i].position.X;
-                //lightMeshWorld.M42 = lights[i].position.Y;
-                //lightMeshWorld.M43 = lights[i].position.Z;
             lightMeshWorld = Matrix.Multiply(Matrix.CreateScale(radius), Matrix.CreateTranslation(center));
 
-                pointLightMeshEffect.Parameters["world"].SetValue(lightMeshWorld);
-                pointLightMeshEffect.Parameters["view"].SetValue(camera.GetViewMatrix());
-                pointLightMeshEffect.Parameters["projection"].SetValue(camera.GetProjectionMatrix());
-                pointLightMeshEffect.Parameters["lightColor"].SetValue(
-                   new Vector4(1,1,1, 0.5f));
-                pointLightMeshEffect.CommitChanges();
+            pointLightMeshEffect.Parameters["world"].SetValue(lightMeshWorld);
+            pointLightMeshEffect.Parameters["view"].SetValue(camera.GetViewMatrix());
+            pointLightMeshEffect.Parameters["projection"].SetValue(camera.GetProjectionMatrix());
+            pointLightMeshEffect.Parameters["lightColor"].SetValue(
+               new Vector4(1, 1, 1, 0.5f));
+            pointLightMeshEffect.CommitChanges();
 
-                graphics.GraphicsDevice.DrawIndexedPrimitives(
-                    PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
-                    meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
+            graphics.GraphicsDevice.DrawIndexedPrimitives(
+                PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
+                meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
 
-            //}
             pointLightMeshEffect.CurrentTechnique.Passes[0].End();
             pointLightMeshEffect.End();
         }
@@ -1385,7 +1404,7 @@ namespace WorldTest
                     PrimitiveType.TriangleList, meshPart.BaseVertex, 0,
                     meshPart.NumVertices, meshPart.StartIndex, meshPart.PrimitiveCount);
             }
-            
+
             handEffect.End();
         }
 

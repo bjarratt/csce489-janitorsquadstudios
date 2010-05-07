@@ -100,6 +100,12 @@ namespace WorldTest
         public BoundingSphere collisionSphere;
 
         private bool lineOfSightTriggered = false;
+        private bool inFinalRoom = false;
+
+        public bool InFinalRoom
+        {
+            get { return inFinalRoom; }
+        }
 
         #endregion
 
@@ -107,7 +113,7 @@ namespace WorldTest
 
         public Enemy(GraphicsDeviceManager Graphics, ContentManager Content, string enemy_name,
                      EnemyStats stats, Vector3 position, Dimension currentDimension,
-                     List<KeyValuePair<EnemyAiState, string>> narrationCues, bool useLineOfSight) : base(Graphics, Content, enemy_name)
+                     List<KeyValuePair<EnemyAiState, string>> narrationCues, bool useLineOfSight, bool inFinalRoom) : base(Graphics, Content, enemy_name)
         {
             this.position = position;
             speed = 10.0f;
@@ -127,6 +133,8 @@ namespace WorldTest
             worldTransform = Matrix.Identity;
 
             this.currentDimension = currentDimension;
+
+            this.inFinalRoom = inFinalRoom;
 
             this.narrationCues = narrationCues;
         }
@@ -334,14 +342,14 @@ namespace WorldTest
                         {
                             if (beginChase)
                             {
-                                    //GameplayScreen.soundControl.Play("enemy alerted");
-                                    beginChase = false;
+                                //GameplayScreen.soundControl.Play("enemy alerted");
+                                beginChase = false;
                             }
                             this.currentPath = newPath;
                             this.FirstPathPoly = this.currentPath.First.Value.Index;
                             this.SecondPathPoly = this.currentPath.First.Next.Value.Index;
                         }
-                    }                    
+                    }
                 }
                 else
                 {
