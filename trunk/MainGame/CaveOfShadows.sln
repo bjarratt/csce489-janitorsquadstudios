@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaveOfShadows", "WorldTest\CaveOfShadows.csproj", "{F788D8D2-821B-429E-8412-B3AE7B179A61}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CaveOfShadows", "CaveOfShadows\CaveOfShadows.csproj", "{F788D8D2-821B-429E-8412-B3AE7B179A61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
